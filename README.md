@@ -1,4 +1,4 @@
-# TFPV.jl
+# TikhonovFenichelReductions.jl
 
 A Julia package for computing Tikhonov-Fenichel Parameter Values (TFPVs) for a
 polynomial ODE system and the corresponding reduced systems (see [1-3] for
