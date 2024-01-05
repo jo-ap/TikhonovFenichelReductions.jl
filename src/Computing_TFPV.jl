@@ -169,7 +169,15 @@ end
 
 
 function compute_reduction(reduction::Reduction)
-  if all(reduction.success)
+  
+  # Check if P-ψ-composition is defined 
+  if reduction.success[3]
+
+    # check if non-singular point is defined
+    if !reduction.success[2]
+      @info "The non-singular point on the slow manifold has not been set successfully. Trying to compute the reduction anyway."
+    end
+
     # dimensions
     n = length(reduction.x)
 
@@ -184,20 +192,22 @@ function compute_reduction(reduction::Reduction)
     # reshape as vector
     f_red = reshape(Matrix(f_red_raw), n)
 
-    # substitute values on slow manifold
+  else
+    # reduction cannot be computed
+    @error "Reduced system cannot be computed. You need to set a valid product decomposition, i.e. P and ψ such that f⁰ = P⋅ψ"
+    return nothing, nothing
+  end
+
+  # Check if slow manifold is set 
+  if reduction.success[1]
+    # substitute components according to slow manifold
     a = reduction.K.([reduction.M; reduction.θ])
     f_red_subs = [evaluate(f, a) for f in f_red]
     return f_red, f_red_subs
   else
-    str_warn = "The reduced system cannot be computed: "
-    if !reduction.success[1]
-      @warn str_warn * "Slow manifold has not been defined succesfully"
-    elseif !reduction.success[2]
-      @warn str_warn * "The non-singular point x₀ has not been defined succesfully"
-    elseif !reduction.success[3]
-      @warn str_warn * "The product decomposion f⁰ = P⋅ψ has not been defined succesfully"
-    end
-    return nothing, nothing
+    @warn "Slow manifold has not been defined succesfully. Reduced system is only returned in raw form, i.e. the reduced components are not substituted according to the slow manfold."
+    return f_red, nothing
   end
+
 end
 
