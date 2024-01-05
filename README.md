@@ -1,8 +1,7 @@
 # TikhonovFenichelReductions.jl
 
 A Julia package for computing Tikhonov-Fenichel Parameter Values (TFPVs) for a
-polynomial ODE system and the corresponding reduced systems (see [1-3] for
-details).
+polynomial ODE system and the corresponding reductions (see [1-3] for details).
 
 *This package is still under development!*
 
@@ -13,12 +12,12 @@ Consider an ODE system of the form
 ```
 where $f \in \mathbb{R}[x,\pi]$ is polynomial and $\varepsilon \geq 0$ is a small
 parameter. The results from [1-3] allow us to compute a reduced system for
-$`\varepsilon \to 0`$ in the sense of Tikhonov's theorem [4] and the work of
-Fenichel [5] using methods from commutative algebra and algebraic geometry. 
+$`\varepsilon \to 0`$ in the sense of Tikhonov [4] and Fenichel [5] using
+methods from commutative algebra and algebraic geometry. 
 
-TFPV.jl implements methods for finding all possible TFPV candidates, i.e.
-separations of parameters into small and large (which in turn correspond to
-slow-fast separations of processes in the original system).
+TikhonovFenichelReductions.jl implements methods for finding all possible TFPV
+candidates, i.e. separations of parameters into small and large (which in turn
+correspond to slow-fast separations of processes in the original system).
 
 ## Usage
 ### Finding TFPV candidates
@@ -43,6 +42,8 @@ small and `1` to a large parameter.
 contained in the affine variety of `G`. 
 `V`contains the generators of primary ideals that correspond to the irreducible
 components of the affine variety $\mathcal{V}(f(\cdot,\pi))$. 
+If finding TFPV candidates takes too long, you can disable the computation of
+irreducible components of `V` by setting `compute_primary_decomposition=false`.
 
 The functions 
 ~~~
@@ -50,25 +51,25 @@ print_tfpv(idx, prob)
 print_varieties(V, prob)
 ~~~
 print out the results in a simple format directly to the REPL. 
+You can use the additional argument `latex=true` to print output as LaTeX source
+code. 
 
 #### Limitations
 
-The method `tfpv_candidates` can only find TFPV candidates where a subset of
+The method `tfpv_candidates` can only find TFPV candidates for which a subset of
 the original parameters is set to zero. 
 For more complicated candidates, i.e. when some function of the parameters is small, 
 one has to consider the Gröbner Basis `G` directly.
-These more complicated cases are defined by a subset of polynomials, whose
-vanishing also leads to the vanishing of `G`.
-
-Work to (at least partially) automate this process is currently in progress. 
+These 'alternative TFPVs' are rational functions whose vanishing results in the
+vanishing of `G`.
 
 ### Computing the reduced system
 
-To compute the reduced system, we first need to make the variables (parsed to
-the appropriate types from Oscar.jl) available in the main namespace. 
+To compute the reduced system, we first need to make the variables available in
+the main namespace (parsed to the appropriate types from `Oscar.jl`).
 These can be accessed as `problem.x` and `problem.θ`. 
 Then, we initialise a reduction by constructing an object of type `Reduction`. 
-For the first slow-fast separation in `idx`, this is most easily done by calling
+For the first slow-fast separation in `idx`, this can be done with 
 ~~~
 reduction = Reduction(prob, idx[1])
 ~~~
@@ -79,8 +80,9 @@ polynomials in `V[1]`.
 Before we can compute the reduced system, we can check if the necessary
 conditions for its existence are satisfied. These can be found in [1-3].
 Essentially, we need to find a manifold of dimension $s$ contained in
-$\mathcal{V}(f(\cdot, \theta^\star))$, find a non-singular point $x_0$ on this
-manifold and a local product decomposition $f(\cdot, \theta^\star) = P\cdot \psi$.
+$\mathcal{V}(f(\cdot, \theta^\star))$, a non-singular point $x_0$ on this
+manifold and a local product decomposition $f(\cdot, \theta^\star) = P\cdot
+\psi$.
 
 ~~~
 # define the slow manifold M₀ (M₀ has to have the same format as problem.x)
@@ -89,8 +91,9 @@ set_manifold!(reduction, M₀)
 # choose a non-singular point x₀ on M₀
 set_point!(reduction, x₀)
 
-# define product decomposion f⁰ = P⋅ψ, where ψ is a matrix of polynomials
-# (when r = 1, this can be done via specifying only ψ with V(ψ) = V(f⁰) in this case)
+# define a product decomposion f⁰ = P⋅ψ, where ψ is a matrix of polynomials
+# locally satisfying V(ψ) = V(f⁰). 
+# (when r = 1, it is sufficient to specify ψ)
 set_decomposition!(reduction, P, ψ)
 ~~~
 If all the conditions for the slow manifold, the non-singular point and the
@@ -125,4 +128,3 @@ This packages only works due to the great [Oscar.jl](https://www.oscar-system.or
 
 ## License
 GNU GENERAL PUBLIC LICENSE, Version 3
-
