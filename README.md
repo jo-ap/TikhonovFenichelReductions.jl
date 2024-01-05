@@ -109,6 +109,13 @@ where `g` corresponds to the RHS of the reduced system on `M₀`.
 Have a look at the file `example.jl`, which uses this package to compute all
 TFPVs as discussed in [6] and computes the Rosenzweig-MacArthur model as a
 reduction from a three dimensional system.
+
+## Installation
+Run
+~~~
+add https://gitlab.com/jo-ap/tikhonovfenichelreductions.jl
+~~~
+in Julia package Mode.
  
 ## References
 [1] A. Goeke and S. Walcher, ‘Quasi-Steady State: Searching for and Utilizing Small Parameters’, in Recent Trends in Dynamical Systems, A. Johann, H.-P. Kruse, F. Rupp, and S. Schmitz, Eds., in Springer Proceedings in Mathematics & Statistics, vol. 35. Basel: Springer Basel, 2013, pp. 153–178. doi: [10.1007/978-3-0348-0451-6_8](http://link.springer.com/10.1007/978-3-0348-0451-6_8).
