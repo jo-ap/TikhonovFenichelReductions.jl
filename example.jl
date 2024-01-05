@@ -38,7 +38,7 @@ prob = ReductionProblem(f, x, θ, s)
 idx, G, V = tfpv_candidates(prob);
 
 # Output
-print_candidates(idx, prob; latex=true) # Candidates for TFPVs
+print_candidates(idx, prob) # Candidates for TFPVs
 print_varieties(V, prob) # The irreducible components of V(f⁰)
 
 # change order of filters 
