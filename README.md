@@ -81,8 +81,8 @@ Before we can compute the reduced system, we can check if the necessary
 conditions for its existence are satisfied. These can be found in [1-3].
 Essentially, we need to find a manifold of dimension $s$ contained in
 $\mathcal{V}(f(\cdot, \theta^\star))$, a non-singular point $x_0$ on this
-manifold and a local product decomposition $f(\cdot, \theta^\star) = P\cdot
-\psi$.
+manifold and a local product decomposition 
+$f(\cdot, \theta^\star) = P\cdot \psi$.
 
 ~~~
 # define the slow manifold M₀ (M₀ has to have the same format as problem.x)
