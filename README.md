@@ -134,4 +134,4 @@ in Julia package Mode.
 This packages only works due to the great [Oscar.jl](https://www.oscar-system.org/) project.
 
 ## License
-GNU GENERAL PUBLIC LICENSE, Version 3
+GNU GENERAL PUBLIC LICENSE, Version 3 or later (see LICENSE)
