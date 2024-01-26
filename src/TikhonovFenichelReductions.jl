@@ -1,3 +1,9 @@
+# TikhonovFenichelReductions.jl is licensed under the GPL v3+ (see LICENSE).
+#
+# Johannes Apelt
+# contact: johannes.apelt@posteo.de
+
+
 module TikhonovFenichelReductions
 
 export ReductionProblem, 

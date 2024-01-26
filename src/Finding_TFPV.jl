@@ -130,7 +130,7 @@ function filter_dimension(problem::ReductionProblem; idx=nothing, compute_primar
   # filter TFPV candidates 
   idx = isnothing(idx) ? num2bin.(1:(2^length(π)-2), length(problem.π)) : idx
   idx_candidates = zeros(Bool, length(idx))
-  V = []
+  V = compute_primary_decomposition ? [] : nothing
   cnt = 1
   for i in idx    
     # Get unperturbed part of system (fast part)
@@ -141,9 +141,9 @@ function filter_dimension(problem::ReductionProblem; idx=nothing, compute_primar
     if dim(ideal(R, f⁰)) >= problem.s
       idx_candidates[cnt] = true
       if compute_primary_decomposition 
-      I = ideal(R, R.(f⁰))
-      PD = primary_decomposition(I)
-      push!(V, [gens(Q[2]) for Q in PD])
+        I = ideal(R, R.(f⁰))
+        PD = primary_decomposition(I)
+        push!(V, [gens(Q[2]) for Q in PD])
       end
     end
     cnt += 1

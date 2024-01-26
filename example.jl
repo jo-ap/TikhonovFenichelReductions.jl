@@ -1,4 +1,4 @@
-## Exemplary use of TFPV.jl 
+## Demo for TikhonovFenichelReductions.jl 
 #
 # This example is based on:
 # N. Kruff, C. Lax, V. Liebscher, and S. Walcher, ‘The Rosenzweig–MacArthur
@@ -34,7 +34,8 @@ s = 2
 prob = ReductionProblem(f, x, θ, s)
 
 # compute TFPV candidates
-# if this takes too long, consider setting compute_primary_decomposition=false
+# in case this takes too long, consider setting
+# compute_primary_decomposition=false (should run fine for this example)
 idx, G, V = tfpv_candidates(prob);
 
 # Output
@@ -70,7 +71,7 @@ set_point!(reduction, [0,0,0])
 set_decomposition!(reduction, [H])
 
 # compute the reduced system
-_, g = compute_reduction(reduction)
+g_raw, g = compute_reduction(reduction)
 
 g[1]
 g[2]
