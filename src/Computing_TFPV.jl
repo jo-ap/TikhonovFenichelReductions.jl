@@ -147,7 +147,10 @@ function set_decomposition!(reduction::Reduction, P, ψ)
   Dψ = parent(reduction.Dψ)(reduction.K.(Dψ))
   P = parent(reduction.P)(P)
   ψ = parent(reduction.ψ)(ψ)
-  is_equal = all(iszero.(P*ψ .- reduction.f⁰))
+  # check if product decomposition is correct
+  # parse f⁰ as matrix, so that they can be compared
+  M = P*ψ
+  is_equal = all(iszero.(M .- parent(M)(reduction.f⁰)))
   if is_equal
     reduction.P = P
     reduction.ψ = ψ
