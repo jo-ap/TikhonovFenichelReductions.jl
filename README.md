@@ -18,6 +18,8 @@ methods from commutative algebra and algebraic geometry.
 TikhonovFenichelReductions.jl implements methods for finding all possible TFPV
 candidates, i.e. separations of parameters into small and large (which in turn
 correspond to slow-fast separations of processes in the original system).
+It also includes functions to simplify the computation of corresponding
+reduced systems.
 
 ## Usage
 ### Finding TFPV candidates

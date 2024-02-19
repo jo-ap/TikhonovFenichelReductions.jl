@@ -6,7 +6,7 @@
 # no. 1–2, pp. 413–439, Jan. 2019, doi: 10.1007/s00285-018-1278-y.
 
 ## Load package
-using Oscar
+using Oscar # optional (results in prettier printing and loads Oscar functions to Main namespace)
 using TikhonovFenichelReductions
 
 ## Define system
