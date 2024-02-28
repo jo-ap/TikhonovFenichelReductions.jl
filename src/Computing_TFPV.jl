@@ -143,9 +143,12 @@ function set_decomposition!(reduction::Reduction, P, ψ)
   catch
     println("P must be of size $n×$r")
   end
+  # parse matrices to matrix elements over rational function field
   Dψ = jacobian(reshape(ψ, r), reduction.x)
   Dψ = parent(reduction.Dψ)(reduction.K.(Dψ))
+  P = reduction.K.(P)
   P = parent(reduction.P)(P)
+  ψ = reduction.K.(P)
   ψ = parent(reduction.ψ)(ψ)
   # check if product decomposition is correct
   # parse f⁰ as matrix, so that they can be compared
