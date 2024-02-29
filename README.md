@@ -53,9 +53,8 @@ contains a non-singular point --- which we will require later anyway.
 We can therefore use this information already to discard unwanted cases. 
 The default behaviour is to compute a primary decomposition and to check if any
 component's dimension is exactly `s`. 
-If you want to disable this filter, you can disable this behaviour by setting
-`exact_dimension=false` (this only has an effect if
-`compute_primary_decomposition=true`).
+If you want to disable this filter, you can set `exact_dimension=false` (this
+only has an effect if `compute_primary_decomposition=true`).
 
 The functions 
 ~~~
@@ -110,8 +109,9 @@ set_decomposition!(reduction, P, ψ)
 set_decomposition!(reduction, ψ)
 ~~~
 
-If you choose `ψ` as a polynomial in $\mathbb{R}[x,\pi]$, it should be possible
-to automatically compute `P`. 
+If you choose `ψ` as a vector of polynomials in $\mathbb{R}[x,\pi]$, it should
+be possible to automatically compute `P` (which is then a matrix of rational
+functions). 
 However, as of now this might fail in complicated cases. 
 It works always if `r=n-s=1`.
 
