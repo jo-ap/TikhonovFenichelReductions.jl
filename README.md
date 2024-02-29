@@ -29,7 +29,7 @@ The main functionality is:
 problem = ReductionProblem(f, x, θ, s, idx_slow_fast)
 
 # Compute TFPV candidates
-idx, G, V = tfpv_candidates(problem)
+idx, G, (V, dim_Y) = tfpv_candidates(problem)
 ~~~
 This sets up the problem. The input is a (Julia) function `f(x,θ)` and a vector
 of strings defining the dynamic variables $x$ and parameters $\theta$,
@@ -46,6 +46,16 @@ contained in the affine variety of `G`.
 components of the affine variety $\mathcal{V}(f(\cdot,\pi))$. 
 If finding TFPV candidates takes too long, you can disable the computation of
 irreducible components of `V` by setting `compute_primary_decomposition=false`.
+`dim_Y` contains the Krull dimension of the irreducible components. These are
+equal to the topological dimensions in $\mathbb{C}[x]$, but can be larger in
+$\mathbb{R}[x]$. However, they are also equal over the reals if a component
+contains a non-singular point --- which we will require later anyway. 
+We can therefore use this information already to discard unwanted cases. 
+The default behaviour is to compute a primary decomposition and to check if any
+component's dimension is exactly `s`. 
+If you want to disable this filter, you can disable this behaviour by setting
+`exact_dimension=false` (this only has an effect if
+`compute_primary_decomposition=true`).
 
 The functions 
 ~~~
@@ -95,9 +105,16 @@ set_point!(reduction, x₀)
 
 # define a product decomposion f⁰ = P⋅ψ, where ψ is a matrix of polynomials
 # locally satisfying V(ψ) = V(f⁰). 
-# (when r = 1, it is sufficient to specify ψ)
 set_decomposition!(reduction, P, ψ)
+# or compute P automatically
+set_decomposition!(reduction, ψ)
 ~~~
+
+If you choose `ψ` as a polynomial in $\mathbb{R}[x,\pi]$, it should be possible
+to automatically compute `P`. 
+However, as of now this might fail in complicated cases. 
+It works always if `r=n-s=1`.
+
 If all the conditions for the slow manifold, the non-singular point and the
 product decomposition are satisfied (indicated by the return value `true` of
 each function), we can compute the reduced system with

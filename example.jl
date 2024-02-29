@@ -36,14 +36,15 @@ prob = ReductionProblem(f, x, θ, s)
 # compute TFPV candidates
 # in case this takes too long, consider setting
 # compute_primary_decomposition=false (should run fine for this example)
-idx, G, V = tfpv_candidates(prob);
+idx, G, (V, dim_Y) = tfpv_candidates(prob);
 
 # Output
 print_candidates(idx, prob) # Candidates for TFPVs
 print_varieties(V, prob) # The irreducible components of V(f⁰)
+dim_Y # the dimensions of the irreducible components
 
 # change order of filters 
-idx_dim, _V = filter_dimension(prob)
+idx_dim, (_V, _dim_Y) = filter_dimension(prob)
 idx_det, _G = filter_determinants(prob; idx=idx_dim)
 
 # check if this is the same
@@ -62,6 +63,7 @@ reduction = Reduction(prob, idx[16]);
 
 # look at the variety that contains the slow manifold
 V[16] # ⟹ M₀ = {(B,S,0) | B,S ∈ ℝ}
+dim_Y[16] # has Krull dimension 2 (i.e. the topological dimension of M₀ in ℂ[B,S,H], but also in ℝ[B,S,H] if there exists a non-singular point)
 set_manifold!(reduction, [B, S, 0])
 
 # choose non-singular point

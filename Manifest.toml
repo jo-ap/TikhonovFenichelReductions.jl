@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.0"
+julia_version = "1.10.1"
 manifest_format = "2.0"
 project_hash = "3c15651668cba94976160f883e05503e28a5403e"
 
@@ -28,9 +28,9 @@ weakdeps = ["StaticArrays"]
 
 [[deps.AlgebraicSolving]]
 deps = ["LinearAlgebra", "Logging", "LoopVectorization", "Markdown", "Nemo", "Printf", "Random", "StaticArrays", "Test", "msolve_jll"]
-git-tree-sha1 = "c60141743f1305a607c823643bcbe46900ce517a"
+git-tree-sha1 = "df25c997e792f7f67a501bbb4769ce941618cb1d"
 uuid = "66b61cbe-0446-4d5d-9090-1ff510639f9d"
-version = "0.4.7"
+version = "0.4.8"
 
 [[deps.Antic_jll]]
 deps = ["Artifacts", "FLINT_jll", "GMP_jll", "JLLWrappers", "Libdl", "MPFR_jll", "Pkg"]
@@ -125,7 +125,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.0.5+1"
+version = "1.1.0+0"
 
 [[deps.CpuId]]
 deps = ["Markdown"]
@@ -495,7 +495,7 @@ version = "0.3.24+0"
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
-version = "0.3.23+2"
+version = "0.3.23+4"
 
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -695,9 +695,9 @@ weakdeps = ["OffsetArrays", "StaticArrays"]
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
-git-tree-sha1 = "f68dd04d131d9a8a8eb836173ee8f105c360b0c5"
+git-tree-sha1 = "7b0e9c14c624e435076d19aea1e5cbdec2b9ca37"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.9.1"
+version = "1.9.2"
 
     [deps.StaticArrays.extensions]
     StaticArraysChainRulesCoreExt = "ChainRulesCore"

@@ -30,7 +30,7 @@ function splitsystem(f::Vector{QQMPolyRingElem}, π::Vector{QQMPolyRingElem}, id
   f¹ = [evaluate(fᵢ, [π[idx]...], zeros(R, sum(idx))) for fᵢ in f]
   idx = idx .== false
   f⁰ = [evaluate(fᵢ, [π[idx]...], zeros(R, sum(idx))) for fᵢ in f]
-	return f⁰, f¹
+  return f⁰, f¹
 end
 
 function jacobian(f::Vector{QQMPolyRingElem}, x::Vector{QQMPolyRingElem})
@@ -131,25 +131,19 @@ function set_point!(reduction::Reduction, x₀::AbstractVector)
   return check_χ 
 end
 
-# Product decomposition of f
-function set_decomposition!(reduction::Reduction, P, ψ)
+# Set Product decomposition of f
+function set_decomposition!(reduction::Reduction, P::AbstractAlgebra.Generic.MatSpaceElem,  ψ)
   n = length(reduction.x)
   r = n - reduction.s
   try ψ = reshape(ψ, r, 1)
   catch
-    println("ψ must be of size $r×1")
+    println("ψ must be of size $r or $r×1")
   end
-  try P = reshape(P, n, r)
-  catch
-    println("P must be of size $n×$r")
-  end
-  # parse matrices to matrix elements over rational function field
   Dψ = jacobian(reshape(ψ, r), reduction.x)
   Dψ = parent(reduction.Dψ)(reduction.K.(Dψ))
-  P = reduction.K.(P)
-  P = parent(reduction.P)(P)
   ψ = reduction.K.(ψ)
   ψ = parent(reduction.ψ)(ψ)
+  P = reduction.K.(P)
   # check if product decomposition is correct
   # parse f⁰ as matrix, so that they can be compared
   M = P*ψ
@@ -164,18 +158,37 @@ function set_decomposition!(reduction::Reduction, P, ψ)
   end
   return is_equal
 end
-
-function get_P(f⁰, ψ) 
-  f⁰.//ψ
+function set_decomposition!(reduction::Reduction, P::VecOrMat, ψ)
+  n = length(reduction.x)
+  r = n - reduction.s
+  try P = reshape(P, n, r)
+  catch
+    println("P must be of size $n×$r")
+  end
+  P = reduction.K.(P)
+  P = parent(reduction.P)(P)
+  set_decomposition!(reduction, P, ψ)
 end
-function set_decomposition!(reduction::Reduction, ψ)
-  P = get_P(reduction.f⁰, ψ)
+
+# try computing matrix of rational functions P from ψ
+function get_P(reduction::Reduction, ψ::VecOrMat) 
+  if size(ψ, 1) == 1
+    P = reduction.f⁰.//ψ
+  else 
+      U, Q, H = reduce_with_quotients_and_unit(reduction.f⁰, ψ)
+      @assert all(H .== 0) "Could not automatically compute P"
+      P = U*Q
+  end
+  return P
+end
+function set_decomposition!(reduction::Reduction, ψ::VecOrMat)
+  P = get_P(reduction, ψ)
   set_decomposition!(reduction, P, ψ)
 end
 
 
 function compute_reduction(reduction::Reduction)
-  
+
   # Check if P-ψ-composition is defined 
   if reduction.success[3]
 

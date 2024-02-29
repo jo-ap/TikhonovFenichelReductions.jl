@@ -1,7 +1,7 @@
 name = "TikhonovFenichelReductions"
 uuid = "66629163-d46e-44ca-9a00-7025b1e168e6"
 authors = ["johannes "]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
