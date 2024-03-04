@@ -38,7 +38,7 @@ they can be used with Oscar.jl. Return the polynomial Ring `R = ℚ[x,θ]`
 together with `x`, `θ` and `f` parsed to the appropriate OSCAR types.
 """
 function parse_system(f::Function, x::Vector{String}, θ::Vector{String})
-  R, v = PolynomialRing(QQ, [x..., θ...])
+  R, v = polynomial_ring(QQ, [x..., θ...])
   _x = v[1:length(x)]
   _θ = v[length(x)+1:end]
   _f = f(_x, _θ)
@@ -130,15 +130,15 @@ function filter_dimension(problem::ReductionProblem; idx=nothing, compute_primar
   # use dynamic variables as variables for the polynomial ring
   x_str = string.(problem.x)
   θ_str = string.(problem.θ)
-  K, θ = RationalFunctionField(QQ, θ_str)
-  R, x = PolynomialRing(K, x_str)
+  K, θ = rational_function_field(QQ, θ_str)
+  R, x = polynomial_ring(K, x_str)
   π = θ[problem.idx_slow_fast]
 
   # filter TFPV candidates 
   idx = isnothing(idx) ? num2bin.(1:(2^length(π)-2), length(problem.π)) : idx
   idx_candidates = zeros(Bool, length(idx))
   V = compute_primary_decomposition ? [] : nothing
-  dim_components = compute_primary_decomposition ? [] : nothing
+  dim_components = compute_primary_decomposition ? Vector{Vector{Int}}() : nothing
   cnt = 1
   for i in idx    
     # Get unperturbed part of system (fast part)

@@ -13,15 +13,15 @@ mutable struct Reduction
   f⁰::Vector{QQMPolyRingElem}
   f¹::Vector{QQMPolyRingElem}
   Df::AbstractAlgebra.Generic.MatSpaceElem{QQMPolyRingElem}
-  Df_x₀::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.Frac{QQMPolyRingElem}}
-  T::AbstractAlgebra.Generic.PolyRing{AbstractAlgebra.Generic.Frac{QQMPolyRingElem}}
-  χ::AbstractAlgebra.Generic.Poly{AbstractAlgebra.Generic.Frac{QQMPolyRingElem}}
-  M::Vector{AbstractAlgebra.Generic.Frac{QQMPolyRingElem}}
-  x₀::Vector{AbstractAlgebra.Generic.Frac{QQMPolyRingElem}}
+  Df_x₀::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
+  T::AbstractAlgebra.Generic.PolyRing{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
+  χ::AbstractAlgebra.Generic.Poly{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
+  M::Vector{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
+  x₀::Vector{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
   K::AbstractAlgebra.Generic.FracField{QQMPolyRingElem}
-  P::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.Frac{QQMPolyRingElem}}
-  ψ::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.Frac{QQMPolyRingElem}}
-  Dψ::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.Frac{QQMPolyRingElem}}
+  P::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
+  ψ::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
+  Dψ::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
   success::Vector{Bool}
 end
 
