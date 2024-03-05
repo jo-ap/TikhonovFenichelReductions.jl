@@ -76,6 +76,9 @@ function set_manifold!(reduction::Reduction, M::AbstractVector)
   else
     reduction.M = M
     reduction.success[1] = true
+    if _set_point!(reduction, M)
+      println("Set generic non-singular point on slow manifold")
+    end
   end
   return f_vanishes
 end
@@ -110,7 +113,7 @@ function jacobian_tfpv(reduction::Reduction)
   eval_mat(reduction.Df, reduction.K.([reduction.x; reduction._θ]))
 end
 
-function set_point!(reduction::Reduction, x₀::AbstractVector)
+function _set_point!(reduction::Reduction, x₀::AbstractVector)
   x₀ = parse_ring(reduction.K, x₀)
   n = length(reduction.x)
   @assert length(x₀) == n "The point x₀ must have $n components."
@@ -125,12 +128,17 @@ function set_point!(reduction::Reduction, x₀::AbstractVector)
     reduction.Df_x₀ = Df_x₀
     reduction.χ = χ
     reduction.success[2] = true
-  else
-    @warn "The eigenvalue λ does not factor the characteristic polynomial of D₁f(x₀,π) with power s=$(reduction.s)"
   end
   return check_χ 
 end
-
+function set_point!(reduction::Reduction, x₀::AbstractVector)
+  retval = _set_point!(reduction, x₀)
+  if !retval
+    @warn "The eigenvalue λ does not factor the characteristic polynomial of D₁f(x₀,π) with power s=$(reduction.s)"
+  end
+  return retval 
+end
+  
 # Set Product decomposition of f
 function set_decomposition!(reduction::Reduction, P::AbstractAlgebra.Generic.MatSpaceElem,  ψ)
   n = length(reduction.x)
