@@ -76,7 +76,15 @@ function set_manifold!(reduction::Reduction, M::AbstractVector)
   else
     reduction.M = M
     reduction.success[1] = true
-    if _set_point!(reduction, M)
+    # check if there exists a reduction
+    # an eigenvalue λ has to factor the characteristic polynomial of the
+    # jacobian at a non-singular point exactly with power s, i.e. ther is no
+    # reduciton if the polynomial is given by λ^(s+1)•r(λ) with degree(r) > s+1 
+    coeffs = collect(coefficients(charpoly(jacobian_tfpv_on_manifold(reduction))))
+    if all(coeffs[1:reduction.s] .== 0)
+      @info "There exists no reduction onto this manifold"
+      # check if a generic point on the slow manifold is non-singular
+    elseif _set_point!(reduction, M)
       println("Set generic non-singular point on slow manifold")
     end
   end
@@ -183,9 +191,11 @@ function get_P(reduction::Reduction, ψ::VecOrMat)
   if size(ψ, 1) == 1
     P = reduction.f⁰.//ψ
   else 
-      U, Q, H = reduce_with_quotients_and_unit(reduction.f⁰, ψ)
-      @assert all(H .== 0) "Could not automatically compute P"
-      P = U*Q
+    U, Q, H = reduce_with_quotients_and_unit(reduction.f⁰, ψ)
+    P = U*Q
+    if any(H .!= 0)
+      @warn "Could not automatically compute P"
+    end
   end
   return P
 end
@@ -193,6 +203,26 @@ function set_decomposition!(reduction::Reduction, ψ::VecOrMat)
   P = get_P(reduction, ψ)
   set_decomposition!(reduction, P, ψ)
 end
+
+# Experimental: Try guessing P and ψ automatically
+function get_decomposition(reduction)
+  G = groebner_basis(ideal(reduction.f⁰); complete_reduction=true)
+  ψ = gens(G)
+  while true 
+    U, Q, H = reduce_with_quotients_and_unit(reduction.f⁰, ψ)
+    idx = [any(Q[:,i] .!= 0) for i in 1:size(Q, 2)]
+    if all(idx) 
+      return U*Q, ψ
+    else
+      ψ = ψ[idx] 
+    end
+  end
+end
+
+
+
+
+
 
 
 function compute_reduction(reduction::Reduction)
