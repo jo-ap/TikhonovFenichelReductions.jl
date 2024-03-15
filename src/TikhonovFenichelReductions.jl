@@ -13,7 +13,7 @@ export ReductionProblem,
   Reduction,
   jacobian_tfpv, jacobian_tfpv_on_manifold,
   set_manifold!, set_point!, set_decomposition!, 
-  compute_reduction
+  compute_reduction, compute_directional_reduction
 
 # greetings
 function __init__()

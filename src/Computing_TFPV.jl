@@ -27,9 +27,8 @@ end
 
 function splitsystem(f::Vector{QQMPolyRingElem}, π::Vector{QQMPolyRingElem}, idx::Vector{Bool})
   R = parent(f[1])
-  f¹ = [evaluate(fᵢ, [π[idx]...], zeros(R, sum(idx))) for fᵢ in f]
-  idx = idx .== false
-  f⁰ = [evaluate(fᵢ, [π[idx]...], zeros(R, sum(idx))) for fᵢ in f]
+  f⁰ = [evaluate(fᵢ, π[.!idx], zero.(π[.!idx])) for fᵢ in f]
+  f¹ = f .- f⁰ 
   return f⁰, f¹
 end
 
@@ -68,7 +67,7 @@ end
 function set_manifold!(reduction::Reduction, M::AbstractVector)
   M = parse_ring(reduction.K, M)
   n = length(reduction.x)
-  @assert length(M) == n "The Manifold M must be defined in $n components."
+  @assert length(M) == n "The slow manifold M must be defined in $n components."
   _f⁰ = [evaluate(fᵢ, [M; reduction.K.(reduction.θ)]) for fᵢ in reduction.f⁰]
   f_vanishes = all(iszero.(_f⁰))
   if !f_vanishes 
@@ -78,10 +77,10 @@ function set_manifold!(reduction::Reduction, M::AbstractVector)
     reduction.success[1] = true
     # check if there exists a reduction
     # an eigenvalue λ has to factor the characteristic polynomial of the
-    # jacobian at a non-singular point exactly with power s, i.e. ther is no
-    # reduciton if the polynomial is given by λ^(s+1)•r(λ) with degree(r) > s+1 
+    # jacobian at a non-singular point exactly with power s, i.e. there is no
+    # reduction if the polynomial is given by λ^(s+1)•r(λ)
     coeffs = collect(coefficients(charpoly(jacobian_tfpv_on_manifold(reduction))))
-    if all(coeffs[1:reduction.s] .== 0)
+    if all(coeffs[1:reduction.s + 1] .== 0)
       @info "There exists no reduction onto this manifold"
       # check if a generic point on the slow manifold is non-singular
     elseif _set_point!(reduction, M)
@@ -203,7 +202,6 @@ function set_decomposition!(reduction::Reduction, ψ::VecOrMat)
   P = get_P(reduction, ψ)
   set_decomposition!(reduction, P, ψ)
 end
-
 # Experimental: Try guessing P and ψ automatically
 function get_decomposition(reduction)
   G = groebner_basis(ideal(reduction.f⁰); complete_reduction=true)
@@ -220,41 +218,28 @@ function get_decomposition(reduction)
 end
 
 
-
-
-
-
-
 function compute_reduction(reduction::Reduction)
-
   # Check if P-ψ-composition is defined 
   if reduction.success[3]
-
     # check if non-singular point is defined
     if !reduction.success[2]
       @info "The non-singular point on the slow manifold has not been set successfully. Trying to compute the reduction anyway."
     end
-
     # dimensions
     n = length(reduction.x)
-
     # compute reduced system
     A = reduction.Dψ*reduction.P
     Q = reduction.P*inv(A)*reduction.Dψ
     Iₙ = diagonal_matrix(reduction.K(1), n)
     F¹ = matrix_space(reduction.K, n, 1)(reduction.f¹)
-
     f_red_raw = (Iₙ - Q)*F¹
-
     # reshape as vector
     f_red = reshape(Matrix(f_red_raw), n)
-
   else
     # reduction cannot be computed
     @error "Reduced system cannot be computed. You need to set a valid product decomposition, i.e. P and ψ such that f⁰ = P⋅ψ"
     return nothing, nothing
   end
-
   # Check if slow manifold is set 
   if reduction.success[1]
     # substitute components according to slow manifold
@@ -265,6 +250,46 @@ function compute_reduction(reduction::Reduction)
     @warn "Slow manifold has not been defined succesfully. Reduced system is only returned in raw form, i.e. the reduced components are not substituted according to the slow manfold."
     return f_red, nothing
   end
-
 end
 
+
+function compute_directional_reduction(reduction::Reduction, γ::Function)
+  # check if curve satisfies γ(0) = π⁺
+  @assert all(γ(reduction.θ, 0) .== reduction._θ) "The curve γ must satisfy γ(0) = π⁺"
+  # compute γ'(0)
+  Rδ, δ = polynomial_ring(reduction.R, :δ)
+  dγ = derivative.(γ(reduction.θ, δ))
+  dγ_0 = matrix(reduction.K ,length(reduction.θ), 1, evaluate.(dγ, 0))
+  # compute D₂f(x, πˣ)
+  D₂f = reduction.K.(eval_mat(jacobian(reduction.f, reduction.θ), reduction.θ, reduction._θ))
+  # Check if P-ψ-composition is defined 
+  if reduction.success[3]
+    # check if non-singular point is defined
+    if !reduction.success[2]
+      @info "The non-singular point on the slow manifold has not been set successfully. Trying to compute the reduction anyway."
+    end
+    # dimensions
+    n = length(reduction.x)
+    # compute reduced system
+    A = reduction.Dψ*reduction.P
+    Q = reduction.P*inv(A)*reduction.Dψ
+    Iₙ = diagonal_matrix(reduction.K(1), n)
+    f_red_raw = (Iₙ - Q)*D₂f*dγ_0
+    # reshape as vector
+    f_red = reshape(Matrix(f_red_raw), n)
+  else
+    # reduction cannot be computed
+    @error "Reduced system cannot be computed. You need to set a valid product decomposition, i.e. P and ψ such that f⁰ = P⋅ψ"
+    return nothing, nothing
+  end
+  # Check if slow manifold is set 
+  if reduction.success[1]
+    # substitute components according to slow manifold
+    a = reduction.K.([reduction.M; reduction.θ])
+    f_red_subs = [evaluate(f, a) for f in f_red]
+    return f_red, f_red_subs
+  else
+    @warn "Slow manifold has not been defined succesfully. Reduced system is only returned in raw form, i.e. the reduced components are not substituted according to the slow manfold."
+    return f_red, nothing
+  end
+end
