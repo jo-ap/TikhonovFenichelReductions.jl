@@ -2,7 +2,7 @@
 
 julia_version = "1.10.2"
 manifest_format = "2.0"
-project_hash = "3c15651668cba94976160f883e05503e28a5403e"
+project_hash = "dc0cb1e55cdf0243563f0bc58a779fbddb02079f"
 
 [[deps.ASL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -12,9 +12,9 @@ version = "0.1.3+0"
 
 [[deps.AbstractAlgebra]]
 deps = ["InteractiveUtils", "LinearAlgebra", "MacroTools", "Preferences", "Random", "RandomExtensions", "SparseArrays", "Test"]
-git-tree-sha1 = "c5b67f9b65fa3462d8fba699b0afc4a5ec11d007"
+git-tree-sha1 = "a25edb0a7ea5427ab9941ec08aed85738d3071b5"
 uuid = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
-version = "0.40.1"
+version = "0.40.5"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
