@@ -202,20 +202,21 @@ function set_decomposition!(reduction::Reduction, ψ::VecOrMat)
   P = get_P(reduction, ψ)
   set_decomposition!(reduction, P, ψ)
 end
+
 # Experimental: Try guessing P and ψ automatically
-function get_decomposition(reduction)
-  G = groebner_basis(ideal(reduction.f⁰); complete_reduction=true)
-  ψ = gens(G)
-  while true 
-    U, Q, H = reduce_with_quotients_and_unit(reduction.f⁰, ψ)
-    idx = [any(Q[:,i] .!= 0) for i in 1:size(Q, 2)]
-    if all(idx) 
-      return U*Q, ψ
-    else
-      ψ = ψ[idx] 
-    end
-  end
-end
+# function get_decomposition(reduction)
+#   G = groebner_basis(ideal(reduction.f⁰); complete_reduction=true)
+#   ψ = gens(G)
+#   while true 
+#     U, Q, H = reduce_with_quotients_and_unit(reduction.f⁰, ψ)
+#     idx = [any(Q[:,i] .!= 0) for i in 1:size(Q, 2)]
+#     if all(idx) 
+#       return U*Q, ψ
+#     else
+#       ψ = ψ[idx] 
+#     end
+#   end
+# end
 
 
 function compute_reduction(reduction::Reduction)
