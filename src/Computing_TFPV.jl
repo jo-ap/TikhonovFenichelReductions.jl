@@ -1,5 +1,34 @@
 ## Computing a reduction
+"""
+    $(TYPEDEF)
 
+Type that holds all information to compute a Tikhonov-Fenichel reduction for a
+given slow-fast separation of rates.
+
+### Fields 
+- `idx::Vector{Bool}`: slow-fast separation (0: slow, 1: fast)
+- `s::Int`: Dimension of reduced system (= dimension of slow manifold)
+- `R::QQMPolyRing`: Ring over rationals in `x` and `θ`
+- `x::Vector{QQMPolyRingElem}`: Dynamic variables of system 
+- `θ::Vector{QQMPolyRingElem}`: All parameters
+- `_θ::Vector{QQMPolyRingElem}`: All parameters, where slow parameters are set to 0
+- `π::Vector{QQMPolyRingElem}`: Parameters, that are considered to be either small or large
+- `idx_slow_fast::Vector{Bool}`: Boolean indices, s.t. `π=θ[idx_slow_fast]`
+- `f::Vector{QQMPolyRingElem}`: RHS of system as vector with elements of ring `R`
+- `f⁰::Vector{QQMPolyRingElem}`: Fast / unperturbed part of system as vector with elements of ring `R`
+- `f¹::Vector{QQMPolyRingElem}`: Slow / perturbed part of system as vector with elements of ring `R`
+- `Df::AbstractAlgebra.Generic.MatSpaceElem{QQMPolyRingElem}`: Jacobian of `f`
+- `Df_x₀::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Jacobian of `f` at non-singular point `x₀`
+- `T::AbstractAlgebra.Generic.PolyRing{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Ring in `x` over Fraction field `K`
+- `chi::AbstractAlgebra.Generic.Poly{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Characteristic polynomial of `Df_x₀`
+- `M::Vector{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Slow manifold defined in all components of system
+- `x₀::Vector{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Non-singular point in the irreducible component of V(f⁰) containing the slow manifold
+- `K::AbstractAlgebra.Generic.FracField{QQMPolyRingElem}`: Fraction field in `θ`
+- `P::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Matrix with rational functions, such that `f⁰=P⋅ψ`
+- `ψ::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Vector with polynomials, such that `f⁰=P⋅ψ`
+- `Dψ::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Jacobian of `ψ`
+- `success::Vector{Bool}`: Indicates whether slow manifold `M`, non-singular point `x₀` and product decomposition `f⁰=P⋅ψ` have been set successfully
+"""
 mutable struct Reduction
   idx::Vector{Bool}
   s::Int
@@ -15,7 +44,7 @@ mutable struct Reduction
   Df::AbstractAlgebra.Generic.MatSpaceElem{QQMPolyRingElem}
   Df_x₀::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
   T::AbstractAlgebra.Generic.PolyRing{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
-  χ::AbstractAlgebra.Generic.Poly{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
+  chi::AbstractAlgebra.Generic.Poly{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
   M::Vector{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
   x₀::Vector{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
   K::AbstractAlgebra.Generic.FracField{QQMPolyRingElem}
@@ -25,6 +54,12 @@ mutable struct Reduction
   success::Vector{Bool}
 end
 
+"""
+    $(TYPEDSIGNATURES)
+
+Split RHS of system into fast/unperturbed and slow/perturbed part for a given
+slow-fast separation of rates.
+"""
 function splitsystem(f::Vector{QQMPolyRingElem}, π::Vector{QQMPolyRingElem}, idx::Vector{Bool})
   R = parent(f[1])
   f⁰ = [evaluate(fᵢ, π[.!idx], zero.(π[.!idx])) for fᵢ in f]
@@ -32,12 +67,27 @@ function splitsystem(f::Vector{QQMPolyRingElem}, π::Vector{QQMPolyRingElem}, id
   return f⁰, f¹
 end
 
+"""
+    $(TYPEDSIGNATURES)
+
+Compute Jacobian of `f` with respect to `x`.
+"""
 function jacobian(f::Vector{QQMPolyRingElem}, x::Vector{QQMPolyRingElem})
   matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in x] for fᵢ in f])
 end
 
-# construct Reduction type
-function Reduction(problem::ReductionProblem, idx::Union{Vector{Bool}, Vector{Int}})
+"""
+    $(TYPEDSIGNATURES)
+
+Constructor for `Reduction` Type.
+
+### Arguments
+- `problem::ReductionProblem`: Reduction problem type holding information on system and dimension of reduction.
+- `idx::Union{Vector{Bool}, Vector{Int}}`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
+
+See also: [set_manifold!](@ref), [set_decomposition!](@ref)
+"""
+function Reduction(problem::ReductionProblem, idx::Vector{Bool})
   R = parent(problem.f[1])
   K = fraction_field(R)
   _θ = copy(problem.θ)
@@ -64,6 +114,15 @@ function parse_ring(R, x)
   return x
 end
 
+"""
+    $(TYPEDSIGNATURES)
+
+Set the slow manifold by defining the values of the components of the system.
+Note that `M` must be defined as a vector with the same length as the system's
+components, i.e. `reduction.x`.
+
+See also: [Reduction](@ref), [set_decomposition!](@ref), [set_point!](@ref)
+"""
 function set_manifold!(reduction::Reduction, M::AbstractVector)
   M = parse_ring(reduction.K, M)
   n = length(reduction.x)
@@ -126,18 +185,27 @@ function _set_point!(reduction::Reduction, x₀::AbstractVector)
   @assert length(x₀) == n "The point x₀ must have $n components."
   # compute characteristic polynomial
   Df_x₀ = eval_mat(reduction.Df, [x₀; reduction.K.(reduction._θ)])
-  χ = charpoly(reduction.T, Df_x₀)
+  chi = charpoly(reduction.T, Df_x₀)
   # check condition for coefficients
-  c = collect(coefficients(χ))
-  check_χ = all(iszero.(c[1:reduction.s])) && !iszero(c[reduction.s+1])
-  if check_χ
+  c = collect(coefficients(chi))
+  check_chi = all(iszero.(c[1:reduction.s])) && !iszero(c[reduction.s+1])
+  if check_chi
     reduction.x₀ = x₀
     reduction.Df_x₀ = Df_x₀
-    reduction.χ = χ
+    reduction.chi = chi
     reduction.success[2] = true
   end
-  return check_χ 
+  return check_chi 
 end
+
+"""
+    $(TYPEDSIGNATURES)
+
+Set non-singular point on irreducible component of V(f⁰) corresponding to the slow manifold. 
+Typically, this can be done automatically by setting the slow manifold.
+
+See also: [set_manifold!](@ref), [set_decomposition!](@ref), [Reduction](@ref)
+"""
 function set_point!(reduction::Reduction, x₀::AbstractVector)
   retval = _set_point!(reduction, x₀)
   if !retval
@@ -146,8 +214,26 @@ function set_point!(reduction::Reduction, x₀::AbstractVector)
   return retval 
 end
   
-# Set Product decomposition of f
-function set_decomposition!(reduction::Reduction, P::AbstractAlgebra.Generic.MatSpaceElem,  ψ)
+"""
+    $(TYPEDSIGNATURES)
+
+Set product decomposition `f⁰=P⋅ψ` locally satisfying `𝑉(f⁰)=𝑉(ψ)`, where `P`
+is a matrix of rational functions  and `ψ` is a vector of polynomials.
+
+### Variants:
+- `set_decomposition!(reduction::Reduction, P::AbstractAlgebra.Generic.MatSpaceElem, ψ)`: Manually specify `P` and `ψ`
+- `set_decomposition!(reduction::Reduction,  ψ)`: Try to compute `P` automatically. This works always for `s=1`, but may fail if `s>1`.
+
+### Description
+Typically, `ψ` can be chosen from `s` independent entries of `f⁰`. 
+Practically one can consider the generators of the ideals defining the
+irreducible components of `𝑉(f⁰)` as entries for `ψ` (possibly rewriting the
+rational equations as polynomials by multiplying appropriately with
+parameters occurring in a denominator).
+
+See also: [set_manifold!](@ref), [set_point!](@ref), [Reduction](@ref)
+"""
+function set_decomposition!(reduction::Reduction, P::AbstractAlgebra.Generic.MatSpaceElem, ψ)
   n = length(reduction.x)
   r = n - reduction.s
   try ψ = reshape(ψ, r, 1)
@@ -184,7 +270,6 @@ function set_decomposition!(reduction::Reduction, P::VecOrMat, ψ)
   P = parent(reduction.P)(P)
   set_decomposition!(reduction, P, ψ)
 end
-
 # try computing matrix of rational functions P from ψ
 function get_P(reduction::Reduction, ψ::VecOrMat) 
   if size(ψ, 1) == 1
@@ -198,6 +283,7 @@ function get_P(reduction::Reduction, ψ::VecOrMat)
   end
   return P
 end
+
 function set_decomposition!(reduction::Reduction, ψ::VecOrMat)
   P = get_P(reduction, ψ)
   set_decomposition!(reduction, P, ψ)
@@ -219,6 +305,17 @@ end
 # end
 
 
+"""
+    $(TYPEDSIGNATURES)
+
+Compute the reduced system after the slow manifold, non-singular point and
+product decomposition have been set successfully.
+
+The function returns a tuple containing the reduced system in raw form and with
+variables substituted according to the slow manifold.
+
+See also: [set_manifold!](@ref), [set_decomposition!](@ref), [set_point!](@ref), [Reduction](@ref)
+"""
 function compute_reduction(reduction::Reduction)
   # Check if P-ψ-composition is defined 
   if reduction.success[3]

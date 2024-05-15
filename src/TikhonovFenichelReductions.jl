@@ -3,11 +3,9 @@
 # Johannes Apelt
 # contact: johannes.apelt@posteo.de
 
-
 module TikhonovFenichelReductions
 
 export ReductionProblem, 
-  num2bin,
   filter_determinants, filter_dimension, tfpv_candidates, 
   print_candidates, print_varieties,
   Reduction,
@@ -25,6 +23,7 @@ function __init__()
 end
 
 ## Dependencies
+using DocStringExtensions
 using Oscar
 using LaTeXStrings
 using Latexify

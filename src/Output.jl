@@ -1,9 +1,9 @@
 ## Output functions
 
 """
-    padstring(s::String, width::Int; padfront::Bool=true)
+    $(TYPEDSIGNATURES)
 
-Pad string `s` to predefined width or keep unchanged if `length(str) < width`.
+Pad string `s` to predefined width or keep unchanged if `width ≤ length(str)`.
 Setting `padfront=false` inserts padding after the string (left aligned)
 instead of in front. 
 """
@@ -19,9 +19,10 @@ function padstring(s::String, width::Int; padfront::Bool=true)
 end
 
 """
-    print_candidates(idx::Vector{Vector{Bool}}, prob::ReductionProblem; latex=false)
+    $(TYPEDSIGNATURES)
 
-Print TFPV candidates to terminal.
+Print TFPV candidates to terminal or return LaTeXString that can be included in
+tex file.
 """
 function print_candidates(idx::Vector{Vector{Bool}}, prob::ReductionProblem; latex=false)
   if latex
@@ -53,10 +54,11 @@ function print_candidates(idx::Vector{Vector{Bool}}, prob::ReductionProblem; lat
 end
 
 """
-    print_varieties(V, prob::ReductionProblem; latex=false)
+    $(TYPEDSIGNATURES)
 
-Print irreducible components of varieties for TFPV candidates to terminal (as
-returned by `filter_dimension` or `tfpv_candidates`.
+Print generators of ideals in corresponding to irreducible components of varieties
+for TFPV candidates to terminal (`V` as returned by `filter_dimension` or
+`tfpv_candidates`).
 
 See also: [`filter_dimension`](@ref), [`tfpv_candidates`](@ref)
 """
