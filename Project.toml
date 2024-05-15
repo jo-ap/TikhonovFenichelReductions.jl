@@ -5,9 +5,7 @@ version = "0.1.1"
 
 [deps]
 AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
+DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 Latexify = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
 Oscar = "f1435218-dba5-11e9-1e4d-f1a5fab5fc13"
-
-[compat]
-AbstractAlgebra = "<0.40.6"
