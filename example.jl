@@ -6,6 +6,7 @@
 # no. 1–2, pp. 413–439, Jan. 2019, doi: 10.1007/s00285-018-1278-y.
 
 ## Load package
+
 using Oscar # optional (results in prettier printing and loads Oscar functions to Main namespace)
 using TikhonovFenichelReductions
 
@@ -66,9 +67,6 @@ V[16] # ⟹ M₀ = {(B,S,0) | B,S ∈ ℝ}
 dim_Y[16] # has Krull dimension 2 (i.e. the topological dimension of M₀ in ℂ[B,S,H], but also in ℝ[B,S,H] if there exists a non-singular point)
 set_manifold!(reduction, [B, S, 0])
 
-# choose non-singular point
-set_point!(reduction, [0,0,0])
-
 # define product decomposion f⁰ = P⋅ψ (can be done via specifying ψ with V(ψ) = V(f⁰) in this case)
 set_decomposition!(reduction, [H])
 
@@ -83,3 +81,5 @@ dBdt = ρ*B*(1-B) - α*(η + β)*B*S//(δ + γ*B)
 dSdt = -η*S + γ*(η + β)*B*S//(δ + γ*B)
 all(iszero.(g[1:2] .- [dBdt, dSdt])) # yes
 
+# slow manifold is attractive if all non-zero eigenvalues of Df at x₀ have negative real part
+reduction.Df_x₀

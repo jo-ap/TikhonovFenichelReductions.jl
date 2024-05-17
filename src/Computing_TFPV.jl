@@ -123,7 +123,7 @@ components, i.e. `reduction.x`.
 
 See also: [Reduction](@ref), [set_decomposition!](@ref), [set_point!](@ref)
 """
-function set_manifold!(reduction::Reduction, M::AbstractVector)
+function set_manifold!(reduction::Reduction, M::AbstractVector)::Bool
   M = parse_ring(reduction.K, M)
   n = length(reduction.x)
   @assert length(M) == n "The slow manifold M must be defined in $n components."
@@ -179,7 +179,7 @@ function jacobian_tfpv(reduction::Reduction)
   eval_mat(reduction.Df, reduction.K.([reduction.x; reduction._θ]))
 end
 
-function _set_point!(reduction::Reduction, x₀::AbstractVector)
+function _set_point!(reduction::Reduction, x₀::AbstractVector)::Bool
   x₀ = parse_ring(reduction.K, x₀)
   n = length(reduction.x)
   @assert length(x₀) == n "The point x₀ must have $n components."
@@ -206,7 +206,7 @@ Typically, this can be done automatically by setting the slow manifold.
 
 See also: [set_manifold!](@ref), [set_decomposition!](@ref), [Reduction](@ref)
 """
-function set_point!(reduction::Reduction, x₀::AbstractVector)
+function set_point!(reduction::Reduction, x₀::AbstractVector)::Bool
   retval = _set_point!(reduction, x₀)
   if !retval
     @warn "The eigenvalue λ does not factor the characteristic polynomial of D₁f(x₀,π) with power s=$(reduction.s)"
