@@ -16,7 +16,7 @@ export ReductionProblem,
 # greetings
 function __init__()
   if isinteractive() && Base.JLOptions().banner != 0
-    println("\n    ==== TikhonovFenichelReductions.jl ==== \n")
+    println("\n==== TikhonovFenichelReductions.jl ====\n")
     println("Compute Tikhonov-Fenichel reductions for polynomial ODE systems.")
     println("This package relies on Oscar.jl.\n")
   end
