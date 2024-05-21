@@ -1,9 +1,11 @@
 # TikhonovFenichelReductions.jl
 
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://jo-ap.github.io/TikhonovFenichelReductions.jl/dev)
+
 A Julia package for computing Tikhonov-Fenichel Parameter Values (TFPVs) for a
 polynomial ODE system and the corresponding reductions (see [1-3] for details).
 
-*This package is still under development!*
+*This package is still under development*
 
 ## Background
 Consider an ODE system of the form 
