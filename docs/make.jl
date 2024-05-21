@@ -14,3 +14,7 @@ makedocs(
   clean=true;
   plugins=[bib]
 )
+
+deploydocs(
+    repo="github.com//jo-ap/TikhonovFenichelReductions.jl.git",
+)
