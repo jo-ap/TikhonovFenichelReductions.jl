@@ -82,8 +82,8 @@ end
 Constructor for `Reduction` Type.
 
 ### Arguments
-- `problem::ReductionProblem`: Reduction problem type holding information on system and dimension of reduction.
-- `idx::Union{Vector{Bool}, Vector{Int}}`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
+- `problem`: Reduction problem type holding information on system and dimension of reduction.
+- `idx`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
 
 See also: [set_manifold!](@ref), [set_decomposition!](@ref)
 """
