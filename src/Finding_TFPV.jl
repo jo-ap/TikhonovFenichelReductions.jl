@@ -221,6 +221,11 @@ function filter_dimension(
 
 end
 
+# Multi-threading is currently not supported by GAP.jl
+# This function can be multithreaded by setting `multithreading=true`. Note that
+# multithreading has to be enabled when the julia session is started (e.g. by
+# `julia --threads=auto`, see the
+# [manual](https://docs.julialang.org/en/v1/manual/multi-threading)).
 """
     $(TYPEDSIGNATURES)
 
@@ -239,18 +244,13 @@ By default, all 2ᵐ-2 possible slow-fast separations of the m parameters are
 considered, but if `idx::Vector{Vector{Bool}}` is defined, checking of the
 conditions is only performed on those candidates.
 
-This function can be multithreaded by setting `multithreading=true`. Note that
-multithreading has to be enabled when the julia session is started (e.g. by
-`julia --threads=auto`, see the
-[manual](https://docs.julialang.org/en/v1/manual/multi-threading)).
-
 See also: [`filter_dimension`](@ref)
 """
 function filter_determinants(
   problem::ReductionProblem;
-  idx::Vector{Vector{Bool}}=Vector{Bool}[],
-  multithreading::Bool=false)
-  
+  idx::Vector{Vector{Bool}}=Vector{Bool}[])
+  # multithreading::Bool=false
+
   # number of dimensions to reduce the system by
   r = length(problem.x) - problem.s
 
@@ -273,26 +273,26 @@ function filter_determinants(
   idx = length(idx) == 0 ? num2bin.(1:(2^length(problem.π)-2), length(problem.π)) : idx
   idx_candidates = zeros(Bool, length(idx))
   cnt = 1
-  if multithreading && Threads.nthreads() > 1
-    Threads.@threads for i in idx    
-      # get all small parameters
-      idx_slow = i .== false
-      # check if all g∈G vanish if small parameters are set to zero
-      idx_candidates[cnt] = allvanish(G, problem.π[idx_slow])
-      cnt += 1
-    end
-  else 
-    if multithreading
-      @info "Using only one thread. Multi-threading can be enabled by starting julia with e.g. '--threads=auto' or '--threads=4'. \nSee https://docs.julialang.org/en/v1/manual/multi-threading"
-    end
-    for i in idx    
-      # get all small parameters
-      idx_slow = i .== false
-      # check if all g∈G vanish if small parameters are set to zero
-      idx_candidates[cnt] = allvanish(G, problem.π[idx_slow])
-      cnt += 1
-    end
+  # if multithreading && Threads.nthreads() > 1
+  #   Threads.@threads for i in idx    
+  #     # get all small parameters
+  #     idx_slow = i .== false
+  #     # check if all g∈G vanish if small parameters are set to zero
+  #     idx_candidates[cnt] = allvanish(G, problem.π[idx_slow])
+  #     cnt += 1
+  #   end
+  # else 
+  #   if multithreading
+  #     @info "Using only one thread. Multi-threading can be enabled by starting julia with e.g. '--threads=auto' or '--threads=4'. See https://docs.julialang.org/en/v1/manual/multi-threading"
+  #   end
+  for i in idx    
+    # get all small parameters
+    idx_slow = i .== false
+    # check if all g∈G vanish if small parameters are set to zero
+    idx_candidates[cnt] = allvanish(G, problem.π[idx_slow])
+    cnt += 1
   end
+  # end
 
   # return list with slow-fast separation candidates as defined by boolean indices
   _idx = idx[idx_candidates]
@@ -309,10 +309,13 @@ This combines the functions `filter_determinants` and `filter_dimension`.
 
 See also [`filter_determinants`](@ref), [`filter_dimension`](@ref)
 """
-function tfpv_candidates(problem::ReductionProblem; compute_primary_decomposition::Bool=true, exact_dimension::Bool=true, multithreading::Bool=false)
+function tfpv_candidates(problem::ReductionProblem; 
+                         compute_primary_decomposition::Bool=true,
+                         exact_dimension::Bool=true)
+  # multithreading::Bool=false)
 
   # Use determinants as first filter
-  idx_det, G = filter_determinants(problem; multithreading=multithreading)
+  idx_det, G = filter_determinants(problem)
 
   # Use Krull dimension as second filter
   idx_TFPV, V = filter_dimension(problem; idx=idx_det, compute_primary_decomposition=compute_primary_decomposition, exact_dimension=exact_dimension) 
