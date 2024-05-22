@@ -39,8 +39,8 @@ function print_candidates(idx::Vector{Vector{Bool}}, prob::ReductionProblem; lat
     numbers = string.(0:9)
     max_width = ndigits(length(idx)) 
     field_widths = [length(πᵢ) for πᵢ in string.(prob.π)]
-    str = "π̃ $(repeat(" ", max_width-1)) = ($(join(string.(prob.π), ", "))) \n"
-    str *= repeat("-", length(str)) * "\n"
+    str = "π̃ $(repeat(" ", max_width-1)) = ($(join(string.(prob.π), ", ")))\n"
+    str *= repeat("_", length(str)-2) * "\n"
     for i = 1:length(idx)
       idx_fast = idx[i]
       str *= "π" *
