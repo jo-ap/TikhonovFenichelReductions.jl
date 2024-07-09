@@ -240,6 +240,10 @@ there exist a point `x₀`, such that
 - `τ` divides the characteristic polynomial `Χ(τ)` of `D₁f(x₀,π⁺)` exactly with power `s`
 These properties can be used to filter out possible TFPV candidates.
 
+If a Gröbner Basis with elimination ordering is already computed, you can
+specify the generators for the corresponding elimination ideal (where the
+dynamic variables have been eliminated) with the keyword argument `G`.
+
 By default, all 2ᵐ-2 possible slow-fast separations of the m parameters are
 considered, but if `idx::Vector{Vector{Bool}}` is defined, checking of the
 conditions is only performed on those candidates.
@@ -248,26 +252,30 @@ See also: [`filter_dimension`](@ref)
 """
 function filter_determinants(
   problem::ReductionProblem;
-  idx::Vector{Vector{Bool}}=Vector{Bool}[])
+  idx::Vector{Vector{Bool}}=Vector{Bool}[],
+  G::Vector{QQMPolyRingElem}=QQMPolyRingElem[])
   # multithreading::Bool=false
 
-  # number of dimensions to reduce the system by
-  r = length(problem.x) - problem.s
+  # check if Gröbner basis is provided
+  if isempty(G)
+    # number of dimensions to reduce the system by
+    r = length(problem.x) - problem.s
 
-  # determinants of all k×k minors of J for k>r
-  d = get_determinants(problem.J, r)
+    # determinants of all k×k minors of J for k>r
+    d = get_determinants(problem.J, r)
 
-  # All polynomials that generate the ideal used to determine TFPVs
-  poly_gens = [problem.f; d]
+    # All polynomials that generate the ideal used to determine TFPVs
+    poly_gens = [problem.f; d]
 
-  # Build ideal from polynomial expressions 
-  I = ideal(parent(problem.f[1]), poly_gens)
+    # Build ideal from polynomial expressions 
+    I = ideal(parent(problem.f[1]), poly_gens)
 
-  # eliminate dynamic variables
-  Iₓ = eliminate(I, problem.x)
+    # eliminate dynamic variables
+    Iₓ = eliminate(I, problem.x)
 
-  # Generating set for Iₓ (this is a Gröbner Basis)
-  G = gens(Iₓ)
+    # Generating set for Iₓ (this is a Gröbner Basis)
+    G = gens(Iₓ)
+  end
 
   # filter TFPV candidates 
   idx = length(idx) == 0 ? num2bin.(1:(2^length(problem.π)-2), length(problem.π)) : idx
