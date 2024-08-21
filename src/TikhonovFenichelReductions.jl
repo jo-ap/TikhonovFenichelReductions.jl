@@ -9,6 +9,7 @@ export ReductionProblem,
   filter_determinants, filter_dimension, tfpv_candidates, 
   print_candidates, print_varieties,
   Reduction,
+  slow_manifold_candidates,
   jacobian_tfpv, jacobian_tfpv_on_manifold,
   set_manifold!, set_point!, set_decomposition!, 
   compute_reduction, compute_directional_reduction

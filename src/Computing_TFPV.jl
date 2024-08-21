@@ -79,21 +79,57 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Constructor for `Reduction` Type.
+Compute the irreducible components of V(f⁰) and their dimensions for a given
+TFPV candidate. 
+If there exist a reduction, the corresponding slow manifold must be contained
+in one of these components.
 
 ### Arguments
 - `problem`: Reduction problem type holding information on system and dimension of reduction.
 - `idx`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
 
+### Description
+This function can be used if one wants to check whether a particular slow-fast
+separation of rates yields a reduction for any dimension.
+If the dimension of an irreducible component of V(f⁰) differs from what was
+defined with `ReductionProblem`, the constructor `Reduction` can be called with
+the additional argument `s` specifying the dimension.
+
+See also: [Reduction](@ref)
+
+"""
+function slow_manifold_candidates(problem::ReductionProblem, idx::Vector{Bool})
+  F, p = rational_function_field(QQ, string.(problem.θ))
+  R, x = polynomial_ring(F, string.(problem.x))
+  π = p
+  π[idx .== 0] .= F(0)
+  f = problem._f(x,π)
+  PD = primary_decomposition(ideal(f))
+  Q = [q[2] for q in PD]
+  dim_Q = dim.(Q)
+  return Q, dim_Q
+end
+
+"""
+    $(TYPEDSIGNATURES)
+
+Constructor for `Reduction` Type.
+
+### Arguments
+- `problem`: Reduction problem type holding information on system and dimension of reduction.
+- `idx`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
+- `s::Int`: (optional) Dimension of slow manifold. Can be specified if a reduction corresponding to a TFPV for dimension different from `problem.s` should be considered (e.g. for manually computing a reduction for a given slow-fast separation that is not necessarily obtained via `tfpv_candidates`).
+
 See also: [set_manifold!](@ref), [set_decomposition!](@ref)
 """
-function Reduction(problem::ReductionProblem, idx::Vector{Bool})
+function Reduction(problem::ReductionProblem, idx::Vector{Bool}; s::Union{Nothing,Int}=nothing)
+  s = isnothing(s) ? problem.s : s
   R = parent(problem.f[1])
   K = fraction_field(R)
   _θ = copy(problem.θ)
   _θ[problem.idx_slow_fast] = problem.π.*idx
   n = length(problem.x)
-  r = n - problem.s
+  r = n - s
   f⁰, f¹ = splitsystem(problem.f, problem.π, idx)
   Df = jacobian(problem.f, problem.x)
   T, _ = polynomial_ring(K, "λ")
@@ -103,7 +139,7 @@ function Reduction(problem::ReductionProblem, idx::Vector{Bool})
   ψ = zero_matrix(K,r,1)
   Dψ = zero_matrix(K,r,n)
   Df_x₀ = matrix(K, Matrix(Df))
-  return Reduction(idx, problem.s, R, problem.x, problem.θ, _θ, problem.π, problem.idx_slow_fast, problem.f, f⁰, f¹, Df, Df_x₀, T, T(0), M, x₀, K, P, ψ, Dψ, zeros(Bool, 3))
+  return Reduction(idx, s, R, problem.x, problem.θ, _θ, problem.π, problem.idx_slow_fast, problem.f, f⁰, f¹, Df, Df_x₀, T, T(0), M, x₀, K, P, ψ, Dψ, zeros(Bool, 3))
 end
 
 function parse_ring(R, x)
