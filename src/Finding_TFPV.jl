@@ -192,12 +192,12 @@ function filter_dimension(
     _θ[problem.idx_slow_fast] = π .* i 
     f⁰ = problem._f(x, _θ)
     # Check if Krull dimension is at least s
-    if dim(ideal(R, f⁰)) >= problem.s
+    I = ideal(R, f⁰)
+    if dim(I) >= problem.s
       # compute the irreducible components of V(f⁰)
       if compute_primary_decomposition 
-        I = ideal(R, R.(f⁰))
         PD = primary_decomposition(I)
-        Y = [gens(Q[2]) for Q in PD]
+        Y = [gens(groebner_basis(Q[2]; complete_reduction=true)) for Q in PD]
         Y_dim = dim.([ideal(R, Yᵢ) for Yᵢ in Y])
         # check if there is an irreducible component of the affine variety
         # V(f⁰) with dimension exactly s
