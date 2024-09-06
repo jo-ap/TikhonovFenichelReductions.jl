@@ -6,7 +6,9 @@
 module TikhonovFenichelReductions
 
 export ReductionProblem, 
-  filter_determinants, filter_dimension, tfpv_candidates, 
+  tfpv_candidates, 
+  tfpv_candidates_old, filter_old,
+  determinants_criterion_cases, determinants_criterion, dimension_criterion,
   print_candidates, print_varieties,
   Reduction,
   slow_manifold_candidates,

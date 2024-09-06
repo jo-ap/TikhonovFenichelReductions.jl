@@ -134,6 +134,102 @@ function allvanish(F::Vector{QQMPolyRingElem}, π::Vector{QQMPolyRingElem})
   return true
 end
 
+"""
+    $(TYPEDSIGNATURES)
+
+Use the necessary conditions imposed by the RHS of the polynomial ODE System
+and its Jacobian to filter out TFPV candidates.
+All TFPVs must result in the vanishing of the returned set of polynomials.
+
+### Description
+If `π⁺` is a TFPV yielding a reduction onto an `s`-dimensional slow manifold,
+there exist a point `x₀`, such that 
+- `f(x₀,π⁺)=0`
+- for any `k>s` the determinants of all `k×k` minors of `D₁f(x₀,π⁺)` vanish
+- `τ` divides the characteristic polynomial `Χ(τ)` of `D₁f(x₀,π⁺)` exactly with power `s`
+These properties can be used to filter out possible TFPV candidates.
+
+We are interested in partial solutions of the system of polynomials defined by
+the conditions above.
+In particular, we only consider conditions on the parameters, since there might
+be multiple slow manifolds and reductions.
+Thus, we eliminate the dynamic variables from the ideal and obtain a set of
+polynomials whose variables are the parameters of the ODE system.
+This function computes a generating set for this elimination ideal and all TFPVs
+lie in its vanishing set.
+
+See also: [`tfpv_candidates`](@ref) [`dimension_criterion`](@ref)
+"""
+function determinants_criterion(problem::ReductionProblem)
+  # number of dimensions to reduce the system by
+  r = length(problem.x) - problem.s
+  # determinants of all k×k minors of J for k>r
+  d = get_determinants(problem.J, r)
+  # All polynomials that generate the ideal used to determine TFPVs
+  poly_gens = [problem.f; d]
+  # Build ideal from polynomial expressions 
+  I = ideal(parent(problem.f[1]), poly_gens)
+  # eliminate dynamic variables
+  Iₓ = eliminate(I, problem.x)
+  # Generating set for Iₓ
+  G = gens(Iₓ)
+  return G
+end
+
+"""
+    $(TYPEDSIGNATURES)
+
+Use the necessary conditions imposed by the RHS of the polynomial ODE System
+and its Jacobian to compute all simple TFPVs.
+
+### Description
+This function uses the same necessary conditions for a parameter value to be a
+TFPV as [`determinants_criterion`](@ref). 
+However, this function is optimized and only computes the simple TFPVs, i.e. the
+TFPVs characterised by the vanishing of some rates.
+This allows for the computation of the elimination ideal in separate cases,
+which is usually a lot faster than computing the elimination ideal directly.
+
+To make the best use of all necessary conditions for finding TFPVs, you can also
+check whether the slow manifold can have the correct dimension with the function
+`dimension_criterion`.
+The function `tfpv_candidates` combines all filters for TFPVs and should
+be used in most cases.
+
+See also: [`tfpv_candidates`](@ref) [`dimension_criterion`](@ref)
+"""
+function determinants_criterion_cases(problem::ReductionProblem; idx::Vector{Vector{Bool}} = [Bool[]])
+  # polynomial conditions that generate I (we are interested in the vanishing set of its
+  # elimination ideal with an elimination ordering for x)
+  poly_gens = [problem.f; get_determinants(problem.J, length(problem.x) - problem.s)]
+  # all possible slow-fast separations of parameters
+  idx = length(idx[1]) == 0 ? num2bin.(1:(2^length(problem.π)-2), length(problem.π)) : idx 
+  idx_keep = [false for _ in idx]
+  # # compute the elimination ideal via a Gröbner basis with elimination ordering for x given  ̵πᵢ=0 for i=1,…,m
+  # for i in eachindex(problem.π)
+  #   # set πᵢ=0 in each generator of I
+  #   gens_i = [evaluate(p, [problem.π[i]], [0]) for p in poly_gens]
+  #   I = ideal(gens_i)
+  #   # compute the corresponding elimination ideal
+  #   I_elim = eliminate(I, problem.x)
+  #   G = gens(I_elim)
+  #   # check which slow-fast separations of rates satisfying πᵢ=0 results in the vanishing of the elimination ideal
+  #   # ignore cases already covered (which are tfpv candidates)
+  #   idx_i = [_idx[i] == 0 for _idx in idx] .&& .!idx_keep
+  #   idx_keep_i = [allvanish(G, problem.π[k .== false]) for k in idx[idx_i]]
+  #   idx_keep[idx_i] = idx_keep_i
+  # end
+  for i in eachindex(idx)
+    slow_vars = problem.π[idx[i] .== false]
+    gens_i = [evaluate(p, slow_vars, zero.(slow_vars)) for p in poly_gens]
+    I = ideal(gens_i)
+    I_elim = eliminate(I, problem.x)
+    G = gens(I_elim)
+    idx_keep[i] = all(G .== 0)
+  end
+  return idx[idx_keep]
+end
+
 ## Filter functions
 """
     $(TYPEDSIGNATURES)
@@ -164,14 +260,13 @@ reals can be smaller. However, the existence of a non-singular point in the
 irreducible component implies that topological and Krull dimension are equal. 
 Since we require such a point later, we may use the exact dimension already. 
 
-See also: [`filter_determinants`](@ref)
+See also: [`determinants_criterion`](@ref)
 """
-function filter_dimension(
+function dimension_criterion(
   problem::ReductionProblem; 
-  idx::Vector{Vector{Bool}}=Vector{Bool}[],
+  idx::Vector{Vector{Bool}}=[Bool[]],
   compute_primary_decomposition::Bool=true, 
   exact_dimension::Bool=true)
-
   # redefine RHS of ode system: Interpret parameters as coefficients and only
   # use dynamic variables as variables for the polynomial ring
   x_str = string.(problem.x)
@@ -179,9 +274,8 @@ function filter_dimension(
   K, θ = rational_function_field(QQ, θ_str)
   R, x = polynomial_ring(K, x_str)
   π = θ[problem.idx_slow_fast]
-
   # filter TFPV candidates 
-  idx = length(idx) == 0 ? num2bin.(1:(2^length(problem.π)-2), length(problem.π)) : idx
+  idx = length(idx[1]) == 0 ? num2bin.(1:(2^length(problem.π)-2), length(problem.π)) : idx
   idx_candidates = zeros(Bool, length(idx))
   V = compute_primary_decomposition ? [] : nothing
   dim_components = compute_primary_decomposition ? Vector{Vector{Int}}() : nothing
@@ -213,123 +307,41 @@ function filter_dimension(
     end
     cnt += 1
   end
-
   # return list with slow-fast separation candidates as defined by boolean indices
   _idx = idx[idx_candidates]
-
   return _idx, (V, dim_components)
-
 end
 
-# Multi-threading is currently not supported by GAP.jl
-# This function can be multithreaded by setting `multithreading=true`. Note that
-# multithreading has to be enabled when the julia session is started (e.g. by
-# `julia --threads=auto`, see the
-# [manual](https://docs.julialang.org/en/v1/manual/multi-threading)).
+
 """
     $(TYPEDSIGNATURES)
 
-Use the conditions imposed by the RHS of the polynomial ODE System and its
-Jacobian to filter out TFPV candidates. 
-
-### Description
-If `π⁺` is a TFPV yielding a reduction onto an `s`-dimensional slow manifold,
-there exist a point `x₀`, such that 
-- `f(x₀,π⁺)=0`
-- for any `k>s` the determinants of all `k×k` minors of `D₁f(x₀,π⁺)` vanish
-- `τ` divides the characteristic polynomial `Χ(τ)` of `D₁f(x₀,π⁺)` exactly with power `s`
-These properties can be used to filter out possible TFPV candidates.
-
-If a Gröbner Basis with elimination ordering is already computed, you can
-specify the generators for the corresponding elimination ideal (where the
-dynamic variables have been eliminated) with the keyword argument `G`.
-
-By default, all 2ᵐ-2 possible slow-fast separations of the m parameters are
-considered, but if `idx::Vector{Vector{Bool}}` is defined, checking of the
-conditions is only performed on those candidates.
-
-See also: [`filter_dimension`](@ref)
+Find all simple TFPVs by combining [`determinants_criterion_cases`](@ref) and [`determinants_criterion`](@ref)
 """
-function filter_determinants(
-  problem::ReductionProblem;
-  idx::Vector{Vector{Bool}}=Vector{Bool}[],
-  G::Vector{QQMPolyRingElem}=QQMPolyRingElem[])
-  # multithreading::Bool=false
-
-  # check if Gröbner basis is provided
-  if isempty(G)
-    # number of dimensions to reduce the system by
-    r = length(problem.x) - problem.s
-
-    # determinants of all k×k minors of J for k>r
-    d = get_determinants(problem.J, r)
-
-    # All polynomials that generate the ideal used to determine TFPVs
-    poly_gens = [problem.f; d]
-
-    # Build ideal from polynomial expressions 
-    I = ideal(parent(problem.f[1]), poly_gens)
-
-    # eliminate dynamic variables
-    Iₓ = eliminate(I, problem.x)
-
-    # Generating set for Iₓ (this is a Gröbner Basis)
-    G = gens(Iₓ)
-  end
-
-  # filter TFPV candidates 
-  idx = length(idx) == 0 ? num2bin.(1:(2^length(problem.π)-2), length(problem.π)) : idx
-  idx_candidates = zeros(Bool, length(idx))
-  cnt = 1
-  # if multithreading && Threads.nthreads() > 1
-  #   Threads.@threads for i in idx    
-  #     # get all small parameters
-  #     idx_slow = i .== false
-  #     # check if all g∈G vanish if small parameters are set to zero
-  #     idx_candidates[cnt] = allvanish(G, problem.π[idx_slow])
-  #     cnt += 1
-  #   end
-  # else 
-  #   if multithreading
-  #     @info "Using only one thread. Multi-threading can be enabled by starting julia with e.g. '--threads=auto' or '--threads=4'. See https://docs.julialang.org/en/v1/manual/multi-threading"
-  #   end
-  for i in idx    
-    # get all small parameters
-    idx_slow = i .== false
-    # check if all g∈G vanish if small parameters are set to zero
-    idx_candidates[cnt] = allvanish(G, problem.π[idx_slow])
-    cnt += 1
-  end
-  # end
-
-  # return list with slow-fast separation candidates as defined by boolean indices
-  _idx = idx[idx_candidates]
-
-  return _idx, G
-end
-
-"""
-    $(SIGNATURES)   
-
-Compute all TFPV candidates for the defined reduction problem by using the
-determinants criteria and asserting correct dimension of the slow manifold. 
-This combines the functions `filter_determinants` and `filter_dimension`.
-
-See also [`filter_determinants`](@ref), [`filter_dimension`](@ref)
-"""
-function tfpv_candidates(problem::ReductionProblem; 
+function tfpv_candidates(problem; 
+                         idx::Vector{Vector{Bool}}=[Bool[]],
                          compute_primary_decomposition::Bool=true,
                          exact_dimension::Bool=true)
-  # multithreading::Bool=false)
+  # Use Krull dimension as first filter
+  idx_Krull, V = dimension_criterion(problem; compute_primary_decomposition=compute_primary_decomposition, exact_dimension=exact_dimension) 
+  # Use determinants criterion as second filter
+  idx_TFPV = determinants_criterion_cases(problem; idx=idx_Krull)
+  return idx_TFPV, V
+end
 
+function filter_old(problem)
+  G = determinants_criterion(problem)
+  slowfast = num2bin.(1:(2^length(problem.π)-2), length(problem.π))
+  idx_keep = [allvanish(G, problem.π[k .== false]) for k in slowfast]
+  slowfast[idx_keep]
+end
+
+function tfpv_candidates_old(problem; 
+                                compute_primary_decomposition::Bool=true,
+                                exact_dimension::Bool=true)
   # Use determinants as first filter
-  idx_det, G = filter_determinants(problem)
-
+  idx_det = filter_old(problem)
   # Use Krull dimension as second filter
-  idx_TFPV, V = filter_dimension(problem; idx=idx_det, compute_primary_decomposition=compute_primary_decomposition, exact_dimension=exact_dimension) 
-
-  # Return numerical indices of TFPV candidates (together with Gröbner Basis G
-  # for the elimination ideal and the irreducible components of the varieties
-  # V(h(⋅,π)) given by a primary decomposition)
-  return idx_TFPV, G, V
+  idx_TFPV, V = dimension_criterion(problem; idx=idx_det, compute_primary_decomposition=compute_primary_decomposition, exact_dimension=exact_dimension) 
+  return idx_TFPV, V
 end
