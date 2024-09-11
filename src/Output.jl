@@ -21,10 +21,10 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Print TFPV candidates to terminal or return LaTeXString that can be included in
+Print TFPV (candidates) to terminal or return LaTeXString that can be included in
 tex file.
 """
-function print_candidates(idx::Vector{Vector{Bool}}, prob::ReductionProblem; latex=false)
+function print_tfpv(idx::Vector{Vector{Bool}}, prob::ReductionProblem; latex=false)
   if latex
     parameters = [latexify(πᵢ; env=:raw) for πᵢ in string.(prob.π)]
     m = length(parameters)

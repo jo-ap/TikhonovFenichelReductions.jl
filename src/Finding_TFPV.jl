@@ -158,7 +158,7 @@ polynomials whose variables are the parameters of the ODE system.
 This function computes a generating set for this elimination ideal and all TFPVs
 lie in its vanishing set.
 
-See also: [`tfpv_candidates`](@ref) [`dimension_criterion`](@ref)
+See also: [`tfpv_candidates`](@ref) 
 """
 function determinants_criterion(problem::ReductionProblem)
   # number of dimensions to reduce the system by
@@ -174,60 +174,6 @@ function determinants_criterion(problem::ReductionProblem)
   # Generating set for Iₓ
   G = gens(Iₓ)
   return G
-end
-
-"""
-    $(TYPEDSIGNATURES)
-
-Use the necessary conditions imposed by the RHS of the polynomial ODE System
-and its Jacobian to compute all simple TFPVs.
-
-### Description
-This function uses the same necessary conditions for a parameter value to be a
-TFPV as [`determinants_criterion`](@ref). 
-However, this function is optimized and only computes the simple TFPVs, i.e. the
-TFPVs characterised by the vanishing of some rates.
-This allows for the computation of the elimination ideal in separate cases,
-which is usually a lot faster than computing the elimination ideal directly.
-
-To make the best use of all necessary conditions for finding TFPVs, you can also
-check whether the slow manifold can have the correct dimension with the function
-`dimension_criterion`.
-The function `tfpv_candidates` combines all filters for TFPVs and should
-be used in most cases.
-
-See also: [`tfpv_candidates`](@ref) [`dimension_criterion`](@ref)
-"""
-function determinants_criterion_cases(problem::ReductionProblem; idx::Vector{Vector{Bool}} = [Bool[]])
-  # polynomial conditions that generate I (we are interested in the vanishing set of its
-  # elimination ideal with an elimination ordering for x)
-  poly_gens = [problem.f; get_determinants(problem.J, length(problem.x) - problem.s)]
-  # all possible slow-fast separations of parameters
-  idx = length(idx[1]) == 0 ? num2bin.(1:(2^length(problem.π)-2), length(problem.π)) : idx 
-  idx_keep = [false for _ in idx]
-  # # compute the elimination ideal via a Gröbner basis with elimination ordering for x given  ̵πᵢ=0 for i=1,…,m
-  # for i in eachindex(problem.π)
-  #   # set πᵢ=0 in each generator of I
-  #   gens_i = [evaluate(p, [problem.π[i]], [0]) for p in poly_gens]
-  #   I = ideal(gens_i)
-  #   # compute the corresponding elimination ideal
-  #   I_elim = eliminate(I, problem.x)
-  #   G = gens(I_elim)
-  #   # check which slow-fast separations of rates satisfying πᵢ=0 results in the vanishing of the elimination ideal
-  #   # ignore cases already covered (which are tfpv candidates)
-  #   idx_i = [_idx[i] == 0 for _idx in idx] .&& .!idx_keep
-  #   idx_keep_i = [allvanish(G, problem.π[k .== false]) for k in idx[idx_i]]
-  #   idx_keep[idx_i] = idx_keep_i
-  # end
-  for i in eachindex(idx)
-    slow_vars = problem.π[idx[i] .== false]
-    gens_i = [evaluate(p, slow_vars, zero.(slow_vars)) for p in poly_gens]
-    I = ideal(gens_i)
-    I_elim = eliminate(I, problem.x)
-    G = gens(I_elim)
-    idx_keep[i] = all(G .== 0)
-  end
-  return idx[idx_keep]
 end
 
 ## Filter functions
@@ -313,35 +259,95 @@ function dimension_criterion(
 end
 
 
+function get_tfpv(p, idx_slow_fast, idx)
+  _p = copy(p)
+  _p[idx_slow_fast] = _p[idx_slow_fast].*idx
+  return _p
+end
+
+function update_cofficients(f, p)
+  if f == 0
+    return f 
+  else
+    coeffs = [c for c in coefficients(f)]
+    mons = [m for m in monomials(f)]
+    @assert sum(coeffs .* mons) == f
+    coeffs_new = [evaluate(c, p) for c in coeffs]
+    return sum(coeffs_new .* mons)
+  end
+end
+
 """
     $(TYPEDSIGNATURES)
 
-Find all simple TFPVs by combining [`determinants_criterion_cases`](@ref) and [`determinants_criterion`](@ref)
+Find all simple TFPVs by checking whether the affine variety `V(f⁰)` contains
+an irreducible component `Y` of dimension `s` and the characteristic polynomial
+of `D₁f(x,π⁺)`, where `x∈Y` and `π⁺` is a simple TFPV candidate (i.e. a
+slow-fast separation of rates).
 """
-function tfpv_candidates(problem; 
-                         idx::Vector{Vector{Bool}}=[Bool[]],
-                         compute_primary_decomposition::Bool=true,
-                         exact_dimension::Bool=true)
-  # Use Krull dimension as first filter
-  idx_Krull, V = dimension_criterion(problem; compute_primary_decomposition=compute_primary_decomposition, exact_dimension=exact_dimension) 
-  # Use determinants criterion as second filter
-  idx_TFPV = determinants_criterion_cases(problem; idx=idx_Krull)
-  return idx_TFPV, V
+function tfpv_candidates(problem)
+  # check all possible slow-fast separations for sufficient conditions to be a TFPV for dimension s
+  slow_fast = num2bin.(1:(2^length(problem.π)-2), length(problem.π)) 
+  # define all polynomials and the Jacobian of f in ℝ(π)[x]
+  F, _p = rational_function_field(QQ, string.(problem.θ))
+  R, _x = polynomial_ring(F, string.(problem.x))
+  f = problem._f(_x, _p)
+  J = matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in _x] for fᵢ in f])
+  # keep track of which slow-fast separation satisfies the conditions and save
+  # irreducible components of V(f⁰) and their dimensions
+  idx_keep = Vector{Vector{Bool}}(undef, length(slow_fast))
+  components = Vector{Vector{MPolyIdeal}}()
+  dim_components = Vector{Vector{Int64}}()
+  for i in eachindex(slow_fast)
+    sf = slow_fast[i]
+    tfpv_candidate = get_tfpv(_p, problem.idx_slow_fast, sf)
+    f⁰ = problem._f(_x, tfpv_candidate)
+    I = ideal(f⁰)
+    dim_I = dim(I)
+    if dim_I < problem.s
+      idx_keep[i] = [false]
+    else
+      PD = primary_decomposition(ideal(f⁰))
+      Y = [Q[2] for Q in PD]
+      dim_Y = dim.(Y)
+      # set the slow parameters to zero in Jacobian
+      J_π = map(f -> update_cofficients(f, tfpv_candidate), J)
+      keep_i = [false for _ in Y]
+      for j in eachindex(Y) 
+        # check if dimension of irreducible component Yⱼ is as desired
+        if dim_Y[j] == problem.s
+          # substitute x = x₀ ∈ Yⱼ
+          M = map(f -> normal_form(f, Y[j]), J_π)
+          # Let Χ(τ) = τⁿ+ σₙ(x,π)τ⁽ⁿ⁻¹⁾ + … + σ₁(x,π)τ + σ₀(x,π) be the characteristic polynomial 
+          # for x₀ ∈ Yⱼ and π⁺ a TFPV for dimension s we have σₛ(x₀,π⁺) ≠ 0 
+          keep_i[j] = coeff(charpoly(M), problem.s) != 0
+        end 
+      end
+      idx_keep[i] = keep_i
+      if any(keep_i)
+        push!(components, Y)
+        push!(dim_components, dim_Y)
+      end
+    end
+  end
+  idx_tfpv = any.(idx_keep)
+  return slow_fast[idx_tfpv], components, dim_components, idx_keep[idx_tfpv]
 end
 
-function filter_old(problem)
+# filter based on elimination ideal
+function filter_determinants(problem)
   G = determinants_criterion(problem)
   slowfast = num2bin.(1:(2^length(problem.π)-2), length(problem.π))
   idx_keep = [allvanish(G, problem.π[k .== false]) for k in slowfast]
-  slowfast[idx_keep]
+  return slowfast[idx_keep], G
 end
 
-function tfpv_candidates_old(problem; 
+function tfpv_candidates_elimination_based(problem; 
                                 compute_primary_decomposition::Bool=true,
                                 exact_dimension::Bool=true)
   # Use determinants as first filter
-  idx_det = filter_old(problem)
+  idx_det, G = filter_determinants(problem)
   # Use Krull dimension as second filter
   idx_TFPV, V = dimension_criterion(problem; idx=idx_det, compute_primary_decomposition=compute_primary_decomposition, exact_dimension=exact_dimension) 
-  return idx_TFPV, V
+  return idx_TFPV, G, V
 end
