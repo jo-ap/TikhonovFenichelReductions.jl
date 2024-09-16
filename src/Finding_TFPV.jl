@@ -259,6 +259,11 @@ function dimension_criterion(
 end
 
 
+"""
+    $(TYPEDSIGNATURES)
+
+Return parameter vector where all slow rates are set to zero.
+"""
 function get_tfpv(p, idx_slow_fast, idx)
   _p = copy(p)
   _p[idx_slow_fast] = _p[idx_slow_fast].*idx
@@ -331,7 +336,8 @@ function tfpv_candidates(problem)
     end
   end
   idx_tfpv = any.(idx_keep)
-  return slow_fast[idx_tfpv], components, dim_components, idx_keep[idx_tfpv]
+  gens_components = [gens.(groebner_basis.(v; complete_reduction=true)) for v in components]
+  return slow_fast[idx_tfpv], gens_components, dim_components, idx_keep[idx_tfpv]
 end
 
 # filter based on elimination ideal
