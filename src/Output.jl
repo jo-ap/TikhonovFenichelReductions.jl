@@ -77,13 +77,13 @@ function print_varieties(V, prob::ReductionProblem; latex=false)
     subscripts = ["₀","₁","₂","₃","₄","₅","₆","₇","₈","₉"]
     numbers = string.(0:9)
     max_width = ndigits(length(V)) 
+    pad = "$(repeat(" ", max_width + 4))"
     for i = 1:length(V)
-      V_str = ["𝑉(" * replace(join(string.(Y), ", "),  "=" => " = " ) * 
-        ")" for Y∈V[i]]
+      V_str = ["𝑉(" * replace(join(string.(Y), ", ")) * ")" for Y∈V[i]]
       str = "V" * 
         join([subscripts[string(n) .== numbers][1] for n in string(i)], "") * 
         "$(repeat(" ", max_width - ndigits(i))) = " * 
-        join(V_str, " ∪ ")  
+        join(V_str, " ∪ \n" * pad)
       println(str)
     end
     return nothing
