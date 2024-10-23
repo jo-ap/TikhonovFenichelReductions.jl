@@ -24,7 +24,7 @@ end
 Print TFPV (candidates) to terminal or return LaTeXString that can be included in
 tex file.
 """
-function print_tfpv(problem::ReductionProblem, idx::Vector{Vector{Bool}}; latex=false)
+function print_tfpv(problem::ReductionProblem, idx::Vector{Vector{Bool}}; latex::Bool=false)
   if latex
     parameters = [latexify(πᵢ; env=:raw) for πᵢ in string.(problem.π)]
     m = length(parameters)
@@ -62,7 +62,9 @@ for TFPV candidates to terminal (`V` and `dim_V` as returned by or `tfpv_candida
 
 See also: [`tfpv_candidates`](@ref)
 """
-function print_varieties(V; dim_V=nothing, latex=false)
+function print_varieties(V::Vector{Vector{Vector{T}}};
+                         dim_V::Union{Nothing,Vector{Vector{Int64}}}=nothing, 
+                         latex::Bool=false) where T <: AbstractAlgebra.Generic.MPoly
   if latex
     str_latex = "\\begin{array}{rl} i & \\mathcal{V}(f(\\cdot, \\tilde{\\pi_i})) \\\\ \n"
     for i = 1:length(V)
