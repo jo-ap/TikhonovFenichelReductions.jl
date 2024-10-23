@@ -112,7 +112,6 @@ end
 
 """
     $(TYPEDSIGNATURES)
-
 Constructor for `Reduction` Type.
 
 ### Arguments
@@ -120,7 +119,7 @@ Constructor for `Reduction` Type.
 - `idx`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
 - `s::Int`: (optional) Dimension of slow manifold. Can be specified if a reduction corresponding to a TFPV for dimension different from `problem.s` should be considered (e.g. for manually computing a reduction for a given slow-fast separation that is not necessarily obtained via `tfpv_candidates`).
 
-See also: [set_manifold!](@ref), [set_decomposition!](@ref)
+See also: [set_manifold!](@ref) [set_decomposition!](@ref)
 """
 function Reduction(problem::ReductionProblem, idx::Vector{Bool}; s::Union{Nothing,Int}=nothing)
   s = isnothing(s) ? problem.s : s
@@ -267,7 +266,7 @@ irreducible components of `𝑉(f⁰)` as entries for `ψ` (possibly rewriting t
 rational equations as polynomials by multiplying appropriately with
 parameters occurring in a denominator).
 
-See also: [set_manifold!](@ref), [set_point!](@ref), [Reduction](@ref)
+See also: [set_manifold!](@ref) [set_point!](@ref) [Reduction](@ref)
 """
 function set_decomposition!(reduction::Reduction, P::AbstractAlgebra.Generic.MatSpaceElem, ψ)
   n = length(reduction.x)
