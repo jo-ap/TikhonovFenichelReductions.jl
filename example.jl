@@ -5,7 +5,7 @@
 # system via reduction of an individual based model’, J. Math. Biol., vol. 78,
 # no. 1–2, pp. 413–439, Jan. 2019, doi: 10.1007/s00285-018-1278-y.
 
-## Load package
+## Load packages
 
 using Oscar # optional (results in prettier printing and loads Oscar functions to Main namespace)
 using TikhonovFenichelReductions
@@ -33,22 +33,22 @@ end
 s = 2
 
 # create Problem
-problem = ReductionProblem(f, x, θ, s)
+problem = ReductionProblem(f, x, θ, s);
 
 # find slow-fast separations that are TFPVs
 idx, V, dim_V = tfpv_candidates(problem);
 
 # find all general TFPVs using necessary conditions on the determinants of D₁f
 # G is a Gröbner basis for this, such that every TFPV of dimension s lies in 𝑉(G)
-G = determinants_criterion(problem)
+G = tfpv_groebner_basis(problem)
 
-# Typically, the computation of the Gröbner basis in determinants_criterion is
-# much slower than the computation for slow-fast fast separations, which only
-# computes the irreducible components of 𝑉(f(⋅,π)) and their dimension via a
-# minimal primary computation of a minimal primary decomposition and the Krull
-# dimensions for the corresponding ideals.
-# However, there might exist TFPVs which are not slow-fast separations.
-# Here, this is not the case, because G is a monomial ideal.
+# Typically, the computation of the Gröbner basis in tfpv_groebner_basis is
+# much slower than the computation for slow-fast fast separations in
+# tfpv_candidates, which only computes the irreducible components of 𝑉(f(⋅,π))
+# and their dimension via a minimal primary computation and the Krull
+# dimensions for the corresponding ideals. However, there might exist TFPVs
+# which are not slow-fast separations. Here, this is not the case, because G is
+# a monomial ideal.
 
 # slow-fast separations:
 print_tfpv(problem, idx)
@@ -81,7 +81,7 @@ display(g)
 # check if g as the RHS of the reduced system is the same as in the paper 
 dBdt = ρ*B*(1-B) - α*(η + β)*B*S//(δ + γ*B)
 dSdt = -η*S + γ*(η + β)*B*S//(δ + γ*B)
-all(iszero.(g[1:2] .- [dBdt, dSdt])) # yes
+all(iszero.(g[1:2] .- [dBdt, dSdt])) 
 
 # slow manifold is attractive if all non-zero eigenvalues of Df at x₀ have negative real part
 reduction.Df_x₀
