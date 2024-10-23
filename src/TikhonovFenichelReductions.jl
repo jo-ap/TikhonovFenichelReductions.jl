@@ -7,11 +7,10 @@ module TikhonovFenichelReductions
 
 export ReductionProblem, 
   tfpv_candidates, 
-  tfpv_candidates_elimination_based, filter_determinants,
-  determinants_criterion, dimension_criterion,
+  tfpv_groebner_basis,
   print_tfpv, print_varieties, print_results,
   Reduction,
-  slow_manifold_candidates,
+  get_slow_manifolds,
   jacobian_tfpv, jacobian_tfpv_on_manifold,
   set_manifold!, set_point!, set_decomposition!, 
   compute_reduction, compute_directional_reduction

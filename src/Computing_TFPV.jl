@@ -98,7 +98,7 @@ the additional argument `s` specifying the dimension.
 See also: [Reduction](@ref)
 
 """
-function slow_manifold_candidates(problem::ReductionProblem, idx::Vector{Bool})
+function get_slow_manifolds(problem::ReductionProblem, idx::Vector{Bool})
   F, p = rational_function_field(QQ, string.(problem.θ))
   R, x = polynomial_ring(F, string.(problem.x))
   π = p
