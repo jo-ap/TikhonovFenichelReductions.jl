@@ -18,7 +18,8 @@ Order = [:type, :function]
 
 ## Output
 ```@docs
-print_candidates
+print_results
+print_tfpv
 print_varieties
 ```
 
