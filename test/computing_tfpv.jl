@@ -4,11 +4,11 @@ red_i = Reduction(prob, idx[i])
 
 # make variables available
 S, C = prob.x
-e₀, k₁, k₋₁, k₂ = prob.θ
+e₀, k₁, k₋₁, k₂ = prob.p
 
 # test splitting of system
-@test red_i.f⁰ == [-(k₁*e₀*S - (k₁*S + k₋₁)*C), k₁*e₀*S - (k₁*S + k₋₁)*C]
-@test red_i.f¹ == [0, -k₂*C]
+@test red_i.f0 == [-(k₁*e₀*S - (k₁*S + k₋₁)*C), k₁*e₀*S - (k₁*S + k₋₁)*C]
+@test red_i.f1 == [0, -k₂*C]
 
 # check computation of reduced system
 @test set_manifold!(red_i, [S, e₀*k₁*S//(k₁*S + k₋₁)])

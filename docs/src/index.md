@@ -1,18 +1,21 @@
 # TikhonovFenichelReductions.jl
 
-A Julia package for computing Tikhonov-Fenichel Parameter Values (TFPVs) for a
-polynomial ODE system and the corresponding reductions (see 
+A Julia package for computing Tikhonov-Fenichel Parameter Values (TFPVs) for
+polynomial ODE systems and their corresponding reductions (see 
 [goeke2013a,goeke2014,goeke2015](@cite) for details).
 
 ## Overview
 The general framework for this package is singular perturbation theory.
 More precisely, we consider a system of ODEs in the form 
 ```math
-\dot{x} = f(x,\pi, \varepsilon), \quad x(0)=x_0, x \in U\subseteq\mathbb{R}^n, \pi \in \Pi \subseteq \mathbb{R}^m,
+\dot{x} = f(x,\pi, \varepsilon) = f^{(0)}(x,\pi) + \varepsilon f^{(1)}(x,\pi), 
+
+\quad x(0)=x_0, x \in U\subseteq\mathbb{R}^n, \pi \in \Pi \subseteq \mathbb{R}^m,
 ```
 where ``f \in \mathbb{R}[x,\pi]`` is polynomial and ``\varepsilon \geq 0`` is a
-small parameter. The results from [goeke2013a,goeke2014,goeke2015](@cite) allow
-us to compute a reduced system for ``\varepsilon \to 0`` in the sense of Tikhonov
+small parameter. 
+The results from [goeke2013a,goeke2014,goeke2015](@cite) allow us to compute a
+reduced system for ``\varepsilon \to 0`` in the sense of Tikhonov
 [tikhonov1952](@cite) and Fenichel [fenichel1979](@cite) using methods from
 commutative algebra and algebraic geometry. 
 
@@ -25,8 +28,8 @@ reduced systems.
 Note that this approach yields all possible timescale separations of _rates_ and
 not just _components_ as in the classical approach.
 
-A slow-fast separation of rates is a parameter vector, in which some components
-are set to zero. 
+We call a slow-fast separation of rates is a parameter vector, in which some
+components are set to zero. 
 Many TFPVs we are interested in are slow-fast separations, but there might
 exist TFPVs that are characterized by rational expressions in the original
 parameters being small. 
@@ -38,17 +41,17 @@ This distinction leads to two different approaches for finding TFPVs.
 The main functionality is:
 ~~~
 # Setup
-problem = ReductionProblem(f, x, θ, s, idx_slow_fast)
+problem = ReductionProblem(f, x, p, s, idx_slow_fast)
 
 # Compute TFPV candidates
 idx, V, dim_V = tfpv_candidates(problem)
 ~~~
 To initialize a problem, we simply specify the polynomial RHS of the ODE system
-``f`` as a (Julia) function `f(x,θ)` and a vector of strings with the names of
-the components `x` and parameters `θ`, respectively.
+``f`` as a (Julia) function `f(x,p)` and a vector of strings with the names of
+the components `x` and parameters `p`, respectively.
 The dimension of the reduced system is `s < n`, where `n` is the number of
 components.  
-`π=θ[idx_slow_fast]` are the parameters that should be considered for TFPVs,
+`p_sf=p[idx_slow_fast]` are the parameters that should be considered for TFPVs,
 i.e. all other parameters are in ``\mathcal{O}(1)``. 
 
 The function `tfpv_candidates` returns all slow-fast separations that are TFPVs.
@@ -60,7 +63,7 @@ For this, we can compute a Gröbner basis `G` of an ideal in ``\mathbb{R}[\pi]``
 Then, all TFPVs result in the vanishing of `G`.
 
 `V` contains the generators of primary ideals that correspond to the irreducible
-components of the affine variety ``\mathcal{V}(f(\cdot,\pi)) \subseteq
+components of the affine variety ``\mathcal{V}(f^{(0)}) \subseteq
 \mathbb{R}^n``. 
 Here, we think of affine variety simply as the zero set of some polynomials (or
 ideal, for which it is enough to consider its generators) in the corresponding
@@ -86,7 +89,7 @@ print_results(problem, idx, V, dim_V)
 To compute the reduced system, we first need to make the variables available in
 the `Main` namespace (parsed to the appropriate types from 
 [Oscar.jl](https://www.oscar-system.org/)).
-These can be accessed as `problem.x` and `problem.θ`. 
+These can be accessed as `problem.x` and `problem.p`. 
 Then, we need to construct an instance of type `Reduction`. 
 For the first slow-fast separation in `idx`, this can be done with 
 ~~~
@@ -103,22 +106,22 @@ Before we can compute the reduced system, we can check if the necessary
 conditions for its existence are satisfied. 
 These can be found in [1-3]. 
 Essentially, we need to find a manifold of dimension ``s`` contained in
-``\mathcal{V}(f(\cdot, \pi^\star))``, a non-singular point ``x_0`` on this
-manifold and a product decomposition ``f(\cdot, \pi^\star) = P\cdot \psi``
-that locally satisfies ``\mathcal{V}(f(x, \pi^\star)) = \mathcal{V}(\psi)``.
+``\mathcal{V}(f^{(0)})``, a non-singular point ``x_0`` on this
+manifold and a product decomposition ``f^{(0)} = P\cdot \psi``
+that locally satisfies ``\mathcal{V}(f^{(0)}) = \mathcal{V}(\psi)``.
 
 ~~~
 # define the slow manifold M₀ (M₀ has to have the same format as problem.x)
 set_manifold!(reduction, M₀)
 
-# choose a non-singular point x₀ on M₀
-set_point!(reduction, x₀)
+# choose a non-singular point x0 on M₀
+set_point!(reduction, x0)
 
-# define a product decomposion f⁰ = P⋅ψ, where ψ is a r×1 matrix of polynomials
-# locally satisfying V(ψ) = V(f⁰). 
-set_decomposition!(reduction, P, ψ)
+# define a product decomposion f⁰ = P⋅Ψ, where Ψ is a r×1 matrix of polynomials
+# locally satisfying V(Ψ) = V(f⁰). 
+set_decomposition!(reduction, P, Ψ)
 # or compute P automatically
-set_decomposition!(reduction, ψ)
+set_decomposition!(reduction, Ψ)
 ~~~
 
 When setting the slow manifold, a check is performed that indicates whether a
@@ -129,13 +132,13 @@ only useful when a specific point should be chosen).
 This is relevant because the reduced system lives on a neighbourhood of ``x_0``
 on the slow manifold, which is attractive if all non-zero eigenvalues of ``D_1 f
 (x_0, \pi^\star)`` have negative real part.
-We can access the Jacobian at ``x_0`` as `reduction.Df_x₀` to check the
+We can access the Jacobian at ``x_0`` as `reduction.Df_x0` to check the
 stability of the reduced system.
 However, note that --- as in Tikhonov's theorem --- the convergence can only be
 guaranteed on a possibly finite time interval, which we cannot determine a
 priori.
 
-If you choose `ψ` as a vector of polynomials in ``\mathbb{R}[x,\pi]``, it can
+If you choose `Psi` as a vector of polynomials in ``\mathbb{R}[x,\pi]``, it can
 be possible to automatically compute `P` (which is then a matrix of rational
 functions). 
 However, as of now this might fail in complicated cases, but it is guaranteed to

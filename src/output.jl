@@ -26,9 +26,9 @@ tex file.
 """
 function print_tfpv(problem::ReductionProblem, idx::Vector{Vector{Bool}}; latex::Bool=false)
   if latex
-    parameters = [latexify(πᵢ; env=:raw) for πᵢ in string.(problem.π)]
+    parameters = [latexify(p_sfᵢ; env=:raw) for p_sfᵢ in string.(problem.p_sf)]
     m = length(parameters)
-    str = "\\begin{array}{r$(repeat('c',length(string(problem.π))))} i & $(join(parameters, "^* & ")) \\\\ \n"
+    str = "\\begin{array}{r$(repeat('c',length(string(problem.p_sf))))} i & $(join(parameters, "^* & ")) \\\\ \n"
     for i in eachindex(idx)
       str *= "$i & " * join([idx[i][k] ? parameters[k] : "\\cdot" for k = 1:m], " & ") * " \\\\ \n"
     end
@@ -39,15 +39,15 @@ function print_tfpv(problem::ReductionProblem, idx::Vector{Vector{Bool}}; latex:
     subscripts = ["₀","₁","₂","₃","₄","₅","₆","₇","₈","₉"]
     numbers = string.(0:9)
     max_width = ndigits(length(idx)) 
-    field_widths = [length(πᵢ) for πᵢ in string.(problem.π)]
-    str = "π̃ $(repeat(" ", max_width-1)) = ($(join(string.(problem.π), ", ")))\n"
+    field_widths = [length(p_sfᵢ) for p_sfᵢ in string.(problem.p_sf)]
+    str = "π̃ $(repeat(" ", max_width-1)) = ($(join(string.(problem.p_sf), ", ")))\n"
     str *= repeat("_", length(str)-2) * "\n"
     for i = 1:length(idx)
       idx_fast = idx[i]
       str *= "π" *
         join([subscripts[string(n) .== numbers][1] for n in string(i)], "") *
         "$(repeat(" ", max_width - ndigits(i))) = (" * 
-        join(padstring.([idx_fast[k] ? string(problem.π[k]) : "0" for k = 1:length(idx_fast)], field_widths), ", ") *")\n"
+        join(padstring.([idx_fast[k] ? string(problem.p_sf[k]) : "0" for k = 1:length(idx_fast)], field_widths), ", ") *")\n"
     end
     print(str)
   end
@@ -115,7 +115,7 @@ function print_results(problem::ReductionProblem, idx::Vector{Vector{Bool}}, V, 
   for i in eachindex(idx)
     println("$i")
     idx_fast = idx[i]
-    println(" π̃: [" * join([idx_fast[k] ? string(problem.π[k]) : "0" for k = 1:length(idx_fast)], ", ") *"]")
+    println(" π̃: [" * join([idx_fast[k] ? string(problem.p_sf[k]) : "0" for k = 1:length(idx_fast)], ", ") *"]")
     V_str = ["[" * replace(join(string.(V[i][k]), ", ")) * "], $(dim_V[i][k])" for k in eachindex(V[i])]
     println(" V: " * join(V_str, "\n    ") * "\n")
   end
@@ -123,9 +123,9 @@ end
 
 function print_system(reduction::Reduction; latex=false)
   if latex
-    latexstring("f(x, \\tilde{\\pi}) = $(latexify(string.(reduction.f⁰); env=:raw)) + \\varepsilon $(latexify(string.(reduction.f¹); env=:raw))")
+    latexstring("f(x, \\tilde{\\pi}) = $(latexify(string.(reduction.f0); env=:raw)) + \\varepsilon $(latexify(string.(reduction.f1); env=:raw))")
   else
-    "f(x,π̃) = (" * join(string.(reduction.f⁰), ", ") * ") + ε(" * join(string.(reduction.f¹), ", ") * ")"
+    "f(x,π̃) = (" * join(string.(reduction.f0), ", ") * ") + ε(" * join(string.(reduction.f1), ", ") * ")"
   end
 end 
 

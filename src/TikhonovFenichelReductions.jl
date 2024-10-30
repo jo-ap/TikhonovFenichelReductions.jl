@@ -31,8 +31,8 @@ using LaTeXStrings
 using Latexify
 
 ## load code
-include("./Finding_TFPV.jl")
-include("./Computing_TFPV.jl")
-include("./Output.jl")
+include("./tfpv.jl")
+include("./reductions.jl")
+include("./output.jl")
 
 end # module TikhonovFenichelReductions

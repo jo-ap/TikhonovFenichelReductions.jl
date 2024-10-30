@@ -7,7 +7,7 @@
 # type checks
 @test isa(prob, ReductionProblem) 
 
-@test prob.π == prob.θ[prob.idx_slow_fast] 
+@test prob.p_sf == prob.p[prob.idx_slow_fast] 
 i = findall([i == [true, true, false] for i in idx])
 @test length(i) == 1 
 i = i[1]

@@ -8,22 +8,22 @@ dimension `s` are considered.
 ### Fields 
 - `f::Vector{QQMPolyRingElem}`: RHS of ODE system as a vector of polynomials
 - `x::Vector{QQMPolyRingElem}`: Vector of dynamic variables
-- `θ::Vector{QQMPolyRingElem}`: Vector of all parameters
+- `p::Vector{QQMPolyRingElem}`: Vector of all parameters
 - `s::Int`: Dimension of reduced system
-- `π::Vector{QQMPolyRingElem}`: Vector of parameters to be considered slow or fast
-- `idx_slow_fast::Vector{Bool}`: Boolean index, such that `π=ϑ[idx_slow_fast]`
+- `p_sf::Vector{QQMPolyRingElem}`: Vector of parameters to be considered slow or fast (all others are considered fixed)
+- `idx_slow_fast::Vector{Bool}`: Boolean index, such that `p_sf=p[idx_slow_fast]`
 - `J::AbstractAlgebra.Generic.MatSpaceElem{QQMPolyRingElem}`: Jacobian of `f`
-- `_f::Function`: RHS of ODE system as a Julia function with arguments `x` and `ϑ`
+- `_f::Function`: RHS of ODE system as a Julia function with arguments `x` and `p`
 
 The type `QQMPolyRingElem` is used in [Oscar.jl](https://www.oscar-system.org/)
-to represent elements of a polynomial ring; here this is `ℝ[x,θ]`.
+to represent elements of a polynomial ring; here this is `ℝ[x,p]`.
 """
 mutable struct ReductionProblem 
   f::Vector{QQMPolyRingElem}
   x::Vector{QQMPolyRingElem}
-  θ::Vector{QQMPolyRingElem}
+  p::Vector{QQMPolyRingElem}
   s::Int
-  π::Vector{QQMPolyRingElem}
+  p_sf::Vector{QQMPolyRingElem}
   idx_slow_fast::Vector{Bool}
   J::AbstractAlgebra.Generic.MatSpaceElem{QQMPolyRingElem}
   _f::Function
@@ -35,16 +35,15 @@ end
 Constructor for `ReductionProblem` Type.
 
 ### Arguments 
-- `f(x,θ)::Function`: Julia function defining the RHS of system 
+- `f(x,p)::Function`: Julia function defining the RHS of system 
 - `x::Vector{String}`: Vector of dynamic variables 
-- `θ::Vector{String}`: Vector of all parameters
+- `p::Vector{String}`: Vector of all parameters
 - `s::Int`: Dimension of reduced system 
 - `idx_slow_fast::Vector{Bool}`: Boolean index for all rates that are either small or large (all others are considered fixed)
 
 ### Description
-This function is used to setup the problem of finding Tikhonov-Fenichel
-Parameter Values, i.e. slow-fast separations of rates that yield a reduction
-onto an `s`-dimensional system. 
+This function is used to set up the problem of finding Tikhonov-Fenichel
+Parameter Values for dimension `s`.
 The names of all variables and parameters in the system are parsed to
 appropriate types in
 [Oscar.jl](https://www.oscar-system.org/),
@@ -56,31 +55,31 @@ See also: [`tfpv_candidates`](@ref)
 function ReductionProblem(
   f::Function, 
   x::Vector{String}, 
-  θ::Vector{String}, 
+  p::Vector{String}, 
   s::Int; 
   idx_slow_fast::Vector{Bool}=Bool[])
   @assert s < length(x) "the dimension of the reduced system must be smaller than that of the full system, i.e. s < n"
-  _, _x, _θ, _f = parse_system(f, x, θ)
-  idx_slow_fast = length(idx_slow_fast) > 0 ? idx_slow_fast : [true for i in 1:length(θ)]   
-  _π = _θ[idx_slow_fast]
+  _, _x, _p, _f = parse_system(f, x, p)
+  idx_slow_fast = length(idx_slow_fast) > 0 ? idx_slow_fast : [true for i in 1:length(p)]   
+  _p_sf = _p[idx_slow_fast]
   J = jacobian(_f, _x)
-  ReductionProblem(_f, _x, _θ, s, _π, idx_slow_fast, J, f)
+  ReductionProblem(_f, _x, _p, s, _p_sf, idx_slow_fast, J, f)
 end
 
 ## Helper Functions
 """
     $(TYPEDSIGNATURES) 
 
-Parse dynamic variables `x` and parameters `θ` of polynomial ODE system so that
-they can be used with Oscar.jl. Return the polynomial Ring `R = ℚ[x,θ]`
-together with `x`, `θ` and `f` parsed to the appropriate OSCAR types.
+Parse dynamic variables `x` and parameters `p` of polynomial ODE system so that
+they can be used with Oscar.jl. Return the polynomial Ring `R = ℚ[x,p]`
+together with `x`, `p` and `f` parsed to the appropriate OSCAR types.
 """
-function parse_system(f::Function, x::Vector{String}, θ::Vector{String})
-  R, v = polynomial_ring(QQ, [x..., θ...])
+function parse_system(f::Function, x::Vector{String}, p::Vector{String})
+  R, v = polynomial_ring(QQ, [x..., p...])
   _x = v[1:length(x)]
-  _θ = v[length(x)+1:end]
-  _f = f(_x, _θ)
-  return R, _x, _θ, _f
+  _p = v[length(x)+1:end]
+  _f = f(_x, _p)
+  return R, _x, _p, _f
 end
 
 """
@@ -122,12 +121,12 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Check if all polynomials in `F` vanish for all parameters in `π` set to zero.
+Check if all polynomials in `F` vanish for all parameters in `p_sf` set to zero.
 """
-function allvanish(F::Vector{QQMPolyRingElem}, π::Vector{QQMPolyRingElem})
-  z = zeros(parent(π[1]), length(π))
+function allvanish(F::Vector{QQMPolyRingElem}, p_sf::Vector{QQMPolyRingElem})
+  z = zeros(parent(p_sf[1]), length(p_sf))
   for f∈F
-    if !iszero(evaluate(f, π, z))
+    if !iszero(evaluate(f, p_sf, z))
       return false
     end
   end
@@ -185,10 +184,10 @@ end
 
 # ### Description
 # The slow manifold on which the reduced system is defined is contained in
-# `𝑉(f⁰)`, the affine variety of `f⁰`, i.e. the zero set of the fast /
+# `𝑉(f0)`, the affine variety of `f0`, i.e. the zero set of the fast /
 # unperturbed part of the system (when we consider the entries as polynomials in
 # the dynamic varieties `x`, so that the variety is a subset of the phase space).
-# Thus, `𝑉(f⁰)` needs to have an irreducible component with dimension `s`, which
+# Thus, `𝑉(f0)` needs to have an irreducible component with dimension `s`, which
 # we can check using the Krull dimension of the corresponding ideal.
 
 # By default, all 2ᵐ-2 possible slow-fast separations of the m parameters are
@@ -197,7 +196,7 @@ end
 
 # If `compute_primary_decomposition=true` (default behaviour) is set, the
 # function attempts to compute a primary decomposition of the ideal corresponding
-# to the unperturbed part of the system `f⁰`.
+# to the unperturbed part of the system `f0`.
 
 # If in addition, `exact_dimension=true` (default), only those candidates are
 # kept for which the affine variety has exactly dimension `problem.s`. Keep in
@@ -216,23 +215,23 @@ end
 #   # redefine RHS of ode system: Interpret parameters as coefficients and only
 #   # use dynamic variables as variables for the polynomial ring
 #   x_str = string.(problem.x)
-#   θ_str = string.(problem.θ)
-#   K, θ = rational_function_field(QQ, θ_str)
+#   p_str = string.(problem.p)
+#   K, p = rational_function_field(QQ, p_str)
 #   R, x = polynomial_ring(K, x_str)
-#   π = θ[problem.idx_slow_fast]
+#   p_sf = p[problem.idx_slow_fast]
 #   # filter TFPV candidates 
-#   idx = length(idx[1]) == 0 ? num2bin.(1:(2^length(problem.π)-2), length(problem.π)) : idx
+#   idx = length(idx[1]) == 0 ? num2bin.(1:(2^length(problem.p_sf)-2), length(problem.p_sf)) : idx
 #   idx_candidates = zeros(Bool, length(idx))
 #   V = compute_primary_decomposition ? [] : nothing
 #   dim_components = compute_primary_decomposition ? Vector{Vector{Int}}() : nothing
 #   cnt = 1
 #   for i in idx    
 #     # Get unperturbed part of system (fast part)
-#     _θ = θ
-#     _θ[problem.idx_slow_fast] = π .* i 
-#     f⁰ = problem._f(x, _θ)
+#     _p = p
+#     _p[problem.idx_slow_fast] = p_sf .* i 
+#     f0 = problem._f(x, _p)
 #     # Check if Krull dimension is at least s
-#     I = ideal(R, f⁰)
+#     I = ideal(R, f0)
 #     if dim(I) >= problem.s
 #       # compute the irreducible components of V(f⁰)
 #       if compute_primary_decomposition 
@@ -303,9 +302,9 @@ See also: [`tfpv_groebner_basis`](@ref), [`print_results`](@ref), [`print_tfpv`]
 """
 function tfpv_candidates(problem)
   # check all possible slow-fast separations for sufficient conditions to be a TFPV for dimension s
-  slow_fast = num2bin.(1:(2^length(problem.π)-2), length(problem.π)) 
-  # define all polynomials and the Jacobian of f in ℝ(π)[x]
-  F, _p = rational_function_field(QQ, string.(problem.θ))
+  slow_fast = num2bin.(1:(2^length(problem.p_sf)-2), length(problem.p_sf)) 
+  # define all polynomials and the Jacobian of f in ℝ(p_sf)[x]
+  F, _p = rational_function_field(QQ, string.(problem.p))
   R, _x = polynomial_ring(F, string.(problem.x))
   f = problem._f(_x, _p)
   J = matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in _x] for fᵢ in f])
@@ -317,25 +316,25 @@ function tfpv_candidates(problem)
   for i in eachindex(slow_fast)
     sf = slow_fast[i]
     tfpv_candidate = get_tfpv(_p, problem.idx_slow_fast, sf)
-    f⁰ = problem._f(_x, tfpv_candidate)
-    I = ideal(f⁰)
+    f0 = problem._f(_x, tfpv_candidate)
+    I = ideal(f0)
     dim_I = dim(I)
     if dim_I < problem.s
       idx_keep[i] = [false]
     else
-      PD = primary_decomposition(ideal(f⁰))
+      PD = primary_decomposition(ideal(f0))
       Y = [Q[2] for Q in PD]
       dim_Y = dim.(Y)
       # set the slow parameters to zero in Jacobian
-      J_π = map(f -> update_cofficients(f, tfpv_candidate), J)
+      J_p_sf = map(f -> update_cofficients(f, tfpv_candidate), J)
       keep_i = [false for _ in Y]
       for j in eachindex(Y) 
         # check if dimension of irreducible component Yⱼ is as desired
         if dim_Y[j] == problem.s
-          # substitute x = x₀ ∈ Yⱼ
-          M = map(f -> normal_form(f, Y[j]), J_π)
-          # Let Χ(τ) = τⁿ+ σₙ(x,π)τ⁽ⁿ⁻¹⁾ + … + σ₁(x,π)τ + σ₀(x,π) be the characteristic polynomial 
-          # for x₀ ∈ Yⱼ and π⁺ a TFPV for dimension s we have σₛ(x₀,π⁺) ≠ 0 
+          # substitute x = x0 ∈ Yⱼ
+          M = map(f -> normal_form(f, Y[j]), J_p_sf)
+          # Let Χ(τ) = τⁿ+ σₙ(x,p_sf)τ⁽ⁿ⁻¹⁾ + … + σ₁(x,p_sf)τ + σ₀(x,p_sf) be the characteristic polynomial 
+          # for x0 ∈ Yⱼ and p_sf⁺ a TFPV for dimension s we have σₛ(x0,p_sf⁺) ≠ 0 
           keep_i[j] = coeff(charpoly(M), problem.s) != 0
         end 
       end

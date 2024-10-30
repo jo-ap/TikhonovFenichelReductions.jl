@@ -3,7 +3,7 @@
 ## Finding Tikhonov-Fenichel Parameter Values
 ```@autodocs
 Modules = [TikhonovFenichelReductions]
-Pages = ["Finding_TFPV.jl"]
+Pages = ["tfpv.jl"]
 Private = false
 Order = [:type, :function]
 ```
@@ -11,7 +11,7 @@ Order = [:type, :function]
 ## Computing a Tikhonov-Fenichel Reduction
 ```@autodocs
 Modules = [TikhonovFenichelReductions]
-Pages = ["Computing_TFPV.jl"]
+Pages = ["reductions.jl"]
 Private = false
 Order = [:type, :function]
 ```
