@@ -58,14 +58,15 @@ primary_decomposition(ideal(G))
 
 ## Make variables and parameters available in Main namespace
 
-B, S, H = problem.x;
-α, β, γ, δ, η, ρ = problem.p;
+B, S, H = system_components(problem)
+α, β, γ, δ, η, ρ = system_parameters(problem)
 
 ## Compute a reduced system
 # The Rosenzweig-MaxArthur system corresponds to the TFPV candidate p_sf₁₆ (See section 3.3 in the paper).
 
 # instantiate reduction 
 reduction = Reduction(problem, idx[15]);
+show_slow_fast(reduction)
 
 # look at the variety that contains the slow manifold
 V[15] # ⟹ M₀ = {(B,S,0) | B,S ∈ ℝ}
@@ -85,5 +86,5 @@ dSdt = -η*S + γ*(η + β)*B*S//(δ + γ*B)
 all(iszero.(g[1:2] .- [dBdt, dSdt])) 
 
 # slow manifold is attractive if all non-zero eigenvalues of Df at x0 have negative real part
-reduction.Df_x0
+jacobian_tfpv_at_x0(reduction)
 

@@ -6,12 +6,14 @@
 module TikhonovFenichelReductions
 
 export ReductionProblem, 
+  system_components, system_parameters,
   tfpv_candidates, 
   tfpv_groebner_basis,
   print_tfpv, print_varieties, print_results,
   Reduction,
-  get_slow_manifolds,
-  jacobian_tfpv, jacobian_tfpv_on_manifold,
+  show_slow_fast,
+  slow_manifolds,
+  jacobian_tfpv_on_manifold, jacobian_tfpv_at_x0,
   set_manifold!, set_point!, set_decomposition!, 
   compute_reduction, compute_directional_reduction
 

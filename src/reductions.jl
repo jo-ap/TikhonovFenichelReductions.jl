@@ -54,6 +54,19 @@ mutable struct Reduction
   success::Vector{Bool}
 end
 
+
+"""
+    $(TYPEDSIGNATURES)
+
+Print slow and fast parameters.
+"""
+function show_slow_fast(reduction::Reduction)
+  p = reduction.p
+  idx = reduction.idx
+  println("slow: " * join(string.(p[.!idx]), ", "))
+  println("fast: " * join(string.(p[idx]), ", "))
+end
+
 """
     $(TYPEDSIGNATURES)
 
@@ -95,10 +108,10 @@ If the dimension of an irreducible component of V(f⁰) differs from what was
 defined with `ReductionProblem`, the constructor `Reduction` can be called with
 the additional argument `s` specifying the dimension.
 
-See also: [Reduction](@ref)
+See also: [`Reduction`](@ref)
 
 """
-function get_slow_manifolds(problem::ReductionProblem, idx::Vector{Bool})
+function slow_manifolds(problem::ReductionProblem, idx::Vector{Bool})
   F, p = rational_function_field(QQ, string.(problem.p))
   R, x = polynomial_ring(F, string.(problem.x))
   p_sf = p
@@ -119,7 +132,7 @@ Constructor for `Reduction` Type.
 - `idx`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
 - `s::Int`: (optional) Dimension of slow manifold. Can be specified if a reduction corresponding to a TFPV for dimension different from `problem.s` should be considered (e.g. for manually computing a reduction for a given slow-fast separation that is not necessarily obtained via `tfpv_candidates`).
 
-See also: [set_manifold!](@ref) [set_decomposition!](@ref)
+See also: [`set_manifold!`](@ref) [`set_decomposition!`](@ref)
 """
 function Reduction(problem::ReductionProblem, idx::Vector{Bool}; s::Union{Nothing,Int}=nothing)
   s = isnothing(s) ? problem.s : s
@@ -156,7 +169,7 @@ Set the slow manifold by defining the values of the components of the system.
 Note that `M` must be defined as a vector with the same length as the system's
 components, i.e. `reduction.x`.
 
-See also: [Reduction](@ref), [set_decomposition!](@ref), [set_point!](@ref)
+See also: [`Reduction`](@ref), [`set_decomposition!`](@ref), [`set_point!`](@ref)
 """
 function set_manifold!(reduction::Reduction, M::AbstractVector)::Bool
   M = parse_ring(reduction.K, M)
@@ -206,13 +219,31 @@ function eval_mat(M, v)
   return _M
 end
 
+
+"""
+    $(TYPEDSIGNATURES)
+
+Return the Jacobian `D₁f(x,π⁺)` at a generic point `x` on the slow manifold for
+a TFPV `π⁺`.
+
+See also: [`Reduction`](@ref), [`set_manifold!`](@ref)
+"""
 function jacobian_tfpv_on_manifold(reduction::Reduction)
   eval_mat(reduction.Df, [reduction.M; reduction.K.(reduction._p)])
 end
 
-function jacobian_tfpv(reduction::Reduction)
-  eval_mat(reduction.Df, reduction.K.([reduction.x; reduction._p]))
+"""
+    $(TYPEDSIGNATURES)
+
+Return the Jacobian `D₁f(x₀,π⁺)` at the point `x₀` on the slow manifold for a
+TFPV `π⁺`.
+
+See also: [`Reduction`](@ref), [`set_point!`](@ref), [`set_manifold!`](@ref)
+"""
+function jacobian_tfpv_at_x0(reduction::Reduction)
+  eval_mat(reduction.Df, [reduction.x0; reduction.K.(reduction._p)])
 end
+
 
 function _set_point!(reduction::Reduction, x0::AbstractVector)::Bool
   x0 = parse_ring(reduction.K, x0)
@@ -239,7 +270,7 @@ end
 Set non-singular point on irreducible component of V(f⁰) corresponding to the slow manifold. 
 Typically, this can be done automatically by setting the slow manifold.
 
-See also: [set_manifold!](@ref), [set_decomposition!](@ref), [Reduction](@ref)
+See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`Reduction`](@ref)
 """
 function set_point!(reduction::Reduction, x0::AbstractVector)::Bool
   retval = _set_point!(reduction, x0)
@@ -266,7 +297,7 @@ irreducible components of `𝑉(f0)` as entries for `Psi` (possibly rewriting th
 rational equations as polynomials by multiplying appropriately with
 parameters occurring in a denominator).
 
-See also: [set_manifold!](@ref) [set_point!](@ref) [Reduction](@ref)
+See also: [`set_manifold!`](@ref) [`set_point!`](@ref) [`Reduction`](@ref)
 """
 function set_decomposition!(reduction::Reduction, P::AbstractAlgebra.Generic.MatSpaceElem, Psi)
   n = length(reduction.x)
@@ -349,7 +380,7 @@ product decomposition have been set successfully.
 The function returns a tuple containing the reduced system in raw form and with
 variables substituted according to the slow manifold.
 
-See also: [set_manifold!](@ref), [set_decomposition!](@ref), [set_point!](@ref), [Reduction](@ref)
+See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`set_point!`](@ref), [`Reduction`](@ref)
 """
 function compute_reduction(reduction::Reduction)
   # Check if P-Psi-composition is defined 
@@ -387,8 +418,8 @@ end
 
 
 function compute_directional_reduction(reduction::Reduction, γ::Function)
-  # check if curve satisfies γ(0) = p_sf⁺
-  @assert all(γ(reduction.p, 0) .== reduction._p) "The curve γ must satisfy γ(0) = p_sf⁺"
+  # check if curve satisfies γ(0) = π⁺
+  @assert all(γ(reduction.p, 0) .== reduction._p) "The curve γ must satisfy γ(0) = π⁺"
   # compute γ'(0)
   Rδ, δ = polynomial_ring(reduction.R, :δ)
   dγ = derivative.(γ(reduction.p, δ))

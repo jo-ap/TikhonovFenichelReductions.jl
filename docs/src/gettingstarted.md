@@ -75,8 +75,8 @@ parameters) available in the Main namespace.
 Here we compute the reduction corresponding to TFPV 15, which is the 
 Rosenzweig-MacArthur model.
 ```@example 1
-B, S, H = problem.x
-α, β, γ, δ, η, ρ = problem.p
+B, S, H = system_components(problem)
+α, β, γ, δ, η, ρ = system_parameters(problem)
 
 # instantiate reduction 
 reduction = Reduction(problem, idx[15])
@@ -128,7 +128,8 @@ The slow manifold is attractive if all non-zero eigenvalues of the Jacobian at
 the non-singular `x0` point have negative real part. 
 ```@example 1 
 # pretty-print Jacobian at x0
-show(stdout, "text/plain", reduction.Df_x0)
+J = jacobian_tfpv_at_x0(reduction)
+show(stdout, "text/plain", J)
 ```
 Thus, the full system converges to the reduction as ``\varepsilon \to 0`` if 
 ``B \geq 0``. 

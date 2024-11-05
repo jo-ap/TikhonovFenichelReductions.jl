@@ -66,6 +66,24 @@ function ReductionProblem(
   ReductionProblem(_f, _x, _p, s, _p_sf, idx_slow_fast, J, f)
 end
 
+"""
+    $(TYPEDSIGNATURES)
+
+Convenience function to get components of ODE system from instance of `ReductionProblem`. 
+
+See also: [`ReductionProblem`](@ref), [`system_parameters`](@ref)
+"""
+system_components(problem::ReductionProblem) = problem.x
+
+"""
+    $(TYPEDSIGNATURES)
+
+Convenience function to get parameters of ODE system from instance of `ReductionProblem`. 
+
+See also: [`ReductionProblem`](@ref), [`system_components`](@ref)
+"""
+system_parameters(problem::ReductionProblem) = problem.p
+
 ## Helper Functions
 """
     $(TYPEDSIGNATURES) 
