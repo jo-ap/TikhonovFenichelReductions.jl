@@ -318,7 +318,7 @@ with an elimination ordering for the components of the ODE system.
 
 See also: [`tfpv_groebner_basis`](@ref), [`print_results`](@ref), [`print_tfpv`](@ref), [`print_varieties`](@ref)
 """
-function tfpv_candidates(problem)
+function tfpv_candidates(problem::ReductionProblem)
   # check all possible slow-fast separations for sufficient conditions to be a TFPV for dimension s
   slow_fast = num2bin.(1:(2^length(problem.p_sf)-2), length(problem.p_sf)) 
   # define all polynomials and the Jacobian of f in ℝ(p_sf)[x]

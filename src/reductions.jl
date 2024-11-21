@@ -190,8 +190,8 @@ function set_manifold!(reduction::Reduction, M::AbstractVector)::Bool
     if all(coeffs[1:reduction.s + 1] .== 0)
       @info "There exists no reduction onto this manifold"
       # check if a generic point on the slow manifold is non-singular
-    elseif _set_point!(reduction, M)
-      println("Set generic non-singular point on slow manifold")
+    elseif !_set_point!(reduction, M)
+      @warn "Could not set generic non-singular point on slow manifold"
     end
   end
   return f_vanishes
@@ -339,20 +339,21 @@ end
 # try computing matrix of rational functions P from Psi
 function get_P(reduction::Reduction, Psi::VecOrMat) 
   if size(Psi, 1) == 1
-    P = reduction.f0.//Psi
+    return reduction.f0.//Psi
   else 
     U, Q, H = reduce_with_quotients_and_unit(reduction.f0, Psi)
-    P = U*Q
     if any(H .!= 0)
       @warn "Could not automatically compute P"
+      return nothing
+    else
+      return U*Q
     end
   end
-  return P
 end
 
 function set_decomposition!(reduction::Reduction, Psi::VecOrMat)
   P = get_P(reduction, Psi)
-  set_decomposition!(reduction, P, Psi)
+  isnothing(P) ? false : set_decomposition!(reduction, P, Psi)
 end
 
 # Experimental: Try guessing P and Psi automatically
