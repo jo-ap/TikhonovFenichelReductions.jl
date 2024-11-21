@@ -15,7 +15,8 @@ export ReductionProblem,
   slow_manifolds,
   jacobian_tfpv_on_manifold, jacobian_tfpv_at_x0,
   set_manifold!, set_point!, set_decomposition!, 
-  compute_reduction, compute_directional_reduction
+  compute_reduction, compute_directional_reduction,
+  similar_reductions, unique_slow_manifolds, compute_bulk_reductions
 
 # greetings
 function __init__()
@@ -32,9 +33,12 @@ using Oscar
 using LaTeXStrings
 using Latexify
 
+using AbstractAlgebra.Generic: FracField, FracFieldElem, MatSpaceElem, MPoly, PolyRing, Poly, RationalFunctionFieldElem
+
 ## load code
 include("./tfpv.jl")
 include("./reductions.jl")
+include("./bulk_reductions.jl")
 include("./output.jl")
 
 end # module TikhonovFenichelReductions
