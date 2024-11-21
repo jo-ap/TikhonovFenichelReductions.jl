@@ -6,7 +6,7 @@ Type that holds all information to compute a Tikhonov-Fenichel reduction for a
 given slow-fast separation of rates.
 
 ### Fields 
-- `idx::Vector{Bool}`: slow-fast separation (0: slow, 1: fast)
+- `sf_separation::Vector{Bool}`: slow-fast separation (0: slow, 1: fast)
 - `s::Int`: Dimension of reduced system (= dimension of slow manifold)
 - `R::QQMPolyRing`: Ring over rationals in `x` and `p`
 - `x::Vector{QQMPolyRingElem}`: Dynamic variables of system 
@@ -17,20 +17,20 @@ given slow-fast separation of rates.
 - `f::Vector{QQMPolyRingElem}`: RHS of system as vector with elements of ring `R`
 - `f0::Vector{QQMPolyRingElem}`: Fast / unperturbed part of system as vector with elements of ring `R`
 - `f1::Vector{QQMPolyRingElem}`: Slow / perturbed part of system as vector with elements of ring `R`
-- `Df::AbstractAlgebra.Generic.MatSpaceElem{QQMPolyRingElem}`: Jacobian of `f`
-- `Df_x0::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Jacobian of `f` at non-singular point `x0`
-- `T::AbstractAlgebra.Generic.PolyRing{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Ring in `x` over Fraction field `K`
-- `chi::AbstractAlgebra.Generic.Poly{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Characteristic polynomial of `Df_x0`
-- `M::Vector{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Slow manifold defined in all components of system
-- `x0::Vector{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Non-singular point in the irreducible component of V(f0) containing the slow manifold
-- `K::AbstractAlgebra.Generic.FracField{QQMPolyRingElem}`: Fraction field in `p`
-- `P::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Matrix with rational functions, such that `f0=P⋅Psi`
-- `Psi::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Vector with polynomials, such that `f0=P⋅Psi`
-- `DPsi::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}`: Jacobian of `Psi`
+- `Df::MatSpaceElem{QQMPolyRingElem}`: Jacobian of `f`
+- `Df_x0::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}`: Jacobian of `f` at non-singular point `x0`
+- `T::PolyRing{FracFieldElem{QQMPolyRingElem}}`: Ring in `x` over Fraction field `K`
+- `chi::Poly{FracFieldElem{QQMPolyRingElem}}`: Characteristic polynomial of `Df_x0`
+- `M::Vector{FracFieldElem{QQMPolyRingElem}}`: Slow manifold defined in all components of system
+- `x0::Vector{FracFieldElem{QQMPolyRingElem}}`: Non-singular point in the irreducible component of V(f0) containing the slow manifold
+- `K::FracField{QQMPolyRingElem}`: Fraction field in `p`
+- `P::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}`: Matrix with rational functions, such that `f0=P⋅Psi`
+- `Psi::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}`: Vector with polynomials, such that `f0=P⋅Psi`
+- `DPsi::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}`: Jacobian of `Psi`
 - `success::Vector{Bool}`: Indicates whether slow manifold `M`, non-singular point `x0` and product decomposition `f0=P⋅Psi` have been set successfully
 """
 mutable struct Reduction
-  idx::Vector{Bool}
+  sf_separation::Vector{Bool}
   s::Int
   R::QQMPolyRing
   x::Vector{QQMPolyRingElem}
@@ -41,16 +41,16 @@ mutable struct Reduction
   f::Vector{QQMPolyRingElem}
   f0::Vector{QQMPolyRingElem}
   f1::Vector{QQMPolyRingElem}
-  Df::AbstractAlgebra.Generic.MatSpaceElem{QQMPolyRingElem}
-  Df_x0::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
-  T::AbstractAlgebra.Generic.PolyRing{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
-  chi::AbstractAlgebra.Generic.Poly{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
-  M::Vector{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
-  x0::Vector{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
-  K::AbstractAlgebra.Generic.FracField{QQMPolyRingElem}
-  P::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
-  Psi::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
-  DPsi::AbstractAlgebra.Generic.MatSpaceElem{AbstractAlgebra.Generic.FracFieldElem{QQMPolyRingElem}}
+  Df::MatSpaceElem{QQMPolyRingElem}
+  Df_x0::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}
+  T::PolyRing{FracFieldElem{QQMPolyRingElem}}
+  chi::Poly{FracFieldElem{QQMPolyRingElem}}
+  M::Vector{FracFieldElem{QQMPolyRingElem}}
+  x0::Vector{FracFieldElem{QQMPolyRingElem}}
+  K::FracField{QQMPolyRingElem}
+  P::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}
+  Psi::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}
+  DPsi::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}
   success::Vector{Bool}
 end
 
@@ -62,9 +62,9 @@ Print slow and fast parameters.
 """
 function show_slow_fast(reduction::Reduction)
   p = reduction.p
-  idx = reduction.idx
-  println("slow: " * join(string.(p[.!idx]), ", "))
-  println("fast: " * join(string.(p[idx]), ", "))
+  sf_separation = reduction.sf_separation
+  println("slow: " * join(string.(p[.!sf_separation]), ", "))
+  println("fast: " * join(string.(p[sf_separation]), ", "))
 end
 
 """
@@ -73,9 +73,9 @@ end
 Split RHS of system into fast/unperturbed and slow/perturbed part for a given
 slow-fast separation of rates.
 """
-function splitsystem(f::Vector{QQMPolyRingElem}, p_sf::Vector{QQMPolyRingElem}, idx::Vector{Bool})
+function splitsystem(f::Vector{QQMPolyRingElem}, p_sf::Vector{QQMPolyRingElem}, sf_separation::Vector{Bool})
   R = parent(f[1])
-  f0 = [evaluate(fᵢ, p_sf[.!idx], zero.(p_sf[.!idx])) for fᵢ in f]
+  f0 = [evaluate(fᵢ, p_sf[.!sf_separation], zero.(p_sf[.!sf_separation])) for fᵢ in f]
   f1 = f .- f0 
   return f0, f1
 end
@@ -99,7 +99,7 @@ in one of these components.
 
 ### Arguments
 - `problem`: Reduction problem type holding information on system and dimension of reduction.
-- `idx`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
+- `sf_separation`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
 
 ### Description
 This function can be used if one wants to check whether a particular slow-fast
@@ -111,11 +111,11 @@ the additional argument `s` specifying the dimension.
 See also: [`Reduction`](@ref)
 
 """
-function slow_manifolds(problem::ReductionProblem, idx::Vector{Bool})
+function slow_manifolds(problem::ReductionProblem, sf_separation::Vector{Bool})
   F, p = rational_function_field(QQ, string.(problem.p))
   R, x = polynomial_ring(F, string.(problem.x))
   p_sf = p
-  p_sf[idx .== 0] .= F(0)
+  p_sf[sf_separation .== 0] .= F(0)
   f = problem._f(x,p_sf)
   PD = primary_decomposition(ideal(f))
   Q = [q[2] for q in PD]
@@ -129,20 +129,20 @@ Constructor for `Reduction` Type.
 
 ### Arguments
 - `problem`: Reduction problem type holding information on system and dimension of reduction.
-- `idx`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
+- `sf_separation`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
 - `s::Int`: (optional) Dimension of slow manifold. Can be specified if a reduction corresponding to a TFPV for dimension different from `problem.s` should be considered (e.g. for manually computing a reduction for a given slow-fast separation that is not necessarily obtained via `tfpv_candidates`).
 
 See also: [`set_manifold!`](@ref) [`set_decomposition!`](@ref)
 """
-function Reduction(problem::ReductionProblem, idx::Vector{Bool}; s::Union{Nothing,Int}=nothing)
+function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::Union{Nothing,Int}=nothing)
   s = isnothing(s) ? problem.s : s
   R = parent(problem.f[1])
   K = fraction_field(R)
   _p = copy(problem.p)
-  _p[problem.idx_slow_fast] = problem.p_sf.*idx
+  _p[problem.idx_slow_fast] = problem.p_sf.*sf_separation
   n = length(problem.x)
   r = n - s
-  f0, f1 = splitsystem(problem.f, problem.p_sf, idx)
+  f0, f1 = splitsystem(problem.f, problem.p_sf, sf_separation)
   Df = jacobian(problem.f, problem.x)
   T, _ = polynomial_ring(K, "λ")
   M = K.(problem.x)
@@ -151,7 +151,7 @@ function Reduction(problem::ReductionProblem, idx::Vector{Bool}; s::Union{Nothin
   Psi = zero_matrix(K,r,1)
   DPsi = zero_matrix(K,r,n)
   Df_x0 = matrix(K, Matrix(Df))
-  return Reduction(idx, s, R, problem.x, problem.p, _p, problem.p_sf, problem.idx_slow_fast, problem.f, f0, f1, Df, Df_x0, T, T(0), M, x0, K, P, Psi, DPsi, zeros(Bool, 3))
+  return Reduction(sf_separation, s, R, problem.x, problem.p, _p, problem.p_sf, problem.idx_slow_fast, problem.f, f0, f1, Df, Df_x0, T, T(0), M, x0, K, P, Psi, DPsi, zeros(Bool, 3))
 end
 
 function parse_ring(R, x)
@@ -286,20 +286,9 @@ end
 Set product decomposition `f0=P⋅Psi` locally satisfying `𝑉(f0)=𝑉(Psi)`, where `P`
 is a matrix of rational functions  and `Psi` is a vector of polynomials.
 
-### Variants:
-- `set_decomposition!(reduction::Reduction, P::AbstractAlgebra.Generic.MatSpaceElem, Psi)`: Manually specify `P` and `Psi`
-- `set_decomposition!(reduction::Reduction,  Psi)`: Try to compute `P` automatically. This works always for `s=1`, but may fail if `s>1`.
-
-### Description
-Typically, `Psi` can be chosen from `s` independent entries of `f0`. 
-Practically one can consider the generators of the ideals defining the
-irreducible components of `𝑉(f0)` as entries for `Psi` (possibly rewriting the
-rational equations as polynomials by multiplying appropriately with
-parameters occurring in a denominator).
-
 See also: [`set_manifold!`](@ref) [`set_point!`](@ref) [`Reduction`](@ref)
 """
-function set_decomposition!(reduction::Reduction, P::AbstractAlgebra.Generic.MatSpaceElem, Psi)
+function set_decomposition!(reduction::Reduction, P::MatSpaceElem, Psi)
   n = length(reduction.x)
   r = n - reduction.s
   try Psi = reshape(Psi, r, 1)
@@ -324,7 +313,7 @@ function set_decomposition!(reduction::Reduction, P::AbstractAlgebra.Generic.Mat
     @warn "P⋅Psi ≠ f0: Product decomposition cannot be set"
   end
   return is_equal
-end
+end,
 function set_decomposition!(reduction::Reduction, P::VecOrMat, Psi)
   n = length(reduction.x)
   r = n - reduction.s
@@ -336,8 +325,9 @@ function set_decomposition!(reduction::Reduction, P::VecOrMat, Psi)
   P = parent(reduction.P)(P)
   set_decomposition!(reduction, P, Psi)
 end
+  
 # try computing matrix of rational functions P from Psi
-function get_P(reduction::Reduction, Psi::VecOrMat) 
+function get_P(reduction::Reduction, Psi) 
   if size(Psi, 1) == 1
     return reduction.f0.//Psi
   else 
@@ -351,25 +341,26 @@ function get_P(reduction::Reduction, Psi::VecOrMat)
   end
 end
 
-function set_decomposition!(reduction::Reduction, Psi::VecOrMat)
+"""
+    $(TYPEDSIGNATURES)
+
+Try to automatically compute matrix of rational functions `P` from given vector
+of polynomials `Psi`, such that `f0=P⋅Psi` and `𝑉(f0)=𝑉(Psi)` holds locally.
+
+NOTE: This works always if the drop in dimension `r=n-s=1`, but is experimental
+for `r>1`
+
+### Description
+Typically, `Psi` can be chosen from `s` independent entries of `f0`. 
+Practically one can consider the generators of the ideals defining the
+irreducible components of `𝑉(f0)` as entries for `Psi` (possibly rewriting the
+rational equations as polynomials by multiplying appropriately with
+parameters occurring in a denominator).
+"""
+function set_decomposition!(reduction::Reduction, Psi)
   P = get_P(reduction, Psi)
   isnothing(P) ? false : set_decomposition!(reduction, P, Psi)
 end
-
-# Experimental: Try guessing P and Psi automatically
-# function get_decomposition(reduction)
-#   G = groebner_basis(ideal(reduction.f0); complete_reduction=true)
-#   Psi = gens(G)
-#   while true 
-#     U, Q, H = reduce_with_quotients_and_unit(reduction.f0, Psi)
-#     idx = [any(Q[:,i] .!= 0) for i in 1:size(Q, 2)]
-#     if all(idx) 
-#       return U*Q, Psi
-#     else
-#       Psi = Psi[idx] 
-#     end
-#   end
-# end
 
 
 """
@@ -381,7 +372,7 @@ product decomposition have been set successfully.
 The function returns a tuple containing the reduced system in raw form and with
 variables substituted according to the slow manifold.
 
-See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`set_point!`](@ref), [`Reduction`](@ref)
+See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`set_point!`](@ref), [`compute_bulk_reductions`](@ref), [`Reduction`](@ref)
 """
 function compute_reduction(reduction::Reduction)
   # Check if P-Psi-composition is defined 

@@ -12,7 +12,7 @@ dimension `s` are considered.
 - `s::Int`: Dimension of reduced system
 - `p_sf::Vector{QQMPolyRingElem}`: Vector of parameters to be considered slow or fast (all others are considered fixed)
 - `idx_slow_fast::Vector{Bool}`: Boolean index, such that `p_sf=p[idx_slow_fast]`
-- `J::AbstractAlgebra.Generic.MatSpaceElem{QQMPolyRingElem}`: Jacobian of `f`
+- `J::MatSpaceElem{QQMPolyRingElem}`: Jacobian of `f`
 - `_f::Function`: RHS of ODE system as a Julia function with arguments `x` and `p`
 
 The type `QQMPolyRingElem` is used in [Oscar.jl](https://www.oscar-system.org/)
@@ -25,7 +25,7 @@ mutable struct ReductionProblem
   s::Int
   p_sf::Vector{QQMPolyRingElem}
   idx_slow_fast::Vector{Bool}
-  J::AbstractAlgebra.Generic.MatSpaceElem{QQMPolyRingElem}
+  J::MatSpaceElem{QQMPolyRingElem}
   _f::Function
 end
 
@@ -107,8 +107,8 @@ Convert integer `i` into a boolean vector of length `n` representing `i` in
 binary.
 """
 function num2bin(i::Int, n::Int)
-  idx = bitstring(i)[(end-n+1):end]
-  idx = [i == '1' for i in idx]
+  sf_separation = bitstring(i)[(end-n+1):end]
+  sf_separation = [i == '1' for i in sf_separation]
 end
 
 """
@@ -117,7 +117,7 @@ end
 Compute determinants of all possible k×k minors of quadratic matrix `M` for
 k > `r`.
 """
-function get_determinants(M::AbstractAlgebra.Generic.MatSpaceElem{QQMPolyRingElem}, r::Int)
+function get_determinants(M::MatSpaceElem{QQMPolyRingElem}, r::Int)
   n = size(M)[1]
   @assert n == size(M)[2] "M must be a quadratic matrix."
   # get all valid combinations of rows and columns
@@ -281,9 +281,9 @@ end
 
 Return parameter vector where all slow rates are set to zero.
 """
-function get_tfpv(p, idx_slow_fast, idx)
+function get_tfpv(p, idx_slow_fast, sf_separation)
   _p = copy(p)
-  _p[idx_slow_fast] = _p[idx_slow_fast].*idx
+  _p[idx_slow_fast] = _p[idx_slow_fast].*sf_separation
   return _p
 end
 
@@ -330,7 +330,7 @@ function tfpv_candidates(problem::ReductionProblem)
   # irreducible components of V(f⁰) and their dimensions
   idx_keep = Vector{Vector{Bool}}(undef, length(slow_fast))
   components = Vector{Vector{MPolyIdeal}}()
-  dim_components = Vector{Vector{Int64}}()
+  dim_components = Vector{Vector{Int}}()
   for i in eachindex(slow_fast)
     sf = slow_fast[i]
     tfpv_candidate = get_tfpv(_p, problem.idx_slow_fast, sf)

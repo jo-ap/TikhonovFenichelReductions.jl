@@ -1,5 +1,7 @@
 ## Output functions
 
+boolean_to_numeric(idx_bool) = (1:length(idx_bool))[idx_bool]
+
 """
     $(TYPEDSIGNATURES)
 
@@ -21,21 +23,28 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Print TFPV (candidates) to terminal or return LaTeXString that can be included in
-tex file.
+Print slow-fast separations to terminal or return LaTeXString that can be
+included in tex file.
+Optionally only print subset defined by (boolean or numeric) index set `idx`.
 """
 function print_tfpv(problem::ReductionProblem,
-                    idx::Vector{Vector{Bool}}; 
+                    sf_separations::Vector{Vector{Bool}}; 
                     latex::Bool=false,
-                    idx_subset::Union{Vector{Bool}, Nothing}=nothing)
+                    idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[])
+  idx = idx == [] ? (1:length(sf_separations)) : idx
+  _print_tfpv(problem, sf_separations, latex, idx)
+end
+
+function _print_tfpv(problem::ReductionProblem,
+                     sf_separations::Vector{Vector{Bool}},
+                     latex::Bool,
+                     idx::AbstractVector{Int})
   if latex
     parameters = [latexify(p_sfᵢ; env=:raw) for p_sfᵢ in string.(problem.p_sf)]
     m = length(parameters)
     str = "\\begin{array}{r$(repeat('c',length(string(problem.p_sf))))} i & $(join(parameters, "^* & ")) \\\\ \n"
-    for i in eachindex(idx)
-      if isnothing(idx_subset) || idx_subset[i]
-        str *= "$i & " * join([idx[i][k] ? parameters[k] : "\\cdot" for k = 1:m], " & ") * " \\\\ \n"
-      end
+    for i in idx
+      str *= "$i & " * join([sf_separations[i][k] ? parameters[k] : "\\cdot" for k = 1:m], " & ") * " \\\\ \n"
     end
     str *= "\\end{array}"
     lstr = latexstring(str)
@@ -43,44 +52,58 @@ function print_tfpv(problem::ReductionProblem,
   else
     subscripts = ["₀","₁","₂","₃","₄","₅","₆","₇","₈","₉"]
     numbers = string.(0:9)
-    max_width = ndigits(length(idx)) 
+    max_width = ndigits(length(sf_separations)) 
     field_widths = [length(p_sfᵢ) for p_sfᵢ in string.(problem.p_sf)]
     str = "π̃ $(repeat(" ", max_width-1)) = ($(join(string.(problem.p_sf), ", ")))\n"
     str *= repeat("_", length(str)-2) * "\n"
-    for i in eachindex(idx)
-      if isnothing(idx_subset) || idx_subset[i]
-        idx_fast = idx[i]
-        str *= "π" *
-        join([subscripts[string(n) .== numbers][1] for n in string(i)], "") *
-        "$(repeat(" ", max_width - ndigits(i))) = (" * 
-        join(padstring.([idx_fast[k] ? string(problem.p_sf[k]) : "0" for k = 1:length(idx_fast)], field_widths), ", ") *")\n"
-      end
+    for i in idx
+      idx_fast = sf_separations[i]
+      str *= "π" *
+      join([subscripts[string(n) .== numbers][1] for n in string(i)], "") *
+      "$(repeat(" ", max_width - ndigits(i))) = (" * 
+      join(padstring.([idx_fast[k] ? string(problem.p_sf[k]) : "0" for k = 1:length(idx_fast)], field_widths), ", ") *")\n"
     end
     print(str)
   end
   return nothing
 end
+function _print_tfpv(problem::ReductionProblem,
+                     sf_separations::Vector{Vector{Bool}},
+                     latex::Bool,
+                     idx::Vector{Bool})
+  @assert length(sf_separations) == length(idx) "`sf_separations` and `idx` must have same length"
+  _print_tfpv(problem, sf_separations, latex, boolean_to_numeric(idx))
+end
 
 """
     $(TYPEDSIGNATURES)
 
-Print generators of ideals in corresponding to irreducible components of varieties
-for TFPV candidates to terminal (`V` and `dim_V` as returned by or `tfpv_candidates`).
+Print generators of ideals corresponding to the irreducible components of
+varieties `V(f⁰)` for TFPV candidates and their dimension (`V` and `dim_V` as
+returned by or `tfpv_candidates`).
+Use keyword argument `latex=true` to generate latex string instead.
 
-See also: [`tfpv_candidates`](@ref)
+See also: [`tfpv_candidates`](@ref), [`print_tfpv`](@ref), [`print_results`](@ref)
 """
-function print_varieties(V::Vector{Vector{Vector{T}}};
-                         dim_V::Union{Nothing,Vector{Vector{Int64}}}=nothing, 
+function print_varieties(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}},
+                         dim_V::Vector{Vector{Int}};
                          latex::Bool=false,
-                         idx_subset::Union{Vector{Bool}, Nothing}=nothing) where T <: AbstractAlgebra.Generic.MPoly
+                         idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[]) 
+  idx = idx == [] ? (1:length(V)) : idx
+  _print_varieties(V, dim_V, latex, idx)
+end
+
+function _print_varieties(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}},
+                         dim_V::Vector{Vector{Int}},
+                         latex::Bool,
+                         idx::AbstractVector{Int})
   if latex
-    str_latex = "\\begin{array}{rl} i & \\mathcal{V}(f(\\cdot, \\tilde{\\pi_i})) \\\\ \n"
-    for i = 1:length(V)
-      if isnothing(idx_subset) || idx_subset[i]
-        Q = V[i]
-        str = ["\\mathcal{V}(" * join(latexify.(string.(Q[i]); env=:raw, cdot=false), ", ") * ")" for i in eachindex(Q)]
-        str_out = join(str, " \\cup ")
-        str_latex *= "$i & " * str_out * "\\\\ \n"
+    str_latex = "\\begin{array}{rll} i & \\mathcal{V}(f(\\cdot, \\tilde{\\pi_i})) & \\dim_{\\textrm{Krull}} \\\\ \n"
+    for i in idx
+      Q = V[i]
+      str_latex *= "$i"
+      for j in eachindex(Q)
+        str_latex *= " & " * latexify.(string.(Q[i][j]); env=:raw, cdot=false) * " & $(dim_V[i][j]) \\\\ \n"
       end
     end
     str_latex *= "\\end{array}"
@@ -90,22 +113,23 @@ function print_varieties(V::Vector{Vector{Vector{T}}};
     numbers = string.(0:9)
     max_width = ndigits(length(V)) 
     pad = "$(repeat(" ", max_width + 4))"
-    for i = 1:length(V)
-      if isnothing(idx_subset) || idx_subset[i]
-        if !isnothing(dim_V)
-          V_str = ["[" * replace(join(string.(V[i][j]), ", ")) * "], $(dim_V[i][j])" for j in eachindex(V[i])]
-        else
-          V_str = ["[" * replace(join(string.(V[i][j]), ", ")) * "]" for j in eachindex(V[i])]
-        end
-        str = "V" * 
-          join([subscripts[string(n) .== numbers][1] for n in string(i)], "") * 
-          "$(repeat(" ", max_width - ndigits(i))) : " * 
-          join(V_str, "\n" * pad)
-        println(str)
-      end
+    for i in idx
+      V_str = ["[" * replace(join(string.(V[i][j]), ", ")) * "], $(dim_V[i][j])" for j in eachindex(V[i])]
+      str = "V" * 
+        join([subscripts[string(n) .== numbers][1] for n in string(i)], "") * 
+        "$(repeat(" ", max_width - ndigits(i))) : " * 
+        join(V_str, "\n" * pad)
+      println(str)
     end
     return nothing
   end
+end
+function _print_varieties(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}};
+                         dim_V::Vector{Vector{Int}},
+                         latex::Bool=false,
+                         idx::Vector{Bool})
+  idx = idx == [] ? (1:length(V)) : boolean_to_numeric(idx)
+  _print_varieties(V, dim_V, latex, idx)
 end
 
 """
@@ -116,30 +140,47 @@ irreducible components of `V(f⁰)` together with their Krull dimension.
 
 ### Arguments 
 - `problem`: `ReductionProblem` 
-- `idx`: Boolean indices defining all TFPVs `π⁺` that are slow-fast separations (0: slow, 1: fast).
+- `sf_separations`: Boolean indices defining all TFPVs `π⁺` that are slow-fast separations (0: slow, 1: fast).
 - `V`: Generators for the irreducible component of the affine varietiy `V(f(⋅,π⁺))` for each slow-fast separation.
 - `dim_V`: Krull dimensions of the ideals generated by the elements in `V` (this equals the dimension of `V(f(⋅,π⁺))` in the affine space `ℂⁿ` or its real part, given that it contains a real non-singular point).
-- `idx_subset`: (optional) Boolean index vector to include only certain TFPVs
+- `idx`: (optional) index vector to include only certain TFPVs (boolean or numeric)
 
-See also: [`tfpv_candidates`](@ref)
+See also: [`tfpv_candidates`](@ref), [`print_tfpv`](@ref), [`_print_varieties`](@ref)
 """
 function print_results(
   problem::ReductionProblem,
-  idx::Vector{Vector{Bool}},
+  sf_separations::Vector{Vector{Bool}},
   V,
-  dim_V::Vector{Vector{Int64}};
-  idx_subset::Union{Vector{Bool}, Nothing}=nothing)
-  @assert length(idx) == length(V) "`idx` and `V` need to have the same length"
-  for i in eachindex(idx)
-    if isnothing(idx_subset) || idx_subset[i]
-      println("$i")
-      idx_fast = idx[i]
-      println(" π̃: [" * join([idx_fast[k] ? string(problem.p_sf[k]) : "0" for k = 1:length(idx_fast)], ", ") *"]")
-      V_str = ["[" * replace(join(string.(V[i][k]), ", ")) * "], $(dim_V[i][k])" for k in eachindex(V[i])]
-      println(" V: " * join(V_str, "\n    ") * "\n")
-    end
+  dim_V::Vector{Vector{Int}};
+  idx::Union{AbstractVector{Int}, Vector{Bool}} = Int[])
+  _print_results(problem, sf_separations, V, dim_V, idx)
+end
+
+function _print_results(
+  problem::ReductionProblem,
+  sf_separations::Vector{Vector{Bool}},
+  V,
+  dim_V::Vector{Vector{Int}},
+  idx::Union{AbstractVector{Int}, Vector{Bool}} = Int[])
+  idx = idx == [] ? (1:length(sf_separations)) : idx
+  for i in idx
+    println("$i")
+    idx_fast = sf_separations[i]
+    println(" π̃: [" * join([idx_fast[k] ? string(problem.p_sf[k]) : "0" for k = 1:length(idx_fast)], ", ") *"]")
+    V_str = ["[" * replace(join(string.(V[i][k]), ", ")) * "], $(dim_V[i][k])" for k in eachindex(V[i])]
+    println(" V: " * join(V_str, "\n    ") * "\n")
   end
 end
+function _print_results(
+  problem::ReductionProblem,
+  sf_separations::Vector{Vector{Bool}},
+  V,
+  dim_V::Vector{Vector{Int}},
+  idx::Vector{Bool})
+  @assert length(sf_separations) == length(V) == length(dim_V) == length(idx) "`sf_separations`, `dim_V` and `V` all need to have the same length as `idx`"
+  _print_results(problem, sf_separations, V, dim_V, boolean_to_numeric(idx))
+end
+
 
 function print_system(reduction::Reduction; latex=false)
   if latex
