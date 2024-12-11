@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.1"
+julia_version = "1.11.2"
 manifest_format = "2.0"
 project_hash = "7b637ad3e0d138ca6bc1c7a48adbc4860a132cbb"
 
@@ -17,9 +17,9 @@ version = "0.1.3+0"
 
 [[deps.AbstractAlgebra]]
 deps = ["LinearAlgebra", "MacroTools", "Preferences", "Random", "RandomExtensions", "SparseArrays", "Test"]
-git-tree-sha1 = "516e52854c98435d3e15b89cd7d778b60a3b48f9"
+git-tree-sha1 = "4d02060414d46e141e79efbd1484901c0fb4ce24"
 uuid = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
-version = "0.43.11"
+version = "0.43.12"
 
 [[deps.AbstractTrees]]
 git-tree-sha1 = "2d9c9a55f9c93e8887ad391fbae72f8ef55e1177"
@@ -160,9 +160,9 @@ version = "1.6.0"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "cc5231d52eb1771251fbd37171dbc408bcc8a1b6"
+git-tree-sha1 = "e51db81749b0777b2147fbe7b783ee79045b8e99"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
-version = "2.6.4+0"
+version = "2.6.4+1"
 
 [[deps.FLINT_jll]]
 deps = ["Artifacts", "GMP_jll", "JLLWrappers", "Libdl", "MPFR_jll", "OpenBLAS32_jll"]
@@ -193,9 +193,9 @@ version = "1.3.7"
 
 [[deps.GAP]]
 deps = ["AbstractAlgebra", "Artifacts", "Compat", "Downloads", "GAP_jll", "GAP_lib_jll", "GAP_pkg_juliainterface_jll", "InteractiveUtils", "Libdl", "MacroTools", "Markdown", "Ncurses_jll", "Pidfile", "Pkg", "REPL", "Random", "Scratch"]
-git-tree-sha1 = "e251aa4e3693eed790e2ee77ec0126e128894a56"
+git-tree-sha1 = "1bdcf8f899d7dff6128ae925b7231d95a2b93f17"
 uuid = "c863536a-3901-11e9-33e7-d5cd0df7b904"
-version = "0.12.0"
+version = "0.12.1"
 
 [[deps.GAP_jll]]
 deps = ["Artifacts", "GMP_jll", "JLLWrappers", "Libdl", "Readline_jll", "Zlib_jll"]
@@ -234,9 +234,9 @@ version = "1.3.1"
 
 [[deps.Git_jll]]
 deps = ["Artifacts", "Expat_jll", "JLLWrappers", "LibCURL_jll", "Libdl", "Libiconv_jll", "OpenSSL_jll", "PCRE2_jll", "Zlib_jll"]
-git-tree-sha1 = "ea372033d09e4552a04fd38361cd019f9003f4f4"
+git-tree-sha1 = "399f4a308c804b446ae4c91eeafadb2fe2c54ff9"
 uuid = "f8c6e375-362e-5223-8a59-34ff63f689eb"
-version = "2.46.2+0"
+version = "2.47.1+0"
 
 [[deps.Gumbo]]
 deps = ["AbstractTrees", "Gumbo_jll", "Libdl"]
@@ -252,9 +252,9 @@ version = "0.10.2+0"
 
 [[deps.Hecke]]
 deps = ["AbstractAlgebra", "Dates", "Distributed", "InteractiveUtils", "LazyArtifacts", "Libdl", "LinearAlgebra", "Markdown", "Nemo", "Pkg", "Printf", "Random", "RandomExtensions", "Serialization", "SparseArrays"]
-git-tree-sha1 = "00d9f8c8d33c69bdc91b0153c2cdfe903e397318"
+git-tree-sha1 = "ee9546ec43de9fa083094a40c999927b9c005b29"
 uuid = "3e1990a7-5d81-5526-99ce-9ba3ff248f21"
-version = "0.34.7"
+version = "0.34.9"
 weakdeps = ["GAP", "Polymake"]
 
     [deps.Hecke.extensions]
@@ -495,9 +495,9 @@ version = "6.5.0+1"
 
 [[deps.Nemo]]
 deps = ["AbstractAlgebra", "FLINT_jll", "Libdl", "LinearAlgebra", "Pkg", "Random", "RandomExtensions", "SHA"]
-git-tree-sha1 = "927b528248680e1597cb1e72e19d072e61fd6860"
+git-tree-sha1 = "c3960b4fe367d62818d03ba273ab8b00b96a34fa"
 uuid = "2edaba10-b0f1-5616-af89-8c11ac63239a"
-version = "0.47.3"
+version = "0.47.5"
 
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
@@ -544,9 +544,9 @@ uuid = "efe28fd5-8261-553b-a9e1-b2916fc3738e"
 version = "0.5.5+0"
 
 [[deps.OrderedCollections]]
-git-tree-sha1 = "dfdf5519f235516220579f949664f1bf44e741c5"
+git-tree-sha1 = "12f1439c4f986bb868acda6ea33ebc78e19b95ad"
 uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
-version = "1.6.3"
+version = "1.7.0"
 
 [[deps.Oscar]]
 deps = ["AbstractAlgebra", "AlgebraicSolving", "Distributed", "GAP", "Hecke", "JSON", "JSON3", "LazyArtifacts", "Markdown", "Nemo", "Pkg", "Polymake", "Random", "RandomExtensions", "Serialization", "Singular", "TOPCOM_jll", "UUIDs", "cohomCalg_jll"]
@@ -695,9 +695,9 @@ version = "0.23.10"
 
 [[deps.Singular_jll]]
 deps = ["Artifacts", "FLINT_jll", "GMP_jll", "JLLWrappers", "Libdl", "MPFR_jll", "cddlib_jll"]
-git-tree-sha1 = "5abd6ea62648b6eb0d21ba7986bcae4fc4b7e74d"
+git-tree-sha1 = "7038aa73c007d59620ea2a2db55698326a304266"
 uuid = "43d676ae-4934-50ba-8046-7a96366d613b"
-version = "404.0.707+0"
+version = "404.0.711+0"
 
 [[deps.Sockets]]
 uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
@@ -710,9 +710,9 @@ version = "1.11.0"
 
 [[deps.SpecialFunctions]]
 deps = ["IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
-git-tree-sha1 = "2f5d4697f21388cbe1ff299430dd169ef97d7e14"
+git-tree-sha1 = "64cca0c26b4f31ba18f13f6c12af7c85f478cfde"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "2.4.0"
+version = "2.5.0"
 
     [deps.SpecialFunctions.extensions]
     SpecialFunctionsChainRulesCoreExt = "ChainRulesCore"
@@ -800,7 +800,7 @@ version = "1.0.0"
 deps = ["AbstractAlgebra", "DocStringExtensions", "LaTeXStrings", "Latexify", "OrderedCollections", "Oscar", "ProgressMeter"]
 path = ".."
 uuid = "66629163-d46e-44ca-9a00-7025b1e168e6"
-version = "0.2.3"
+version = "0.2.4"
 
 [[deps.TranscodingStreams]]
 git-tree-sha1 = "0c45878dcfdcfa8480052b6ab162cdd138781742"
@@ -893,9 +893,9 @@ version = "3.6.6+0"
 
 [[deps.libsingular_julia_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Singular_jll", "libcxxwrap_julia_jll"]
-git-tree-sha1 = "aa6dbd2a5381821379d095a1733d45b9500a588a"
+git-tree-sha1 = "8db9abc14f74d1e17d66466d5ee8a58581e3f3b8"
 uuid = "ae4fbd8f-ecdb-54f8-bbce-35570499b30e"
-version = "0.46.0+0"
+version = "0.46.1+0"
 
 [[deps.lrslib_jll]]
 deps = ["Artifacts", "GMP_jll", "JLLWrappers", "Libdl", "Pkg"]

@@ -12,9 +12,9 @@ version = "0.1.3+0"
 
 [[deps.AbstractAlgebra]]
 deps = ["LinearAlgebra", "MacroTools", "Preferences", "Random", "RandomExtensions", "SparseArrays", "Test"]
-git-tree-sha1 = "516e52854c98435d3e15b89cd7d778b60a3b48f9"
+git-tree-sha1 = "4d02060414d46e141e79efbd1484901c0fb4ce24"
 uuid = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
-version = "0.43.11"
+version = "0.43.12"
 
 [[deps.AlgebraicSolving]]
 deps = ["LinearAlgebra", "Logging", "Markdown", "Nemo", "Printf", "Random", "StaticArrays", "Test", "msolve_jll"]
@@ -117,9 +117,9 @@ version = "1.3.7"
 
 [[deps.GAP]]
 deps = ["AbstractAlgebra", "Artifacts", "Compat", "Downloads", "GAP_jll", "GAP_lib_jll", "GAP_pkg_juliainterface_jll", "InteractiveUtils", "Libdl", "MacroTools", "Markdown", "Ncurses_jll", "Pidfile", "Pkg", "REPL", "Random", "Scratch"]
-git-tree-sha1 = "e251aa4e3693eed790e2ee77ec0126e128894a56"
+git-tree-sha1 = "1bdcf8f899d7dff6128ae925b7231d95a2b93f17"
 uuid = "c863536a-3901-11e9-33e7-d5cd0df7b904"
-version = "0.12.0"
+version = "0.12.1"
 
 [[deps.GAP_jll]]
 deps = ["Artifacts", "GMP_jll", "JLLWrappers", "Libdl", "Readline_jll", "Zlib_jll"]
@@ -152,9 +152,9 @@ version = "6.3.0+0"
 
 [[deps.Hecke]]
 deps = ["AbstractAlgebra", "Dates", "Distributed", "InteractiveUtils", "LazyArtifacts", "Libdl", "LinearAlgebra", "Markdown", "Nemo", "Pkg", "Printf", "Random", "RandomExtensions", "Serialization", "SparseArrays"]
-git-tree-sha1 = "98fa52b81f47cfef2d7b6892dbd95a6564dc7bd4"
+git-tree-sha1 = "ee9546ec43de9fa083094a40c999927b9c005b29"
 uuid = "3e1990a7-5d81-5526-99ce-9ba3ff248f21"
-version = "0.34.8"
+version = "0.34.9"
 weakdeps = ["GAP", "Polymake"]
 
     [deps.Hecke.extensions]
@@ -558,9 +558,9 @@ version = "1.11.0"
 
 [[deps.SpecialFunctions]]
 deps = ["IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
-git-tree-sha1 = "2f5d4697f21388cbe1ff299430dd169ef97d7e14"
+git-tree-sha1 = "64cca0c26b4f31ba18f13f6c12af7c85f478cfde"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "2.4.0"
+version = "2.5.0"
 
     [deps.SpecialFunctions.extensions]
     SpecialFunctionsChainRulesCoreExt = "ChainRulesCore"
@@ -702,9 +702,9 @@ version = "0.13.0+0"
 
 [[deps.libsingular_julia_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Singular_jll", "libcxxwrap_julia_jll"]
-git-tree-sha1 = "aa6dbd2a5381821379d095a1733d45b9500a588a"
+git-tree-sha1 = "8db9abc14f74d1e17d66466d5ee8a58581e3f3b8"
 uuid = "ae4fbd8f-ecdb-54f8-bbce-35570499b30e"
-version = "0.46.0+0"
+version = "0.46.1+0"
 
 [[deps.lrslib_jll]]
 deps = ["Artifacts", "GMP_jll", "JLLWrappers", "Libdl", "Pkg"]
