@@ -50,7 +50,7 @@ problem = ReductionProblem(f, x, p, s)
 Compute all slow-fast separations that are TFPVs by using necessary conditions
 for the existence of a reduction. 
 ```@example 1
-idx, V, dim_V = tfpv_candidates(problem)
+sf_separation, V, dim_V = tfpv_candidates(problem)
 ```
 
 You can also get all general TFPVs by computing a Gröbner basis `G` that
@@ -60,39 +60,42 @@ Note that this is potentially a very computationally intensive task.
 G = tfpv_groebner_basis(problem)
 ```
 
-Show the results: All possible slow-fast separation of rates
+Show the results: All possible slow-fast separation of rates 
 ```@example 1
-print_tfpv(problem, idx)
+print_tfpv(problem, sf_separation)
 ```
-the corresponding irreducible components containing the slow manifold and their
+and the corresponding irreducible components containing the slow manifold and their
 Krull dimension
 ```@example 1
-print_varieties(V; dim_V=dim_V)
+print_varieties(V, dim_V)
 ```
 
 For further use, we need to make the variables (the system components and
 parameters) available in the Main namespace.
-Here we compute the reduction corresponding to TFPV 15, which is the 
+Then, we can compute the reduction corresponding to TFPV 15, which is the
 Rosenzweig-MacArthur model.
 ```@example 1
 B, S, H = system_components(problem)
 α, β, γ, δ, η, ρ = system_parameters(problem)
 
 # instantiate reduction 
-reduction = Reduction(problem, idx[15])
+reduction = Reduction(problem, sf_separation[15])
 ```
 
-To find the slow manifold, we can consider the affine variety.
+To find the slow manifold, we can consider the affine variety defined by the vanishing of
 ```@example 1
 V[15]
 ```
-This means the slow manifold is 
+We can see, that there is only one irreducible component, so the slow manifold is 
 ``\mathcal{V}(f^{(0)}) = \mathcal{V}(H) = \{(B,S,0) \mid B,S \in \mathbb{R}\}``
 with dimension ``s=2`` as desired:
 ```@example 1
 dim_V[15] 
 ```
-Therefore, we can set the slow manifold accordingly.
+We need to define the slow manifold explicitly in order to check whether the
+reduction exists. 
+This also allows us to substitute the variables that got reduced according to
+the slow manifold in the reduced system.
 ```@example 1
 set_manifold!(reduction, [B, S, 0])
 ```
@@ -113,8 +116,8 @@ Now we can compute the reduced system.
 ```@example 1
 _, g = compute_reduction(reduction)
 ```
-The first return value is the system before variables are substituted as
-defined by the slow manifold.
+This returns the system before and after variables are substituted as defined
+by the slow manifold, respectively.
 The first two components ```g``` define the reduced system and can be rewritten as 
 ```math
 \begin{align*}
