@@ -7,7 +7,7 @@
 Find reductions onto the same slow manifold and return their numeric index.
 
 ### Arguments
-- `V`: Generators for the irreducible components of `𝑉(f⁰)` for each slow-fast separation as returned by `tfpv_candidates`
+- `V`: Generators for the irreducible components of `V(f0)` for each slow-fast separation as returned by `tfpv_candidates`
 - `Y`: Generators for one irreducible component that corresponds to the slow manifold
 
 See also: [`tfpv_candidates`](@ref)
@@ -25,20 +25,20 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Compute reductions for TFPVs `sf_separations[sf_separations]` onto slow manifold `M`.
+Compute reductions for TFPVs `sf_separations[idx]` onto slow manifold `M`.
 
 ### Description
-`Psi` for the product decomposition of `f⁰` and the slow manifold `M` depend on
-the irreducible component `Y` of `V(f⁰)`. 
+`Psi` for the product decomposition `f0=P⋅Psi` and the slow manifold `M` depend
+on the irreducible component `Y` of `V(f0)`. 
 Thus, for a particular choice of `Y`, we can compute all reduced systems for
-TFPVs for which `Y` is an irreducible component of `V(f⁰)` at once (the same
+TFPVs for which `Y` is an irreducible component of `V(f0)` at once (the same
 choice for `Psi` and `M` works in all those cases).
-This function is essentially a Convenience wrapper calling `set_manifold!`,
+This function is essentially a convenience wrapper calling `set_manifold!`,
 `set_decomposition!` and `compute_reduction` to speed up the process of
 computing reduced systems onto the same slow manifold.
 
 All possible choices of slow manifolds can be obtained with `unique_slow_manifolds`.
-To find all TFPVs that have slow manifolds in common, use `similar_reductions`.
+To find all TFPVs that have slow manifolds in common use `similar_reductions`.
 
 See also: [`unique_slow_manifolds`](@ref), [`similar_reductions`](@ref), [`compute_reduction`](@ref), [`Reduction`](@ref), [`set_manifold!`](@ref), [`set_decomposition!`](@ref)
 """
@@ -69,7 +69,6 @@ function compute_bulk_reductions(problem::ReductionProblem,
   G = OrderedDict([i => rg_i for (i,rg_i) in G])
   return G
 end
-
 
 """
     $(TYPEDSIGNATURES)

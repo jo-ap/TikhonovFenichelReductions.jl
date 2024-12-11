@@ -11,7 +11,15 @@ Order = [:type, :function]
 ## Computing a Tikhonov-Fenichel Reduction
 ```@autodocs
 Modules = [TikhonovFenichelReductions]
-Pages = ["reductions.jl"]
+Pages = ["reduction.jl"]
+Private = false
+Order = [:type, :function]
+```
+
+## Computing Multiple Tikhonov-Fenichel Reductions Simultaneously
+```@autodocs
+Modules = [TikhonovFenichelReductions]
+Pages = ["bulk_reductions.jl"]
 Private = false
 Order = [:type, :function]
 ```

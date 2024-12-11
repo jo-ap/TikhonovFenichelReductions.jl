@@ -80,7 +80,7 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Compute the irreducible components of V(f⁰) and their dimensions for a given
+Compute the irreducible components of `V(f0)` and their dimensions for a given
 TFPV candidate. 
 If there exist a reduction, the corresponding slow manifold must be contained
 in one of these components.
@@ -92,7 +92,7 @@ in one of these components.
 ### Description
 This function can be used if one wants to check whether a particular slow-fast
 separation of rates yields a reduction for any dimension.
-If the dimension of an irreducible component of V(f⁰) differs from what was
+If the dimension of an irreducible component of `V(f0)` differs from what was
 defined with `ReductionProblem`, the constructor `Reduction` can be called with
 the additional argument `s` specifying the dimension.
 
@@ -255,7 +255,7 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Set non-singular point on irreducible component of V(f⁰) corresponding to the slow manifold. 
+Set non-singular point on irreducible component of `V(f0)` corresponding to the slow manifold. 
 Typically, this can be done automatically by setting the slow manifold.
 
 See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`Reduction`](@ref)
@@ -271,7 +271,7 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Set product decomposition `f0=P⋅Psi` locally satisfying `𝑉(f0)=𝑉(Psi)`, where `P`
+Set product decomposition `f0=P⋅Psi` locally satisfying `V(f0)=V(Psi)`, where `P`
 is a matrix of rational functions  and `Psi` is a vector of polynomials.
 
 See also: [`set_manifold!`](@ref) [`set_point!`](@ref) [`Reduction`](@ref)
@@ -333,7 +333,7 @@ end
     $(TYPEDSIGNATURES)
 
 Try to automatically compute matrix of rational functions `P` from given vector
-of polynomials `Psi`, such that `f0=P⋅Psi` and `𝑉(f0)=𝑉(Psi)` holds locally.
+of polynomials `Psi`, such that `f0=P⋅Psi` and `V(f0)=V(Psi)` holds locally.
 
 NOTE: This works always if the drop in dimension `r=n-s=1`, but is experimental
 for `r>1`
@@ -341,7 +341,7 @@ for `r>1`
 ### Description
 Typically, `Psi` can be chosen from `s` independent entries of `f0`. 
 Practically one can consider the generators of the ideals defining the
-irreducible components of `𝑉(f0)` as entries for `Psi` (possibly rewriting the
+irreducible components of `V(f0)` as entries for `Psi` (possibly rewriting the
 rational equations as polynomials by multiplying appropriately with
 parameters occurring in a denominator).
 """

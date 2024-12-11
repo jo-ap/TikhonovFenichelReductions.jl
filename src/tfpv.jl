@@ -202,10 +202,10 @@ end
 
 # ### Description
 # The slow manifold on which the reduced system is defined is contained in
-# `𝑉(f0)`, the affine variety of `f0`, i.e. the zero set of the fast /
+# `V(f0)`, the affine variety of `f0`, i.e. the zero set of the fast /
 # unperturbed part of the system (when we consider the entries as polynomials in
 # the dynamic varieties `x`, so that the variety is a subset of the phase space).
-# Thus, `𝑉(f0)` needs to have an irreducible component with dimension `s`, which
+# Thus, `V(f0)` needs to have an irreducible component with dimension `s`, which
 # we can check using the Krull dimension of the corresponding ideal.
 
 # By default, all 2ᵐ-2 possible slow-fast separations of the m parameters are
@@ -251,19 +251,19 @@ end
 #     # Check if Krull dimension is at least s
 #     I = ideal(R, f0)
 #     if dim(I) >= problem.s
-#       # compute the irreducible components of V(f⁰)
+#       # compute the irreducible components of V(f0)
 #       if compute_primary_decomposition 
 #         PD = primary_decomposition(I)
 #         Y = [gens(groebner_basis(Q[2]; complete_reduction=true)) for Q in PD]
 #         Y_dim = dim.([ideal(R, Yᵢ) for Yᵢ in Y])
 #         # check if there is an irreducible component of the affine variety
-#         # V(f⁰) with dimension exactly s
+#         # V(f0) with dimension exactly s
 #         if exact_dimension && any(Y_dim .== problem.s)
 #           push!(V, Y)
 #           push!(dim_components, Y_dim)
 #           idx_candidates[cnt] = true
 #         end
-#       # do not compute the irreducible components of V(f⁰)
+#       # do not compute the irreducible components of V(f0)
 #       else
 #         idx_candidates[cnt] = true
 #       end
@@ -303,14 +303,14 @@ end
     $(TYPEDSIGNATURES)
 
 Find all slow-fast separations `π⁺` that are TFPVs by using the necessary conditions
-- the affine variety `V(f⁰)` contains an irreducible component `Y` of dimension `s` 
+- the affine variety `V(f0)` contains an irreducible component `Y` of dimension `s` 
 - the `s`-th coefficient of the characteristic polynomial of `D₁f(x,π⁺)` is non-zero for `x∈Y`
 
 ### Description
 The irreducible components are obtained by computing a minimal primary decomposition. 
 The Jacobian at a point in an irreducible component Y is constructed
 symbolically by computing normal forms with respect to a Gröbner basis G, s.t.
-𝑉(G)=Y. 
+V(G)=Y. 
 
 To obtain all general TFPVs and not just slow-fast separations, one can use the
 function `tfpv_groebner_basis`, which relies on computing a Gröbner basis
@@ -327,7 +327,7 @@ function tfpv_candidates(problem::ReductionProblem)
   f = problem._f(_x, _p)
   J = matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in _x] for fᵢ in f])
   # keep track of which slow-fast separation satisfies the conditions and save
-  # irreducible components of V(f⁰) and their dimensions
+  # irreducible components of V(f0) and their dimensions
   idx_keep = Vector{Vector{Bool}}(undef, length(slow_fast))
   components = Vector{Vector{MPolyIdeal}}()
   dim_components = Vector{Vector{Int}}()

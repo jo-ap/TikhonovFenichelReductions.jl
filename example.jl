@@ -39,12 +39,12 @@ problem = ReductionProblem(f, x, p, s)
 sf_separations, V, dim_V = tfpv_candidates(problem);
 
 # find all general TFPVs using necessary conditions on the determinants of D₁f
-# G is a Gröbner basis for this, such that every TFPV of dimension s lies in 𝑉(G)
+# G is a Gröbner basis for this, such that every TFPV of dimension s lies in V(G)
 G = tfpv_groebner_basis(problem)
 
 # Typically, the computation of the Gröbner basis in tfpv_groebner_basis is
 # much slower than the computation for slow-fast fast separations in
-# tfpv_candidates, which only computes the irreducible components of 𝑉(f(⋅,p_sf))
+# tfpv_candidates, which only computes the irreducible components of V(f(⋅,p_sf))
 # and their dimension via a minimal primary computation and the Krull
 # dimensions for the corresponding ideals. However, there might exist TFPVs
 # which are not slow-fast separations. Here, this is not the case, because G is
@@ -94,7 +94,7 @@ jacobian_tfpv_at_x0(reduction)
 # Get all unique slow manifolds for which reductions can exist
 V_unique = unique_slow_manifolds(problem, V, dim_V)
 
-# Get all indices for TFPVs with a reduction onto 𝑉(H)
+# Get all indices for TFPVs with a reduction onto V(H)
 idx_similar = similar_reductions(V, V_unique[4])
 
 # compute reductions for all TFPVs that have the same manifold (we can choose the same P-Ψ decomposion for f⁰)

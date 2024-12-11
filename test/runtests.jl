@@ -21,7 +21,7 @@ sf_separations, V, dim_V = tfpv_candidates(prob);
 end
 
 @testset "Computing Reductions" begin
-  include("reductions.jl") 
+  include("reduction.jl") 
 end
 
 @testset "Output" begin

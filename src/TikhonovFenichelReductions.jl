@@ -38,7 +38,7 @@ using AbstractAlgebra.Generic: FracField, FracFieldElem, MatSpaceElem, MPoly, Po
 
 ## load code
 include("./tfpv.jl")
-include("./reductions.jl")
+include("./reduction.jl")
 include("./bulk_reductions.jl")
 include("./display.jl")
 include("./output.jl")
