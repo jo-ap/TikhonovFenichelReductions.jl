@@ -12,13 +12,19 @@ function f(x, p)
     k₁*e₀*S - (k₁*S + k₋₁ + k₂)*C
   ]
 end
+
 prob = ReductionProblem(f, x, p, 1; idx_slow_fast = [true, true, false, true])
-idx, G, (V, dim_Y) = tfpv_candidates(prob);
+sf_separations, V, dim_V = tfpv_candidates(prob);
 
 @testset "Finding TFPVs" begin
-  include("finding_tfpv.jl") 
+  include("tfpv.jl") 
 end
 
-@testset "Computing TFPVs" begin
-  include("computing_tfpv.jl") 
+@testset "Computing Reductions" begin
+  include("reductions.jl") 
 end
+
+@testset "Output" begin
+  include("output.jl")
+end
+
