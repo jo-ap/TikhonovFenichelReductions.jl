@@ -350,8 +350,9 @@ function tfpv_candidates(problem::ReductionProblem)
         # check if dimension of irreducible component Yⱼ is as desired
         if dim_Y[j] == problem.s
           # substitute x = x0 ∈ Yⱼ
+          # we need that Y[j] is the radical of Qᵢ in order for normal forms work !
           M = map(f -> normal_form(f, Y[j]), J_p_sf)
-          # Let Χ(τ) = τⁿ+ σₙ(x,p_sf)τ⁽ⁿ⁻¹⁾ + … + σ₁(x,p_sf)τ + σ₀(x,p_sf) be the characteristic polynomial 
+          # Let Χ(τ) = τⁿ+ σₙ₋₁(x,p_sf)τ⁽ⁿ⁻¹⁾ + … + σ₁(x,p_sf)τ + σ₀(x,p_sf) be the characteristic polynomial 
           # for x0 ∈ Yⱼ and p_sf⁺ a TFPV for dimension s we have σₛ(x0,p_sf⁺) ≠ 0 
           keep_i[j] = coeff(charpoly(M), problem.s) != 0
         end 

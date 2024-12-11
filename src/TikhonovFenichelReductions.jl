@@ -29,6 +29,7 @@ end
 
 ## Dependencies
 using DocStringExtensions
+using OrderedCollections
 using Oscar
 using LaTeXStrings
 using Latexify
@@ -39,6 +40,7 @@ using AbstractAlgebra.Generic: FracField, FracFieldElem, MatSpaceElem, MPoly, Po
 include("./tfpv.jl")
 include("./reductions.jl")
 include("./bulk_reductions.jl")
+include("./display.jl")
 include("./output.jl")
 
 end # module TikhonovFenichelReductions

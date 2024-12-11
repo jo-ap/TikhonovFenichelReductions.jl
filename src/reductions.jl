@@ -58,18 +58,6 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Print slow and fast parameters.
-"""
-function show_slow_fast(reduction::Reduction)
-  p = reduction.p
-  sf_separation = reduction.sf_separation
-  println("slow: " * join(string.(p[.!sf_separation]), ", "))
-  println("fast: " * join(string.(p[sf_separation]), ", "))
-end
-
-"""
-    $(TYPEDSIGNATURES)
-
 Split RHS of system into fast/unperturbed and slow/perturbed part for a given
 slow-fast separation of rates.
 """
@@ -334,7 +322,7 @@ function get_P(reduction::Reduction, Psi)
     U, Q, H = reduce_with_quotients_and_unit(reduction.f0, Psi)
     if any(H .!= 0)
       @warn "Could not automatically compute P"
-      return nothing
+      return
     else
       return U*Q
     end
@@ -394,7 +382,7 @@ function compute_reduction(reduction::Reduction)
   else
     # reduction cannot be computed
     @error "Reduced system cannot be computed. You need to set a valid product decomposition, i.e. P and Psi such that f0 = P⋅Psi"
-    return nothing, nothing
+    return, nothing
   end
   # Check if slow manifold is set 
   if reduction.success[1]
@@ -436,7 +424,7 @@ function compute_directional_reduction(reduction::Reduction, γ::Function)
   else
     # reduction cannot be computed
     @error "Reduced system cannot be computed. You need to set a valid product decomposition, i.e. P and Psi such that f0 = P⋅Psi"
-    return nothing, nothing
+    return, nothing
   end
   # Check if slow manifold is set 
   if reduction.success[1]

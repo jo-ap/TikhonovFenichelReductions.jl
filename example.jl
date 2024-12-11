@@ -33,7 +33,7 @@ end
 s = 2
 
 # create Problem
-problem = ReductionProblem(f, x, p, s);
+problem = ReductionProblem(f, x, p, s)
 
 # find slow-fast separations that are TFPVs
 sf_separations, V, dim_V = tfpv_candidates(problem);
@@ -67,12 +67,11 @@ print_results(problem, sf_separations, V, dim_V)
 
 # The Rosenzweig-MaxArthur system corresponds to the TFPV candidate 15 (See section 3.3 in the paper).
 # instantiate reduction 
-reduction = Reduction(problem, sf_separations[15]);
-show_slow_fast(reduction)
+reduction = Reduction(problem, sf_separations[15])
 
 # look at the variety that contains the slow manifold
 V[15] # => M₀ = {(B,S,0) | B,S ∈ ℝ}
-dim_V[15] # has Krull dimension 2 (i.e. the topological dimension of M₀ in ℂ[B,S,H], but also in ℝ[B,S,H] if there exists a non-singular point)
+dim_V[15] # has dimension 2 
 set_manifold!(reduction, [B, S, 0])
 
 # define product decomposion f0 = P⋅Psi (can be done via specifying Psi with V(Psi) = V(f⁰) in this case)
@@ -93,7 +92,7 @@ jacobian_tfpv_at_x0(reduction)
 ## Compute multiple reductions at once
 
 # Get all unique slow manifolds for which reductions can exist
-V_unique = TikhonovFenichelReductions.unique_slow_manifolds(problem, V, dim_V)
+V_unique = unique_slow_manifolds(problem, V, dim_V)
 
 # Get all indices for TFPVs with a reduction onto 𝑉(H)
 idx_similar = similar_reductions(V, V_unique[4])
@@ -102,12 +101,7 @@ idx_similar = similar_reductions(V, V_unique[4])
 R = compute_bulk_reductions(problem, sf_separations, idx_similar, [H], [B,S,0]; idx_components=[1,2]);
 
 # Access the `Reduction` object and reduced system with the indices as in `idx_similar`
-reduction_3 = R[3][1];
+reduction_3 = R[3][1]
 g_3 = R[3][2]
-
-
-
-
-
 
 

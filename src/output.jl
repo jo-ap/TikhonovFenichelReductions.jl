@@ -42,13 +42,12 @@ function _print_tfpv(problem::ReductionProblem,
   if latex
     parameters = [latexify(p_sfᵢ; env=:raw) for p_sfᵢ in string.(problem.p_sf)]
     m = length(parameters)
-    str = "\\begin{array}{r$(repeat('c',length(string(problem.p_sf))))} i & $(join(parameters, "^* & ")) \\\\ \n"
+    str = "\\begin{array}{r$(repeat('c',length(problem.p_sf)))} i & $(join(parameters .* "^\\star", " & ")) \\\\ \n"
     for i in idx
       str *= "$i & " * join([sf_separations[i][k] ? parameters[k] : "\\cdot" for k = 1:m], " & ") * " \\\\ \n"
     end
     str *= "\\end{array}"
-    lstr = latexstring(str)
-    print(lstr)
+    println(str)
   else
     subscripts = ["₀","₁","₂","₃","₄","₅","₆","₇","₈","₉"]
     numbers = string.(0:9)
@@ -65,7 +64,7 @@ function _print_tfpv(problem::ReductionProblem,
     end
     print(str)
   end
-  return nothing
+  return
 end
 function _print_tfpv(problem::ReductionProblem,
                      sf_separations::Vector{Vector{Bool}},
@@ -98,16 +97,16 @@ function _print_varieties(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldEle
                          latex::Bool,
                          idx::AbstractVector{Int})
   if latex
-    str_latex = "\\begin{array}{rll} i & \\mathcal{V}(f(\\cdot, \\tilde{\\pi_i})) & \\dim_{\\textrm{Krull}} \\\\ \n"
+    str_latex = "\\begin{array}{rll} i & \\mathcal{V}(f(\\cdot, \\pi^\\star)) & \\dim_{\\textrm{Krull}} \\\\ \n"
     for i in idx
-      Q = V[i]
       str_latex *= "$i"
-      for j in eachindex(Q)
-        str_latex *= " & " * latexify.(string.(Q[i][j]); env=:raw, cdot=false) * " & $(dim_V[i][j]) \\\\ \n"
+      for j in eachindex(V[i])
+        str_latex *= " & \\langle " * join(latexify.(string.(V[i][j]); env=:raw, cdot=false), ", ") * " \\rangle & $(dim_V[i][j]) \\\\ \n"
       end
     end
     str_latex *= "\\end{array}"
-    return latexstring(str_latex)
+    println(str_latex)
+    return 
   else
     subscripts = ["₀","₁","₂","₃","₄","₅","₆","₇","₈","₉"]
     numbers = string.(0:9)
@@ -121,12 +120,12 @@ function _print_varieties(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldEle
         join(V_str, "\n" * pad)
       println(str)
     end
-    return nothing
+    return
   end
 end
-function _print_varieties(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}};
+function _print_varieties(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}},
                          dim_V::Vector{Vector{Int}},
-                         latex::Bool=false,
+                         latex::Bool,
                          idx::Vector{Bool})
   idx = idx == [] ? (1:length(V)) : boolean_to_numeric(idx)
   _print_varieties(V, dim_V, latex, idx)
@@ -189,6 +188,4 @@ function print_system(reduction::Reduction; latex=false)
     "f(x,π̃) = (" * join(string.(reduction.f0), ", ") * ") + ε(" * join(string.(reduction.f1), ", ") * ")"
   end
 end 
-
-
 

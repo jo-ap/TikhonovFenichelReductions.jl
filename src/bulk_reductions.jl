@@ -66,7 +66,7 @@ function compute_bulk_reductions(problem::ReductionProblem,
     cnt += 1
     println("")
   end
-  G = sort(Dict([i => rg_i for (i,rg_i) in G]))
+  G = OrderedDict([i => rg_i for (i,rg_i) in G])
   return G
 end
 
