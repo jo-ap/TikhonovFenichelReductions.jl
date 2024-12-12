@@ -123,8 +123,8 @@ This also means ``\dim \mathcal{V}_{\mathbb{C}}(f(\cdot,\pi^\star)) = \dim
 \mathcal{V}_{\mathbb{R}}(f(\cdot,\pi^\star))`` locally for the irreducible
 component containing the non-singular point.
 
-Lastly, we define a product decomposition ``f(\cdot,pi^star) = P \cdot \psi``
-with ``\mathcal{V}(\psi) = \mathcal{V}(f(\cdot,pi^star))``.
+Lastly, we define a product decomposition ``f(\cdot,\pi^\star) = P \cdot \psi``
+with ``\mathcal{V}(\psi) = \mathcal{V}(f(\cdot,\pi^\star))``.
 If ``n-s=1``, as is the case here, this can always be done by specifying only
 ``\psi``:
 ```@example 1
