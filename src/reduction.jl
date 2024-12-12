@@ -276,7 +276,11 @@ is a matrix of rational functions  and `Psi` is a vector of polynomials.
 
 See also: [`set_manifold!`](@ref) [`set_point!`](@ref) [`Reduction`](@ref)
 """
-function set_decomposition!(reduction::Reduction, P::MatSpaceElem, Psi)
+function set_decomposition!(reduction::Reduction, P::Union{MatSpaceElem,VecOrMat}, Psi)
+  _set_decomposition!(reduction, P, Psi)
+end
+
+function _set_decomposition!(reduction::Reduction, P::MatSpaceElem, Psi)
   n = length(reduction.x)
   r = n - reduction.s
   try Psi = reshape(Psi, r, 1)
@@ -302,8 +306,7 @@ function set_decomposition!(reduction::Reduction, P::MatSpaceElem, Psi)
   end
   return is_equal
 end
-
-function set_decomposition!(reduction::Reduction, P::VecOrMat, Psi)
+function _set_decomposition!(reduction::Reduction, P::VecOrMat, Psi)
   n = length(reduction.x)
   r = n - reduction.s
   try P = reshape(P, n, r)
@@ -312,7 +315,7 @@ function set_decomposition!(reduction::Reduction, P::VecOrMat, Psi)
   end
   P = reduction.K.(P)
   P = parent(reduction.P)(P)
-  set_decomposition!(reduction, P, Psi)
+  _set_decomposition!(reduction, P, Psi)
 end
   
 # try computing matrix of rational functions P from Psi
