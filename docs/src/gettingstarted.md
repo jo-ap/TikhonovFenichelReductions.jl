@@ -49,6 +49,18 @@ problem = ReductionProblem(f, x, p, s)
 ```
 Compute all slow-fast separations that are TFPVs by using necessary conditions
 for the existence of a reduction. 
+This returns a vector of boolean indices for each TFPV candidate, where ``0``
+corresponds to a small and ``1`` to a large parameter.
+In addition, we obtain the generators of the irreducible components of the
+affine variety 
+```math
+\mathcal{V}_{\mathbb{C}}(f(\cdot,\pi^\star)) = \{x\in\mathbb{C}^n \mid \forall i : f_i(x,\pi^\star)=0\}
+```
+and their dimension, where ``\pi^\star`` is defined by the corresponding
+slow-fast separation in `sf_separation`. 
+Note that we later check whether the variety taken in ``\mathbb{R}^n`` has the
+same dimension (i.e. if there exists a real non-singular point).
+
 ```@example 1
 sf_separation, V, dim_V = tfpv_candidates(problem)
 ```
@@ -86,12 +98,15 @@ To find the slow manifold, we can consider the affine variety defined by the van
 ```@example 1
 V[15]
 ```
-We can see, that there is only one irreducible component, so the slow manifold is 
-``\mathcal{V}(f^{(0)}) = \mathcal{V}(H) = \{(B,S,0) \mid B,S \in \mathbb{R}\}``
-with dimension ``s=2`` as desired:
+which has (complex) dimension
 ```@example 1
 dim_V[15] 
 ```
+as a variety. 
+We can see, that there is only one irreducible component, so the slow manifold is 
+``\mathcal{V}_{\mathbb{R}}(H) = \{(B,S,0) \mid B,S \in \mathbb{R}\}``
+with dimension ``s=2`` as desired.
+
 We need to define the slow manifold explicitly in order to check whether the
 reduction exists. 
 This also allows us to substitute the variables that got reduced according to
@@ -104,11 +119,14 @@ Note that in this case any generic point on the affine variety is non-singular
 and can be chosen.  
 Thus, we don't have to call `set_point!` to set a non-singular point explicitly
 on whose neighbourhood the reduction exists. 
+This also means ``\dim \mathcal{V}_{\mathbb{C}}(f(\cdot,\pi^\star)) = \dim
+\mathcal{V}_{\mathbb{R}}(f(\cdot,\pi^\star))`` locally for the irreducible
+component containing the non-singular point.
 
-Lastly, we define a product decomposition ``f^{(0)} = P \cdot \psi`` with 
-``\mathcal{V}(\psi) = \mathcal{V}(f^{(0)})``.
-If ``n-s=1``, this can always be done by specifying only ``\psi``:
-here:
+Lastly, we define a product decomposition ``f(\cdot,pi^star) = P \cdot \psi``
+with ``\mathcal{V}(\psi) = \mathcal{V}(f(\cdot,pi^star))``.
+If ``n-s=1``, as is the case here, this can always be done by specifying only
+``\psi``:
 ```@example 1
 set_decomposition!(reduction, [H])
 ```
@@ -118,7 +136,7 @@ _, g = compute_reduction(reduction)
 ```
 This returns the system before and after variables are substituted as defined
 by the slow manifold, respectively.
-The first two components ```g``` define the reduced system and can be rewritten as 
+The first two components of ```g``` define the reduced system and can be rewritten as 
 ```math
 \begin{align*}
 \frac{dB}{dt} &= \rho B (1 - B) - \alpha(\eta + \beta) S \frac{B}{\delta + \gamma B} \\

@@ -5,7 +5,7 @@
 Modules = [TikhonovFenichelReductions]
 Pages = ["tfpv.jl"]
 Private = false
-Order = [:type, :function]
+Order = [:function, :type]
 ```
 
 ## Computing a Tikhonov-Fenichel Reduction
@@ -13,7 +13,7 @@ Order = [:type, :function]
 Modules = [TikhonovFenichelReductions]
 Pages = ["reduction.jl"]
 Private = false
-Order = [:type, :function]
+Order = [:function, :type]
 ```
 
 ## Computing Multiple Tikhonov-Fenichel Reductions Simultaneously
@@ -21,7 +21,7 @@ Order = [:type, :function]
 Modules = [TikhonovFenichelReductions]
 Pages = ["bulk_reductions.jl"]
 Private = false
-Order = [:type, :function]
+Order = [:function, :type]
 ```
 
 ## Output

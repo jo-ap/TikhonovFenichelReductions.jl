@@ -23,8 +23,8 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Print slow-fast separations to terminal or return LaTeXString that can be
-included in tex file.
+Print slow-fast separations to terminal or use `latex=true` to print LaTeX
+instead.
 Optionally only print subset defined by (boolean or numeric) index set `idx`.
 """
 function print_tfpv(problem::ReductionProblem,
@@ -53,7 +53,7 @@ function _print_tfpv(problem::ReductionProblem,
     numbers = string.(0:9)
     max_width = ndigits(length(sf_separations)) 
     field_widths = [length(p_sfᵢ) for p_sfᵢ in string.(problem.p_sf)]
-    str = "π̃ $(repeat(" ", max_width-1)) = ($(join(string.(problem.p_sf), ", ")))\n"
+    str = "π $(repeat(" ", max_width-1)) = ($(join(string.(problem.p_sf), ", ")))\n"
     str *= repeat("_", length(str)-2) * "\n"
     for i in idx
       idx_fast = sf_separations[i]
@@ -80,7 +80,7 @@ end
 Print generators of ideals corresponding to the irreducible components of
 varieties `V(f0)` for TFPV candidates and their dimension (`V` and `dim_V` as
 returned by or `tfpv_candidates`).
-Use keyword argument `latex=true` to generate latex string instead.
+Use keyword argument `latex=true` to print LaTeX code instead.
 
 See also: [`tfpv_candidates`](@ref), [`print_tfpv`](@ref), [`print_results`](@ref)
 """

@@ -22,7 +22,7 @@ given slow-fast separation of rates.
 - `T::PolyRing{FracFieldElem{QQMPolyRingElem}}`: Ring in `x` over Fraction field `K`
 - `chi::Poly{FracFieldElem{QQMPolyRingElem}}`: Characteristic polynomial of `Df_x0`
 - `M::Vector{FracFieldElem{QQMPolyRingElem}}`: Slow manifold defined in all components of system
-- `x0::Vector{FracFieldElem{QQMPolyRingElem}}`: Non-singular point in the irreducible component of V(f0) containing the slow manifold
+- `x0::Vector{FracFieldElem{QQMPolyRingElem}}`: Non-singular point in the irreducible component of `V(f0)` containing the slow manifold
 - `K::FracField{QQMPolyRingElem}`: Fraction field in `p`
 - `P::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}`: Matrix with rational functions, such that `f0=P⋅Psi`
 - `Psi::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}`: Vector with polynomials, such that `f0=P⋅Psi`
@@ -301,7 +301,8 @@ function set_decomposition!(reduction::Reduction, P::MatSpaceElem, Psi)
     @warn "P⋅Psi ≠ f0: Product decomposition cannot be set"
   end
   return is_equal
-end,
+end
+
 function set_decomposition!(reduction::Reduction, P::VecOrMat, Psi)
   n = length(reduction.x)
   r = n - reduction.s
@@ -335,7 +336,7 @@ end
 Try to automatically compute matrix of rational functions `P` from given vector
 of polynomials `Psi`, such that `f0=P⋅Psi` and `V(f0)=V(Psi)` holds locally.
 
-NOTE: This works always if the drop in dimension `r=n-s=1`, but is experimental
+NOTE: This always works if the drop in dimension `r=n-s=1`, but is experimental
 for `r>1`
 
 ### Description
@@ -357,8 +358,8 @@ end
 Compute the reduced system after the slow manifold, non-singular point and
 product decomposition have been set successfully.
 
-The function returns a tuple containing the reduced system in raw form and with
-variables substituted according to the slow manifold.
+The function returns reduced system in raw form and with variables substituted
+according to the slow manifold.
 
 See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`set_point!`](@ref), [`compute_bulk_reductions`](@ref), [`Reduction`](@ref)
 """
