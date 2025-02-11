@@ -18,15 +18,6 @@ export ReductionProblem,
   compute_reduction, compute_directional_reduction,
   similar_reductions, unique_slow_manifolds, compute_bulk_reductions
 
-# greetings
-function __init__()
-  if isinteractive() && Base.JLOptions().banner != 0
-    println("\n==== TikhonovFenichelReductions.jl ====\n")
-    println("Compute Tikhonov-Fenichel reductions for polynomial ODE systems.")
-    println("This package relies on Oscar.jl.\n")
-  end
-end
-
 ## Dependencies
 using DocStringExtensions
 using OrderedCollections
@@ -35,6 +26,18 @@ using LaTeXStrings
 using Latexify
 
 using AbstractAlgebra.Generic: FracField, FracFieldElem, MatSpaceElem, MPoly, PolyRing, Poly, RationalFunctionFieldElem
+
+import Pkg
+TFR_VERSION = Pkg.project().version
+
+# greetings
+function __init__()
+  if isinteractive() && Base.JLOptions().banner != 0
+    println("\n==== TikhonovFenichelReductions.jl v$(TFR_VERSION) ====\n")
+    println("Compute Tikhonov-Fenichel reductions for polynomial ODE systems.")
+    println("This package relies on Oscar.jl.\n")
+  end
+end
 
 ## load code
 include("./tfpv.jl")
