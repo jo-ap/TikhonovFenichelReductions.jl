@@ -1,3 +1,4 @@
+
 """
     $(TYPEDEF)
 
@@ -6,24 +7,26 @@ system, for which all slow-fast separations of rates yielding a reduction onto
 dimension `s` are considered. 
 
 ### Fields 
-- `f`: RHS of ODE system as a vector of polynomials
-- `x`: Vector of dynamic variables
-- `p`: Vector of all parameters
-- `s`: Dimension of reduced system
-- `p_sf`: Vector of parameters to be considered slow or fast (all others are considered fixed)
-- `idx_slow_fast`: Boolean index, such that `p_sf=p[idx_slow_fast]`
-- `_f`: RHS of ODE system as a Julia function with arguments `x` and `p`
+- `f::Vector{QQMPolyRingElem}`: RHS of ODE system as a vector of polynomials
+- `x::Vector{QQMPolyRingElem}`: Vector of dynamic variables
+- `p::Vector{QQMPolyRingElem}`: Vector of all parameters
+- `s::Int`: Dimension of reduced system
+- `p_sf::Vector{QQMPolyRingElem}`: Vector of parameters to be considered slow or fast (all others are considered fixed)
+- `idx_slow_fast::Vector{Bool}`: Boolean index, such that `p_sf=p[idx_slow_fast]`
+- `J::MatSpaceElem{QQMPolyRingElem}`: Jacobian of `f`
+- `_f::Function`: RHS of ODE system as a Julia function with arguments `x` and `p`
 
 The type `QQMPolyRingElem` is used in [Oscar.jl](https://www.oscar-system.org/)
 to represent elements of a polynomial ring; here this is `ℝ[x,p]`.
 """
 mutable struct ReductionProblem 
-  f::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
-  x::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
-  p::Vector{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}
+  f::Vector{QQMPolyRingElem}
+  x::Vector{QQMPolyRingElem}
+  p::Vector{QQMPolyRingElem}
   s::Int
-  p_sf::Vector{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}
+  p_sf::Vector{QQMPolyRingElem}
   idx_slow_fast::Vector{Bool}
+  J::MatSpaceElem{QQMPolyRingElem}
   _f::Function
 end
 
@@ -60,8 +63,8 @@ function ReductionProblem(
   _, _x, _p, _f = parse_system(f, x, p)
   idx_slow_fast = length(idx_slow_fast) > 0 ? idx_slow_fast : [true for i in 1:length(p)]   
   _p_sf = _p[idx_slow_fast]
-  # J = jacobian(_f, _x)
-  ReductionProblem(_f, _x, _p, s, _p_sf, idx_slow_fast, f)
+  J = jacobian(_f, _x)
+  ReductionProblem(_f, _x, _p, s, _p_sf, idx_slow_fast, J, f)
 end
 
 """
@@ -91,8 +94,9 @@ they can be used with Oscar.jl. Return the polynomial Ring `R = ℚ[x,p]`
 together with `x`, `p` and `f` parsed to the appropriate OSCAR types.
 """
 function parse_system(f::Function, x::Vector{String}, p::Vector{String})
-  F, _p = rational_function_field(QQ, p)
-  R, _x = polynomial_ring(F, x)
+  R, v = polynomial_ring(QQ, [x..., p...])
+  _x = v[1:length(x)]
+  _p = v[length(x)+1:end]
   _f = f(_x, _p)
   return R, _x, _p, _f
 end
@@ -106,15 +110,6 @@ binary.
 function num2bin(i::Int, n::Int)
   sf_separation = bitstring(i)[(end-n+1):end]
   sf_separation = [i == '1' for i in sf_separation]
-end
-
-"""
-    $(TYPEDSIGNATURES)
-
-Compute Jacobian of `f` with respect to `x`.
-"""
-function jacobian(f::Vector{<:MPolyRingElem}, x::Vector{<:MPolyRingElem})
-  matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in x] for fᵢ in f])
 end
 
 """
@@ -287,12 +282,13 @@ end
 
 Return parameter vector where all slow rates are set to zero.
 """
-function get_tfpv(problem::ReductionProblem, sf_separation::Vector{Bool})
-  _p = copy(problem.p)
-  _p[problem.idx_slow_fast] = _p[problem.idx_slow_fast].*sf_separation
+function get_tfpv(p, idx_slow_fast, sf_separation)
+  _p = copy(p)
+  _p[idx_slow_fast] = _p[idx_slow_fast].*sf_separation
   return _p
 end
-function update_coefficients(f::MPoly{T}, p::Vector{T}) where T <: RationalFunctionFieldElem
+
+function update_cofficients(f, p)
   if f == 0
     return f 
   else
@@ -325,8 +321,11 @@ See also: [`tfpv_groebner_basis`](@ref), [`print_results`](@ref), [`print_tfpv`]
 function tfpv_candidates(problem::ReductionProblem)
   # check all possible slow-fast separations for sufficient conditions to be a TFPV for dimension s
   slow_fast = num2bin.(1:(2^length(problem.p_sf)-2), length(problem.p_sf)) 
-  # Jacobian of the system
-  J = jacobian(problem.f, problem.x)
+  # define all polynomials and the Jacobian of f in ℝ(p_sf)[x]
+  F, _p = rational_function_field(QQ, string.(problem.p))
+  R, _x = polynomial_ring(F, string.(problem.x))
+  f = problem._f(_x, _p)
+  J = matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in _x] for fᵢ in f])
   # keep track of which slow-fast separation satisfies the conditions and save
   # irreducible components of V(f0) and their dimensions
   idx_keep = Vector{Vector{Bool}}(undef, length(slow_fast))
@@ -334,8 +333,8 @@ function tfpv_candidates(problem::ReductionProblem)
   dim_components = Vector{Vector{Int}}()
   for i in eachindex(slow_fast)
     sf = slow_fast[i]
-    tfpv_candidate = get_tfpv(problem, sf)
-    f0 = problem._f(problem.x, tfpv_candidate)
+    tfpv_candidate = get_tfpv(_p, problem.idx_slow_fast, sf)
+    f0 = problem._f(_x, tfpv_candidate)
     I = ideal(f0)
     dim_I = dim(I)
     if dim_I < problem.s
@@ -345,13 +344,13 @@ function tfpv_candidates(problem::ReductionProblem)
       Y = [Q[2] for Q in PD]
       dim_Y = dim.(Y)
       # set the slow parameters to zero in Jacobian
-      J_p_sf = map(f -> update_coefficients(f, tfpv_candidate), J)
+      J_p_sf = map(f -> update_cofficients(f, tfpv_candidate), J)
       keep_i = [false for _ in Y]
       for j in eachindex(Y) 
         # check if dimension of irreducible component Yⱼ is as desired
         if dim_Y[j] == problem.s
           # substitute x = x0 ∈ Yⱼ
-          # we need that Y[j] is the radical of Qᵢ in order for normal forms to work !
+          # we need that Y[j] is the radical of Qᵢ in order for normal forms work !
           M = map(f -> normal_form(f, Y[j]), J_p_sf)
           # Let Χ(τ) = τⁿ+ σₙ₋₁(x,p_sf)τ⁽ⁿ⁻¹⁾ + … + σ₁(x,p_sf)τ + σ₀(x,p_sf) be the characteristic polynomial 
           # for x0 ∈ Yⱼ and p_sf⁺ a TFPV for dimension s we have σₛ(x0,p_sf⁺) ≠ 0 
