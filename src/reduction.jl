@@ -1,3 +1,4 @@
+
 ## Computing a reduction
 """
     $(TYPEDEF)
@@ -6,54 +7,53 @@ Type that holds all information to compute a Tikhonov-Fenichel reduction for a
 given slow-fast separation of rates.
 
 ### Fields 
-- `sf_separation`: slow-fast separation (0: slow, 1: fast)
-- `s`: Dimension of reduced system (= dimension of slow manifold)
-- `R`: Ring over rationals in `x` and `p`
-- `x`: Dynamic variables of system 
-- `p`: All parameters
-- `_p`: All parameters, where slow parameters are set to 0
-- `p_sf`: Parameters, that are considered to be either small or large (all others are considered fixed)
-- `idx_slow_fast`: Boolean indices, s.t. `p_sf=p[idx_slow_fast]`
-- `f`: RHS of system as vector with elements of ring `R`
-- `f0`: Fast / unperturbed part of system as vector with elements of ring `R`
-- `f1`: Slow / perturbed part of system as vector with elements of ring `R`
-- `Df0`: Jacobian of `f0` w.r.t. `x`
-- `Df0_at_x0`: Jacobian of `f0` (w.r.t. `x`) at non-singular point `x0`
-- `T`: Ring in `x` over Fraction field `K`
-- `chi`: Characteristic polynomial of `Df_x0`
-- `M`: Slow manifold defined in all components of system
-- `x0`: Non-singular point in the irreducible component of `V(f0)` containing the slow manifold
-- `K`: Fraction field in `p`
-- `P`: Matrix with rational functions, such that `f0=P⋅Psi`
-- `Psi`: Vector with polynomials, such that `f0=P⋅Psi`
-- `DPsi`: Jacobian of `Psi`
-- `success`: Indicates whether slow manifold `M`, non-singular point `x0` and product decomposition `f0=P⋅Psi` have been set successfully
+- `sf_separation::Vector{Bool}`: slow-fast separation (0: slow, 1: fast)
+- `s::Int`: Dimension of reduced system (= dimension of slow manifold)
+- `R::QQMPolyRing`: Ring over rationals in `x` and `p`
+- `x::Vector{QQMPolyRingElem}`: Dynamic variables of system 
+- `p::Vector{QQMPolyRingElem}`: All parameters
+- `_p::Vector{QQMPolyRingElem}`: All parameters, where slow parameters are set to 0
+- `p_sf::Vector{QQMPolyRingElem}`: Parameters, that are considered to be either small or large (all others are considered fixed)
+- `idx_slow_fast::Vector{Bool}`: Boolean indices, s.t. `p_sf=p[idx_slow_fast]`
+- `f::Vector{QQMPolyRingElem}`: RHS of system as vector with elements of ring `R`
+- `f0::Vector{QQMPolyRingElem}`: Fast / unperturbed part of system as vector with elements of ring `R`
+- `f1::Vector{QQMPolyRingElem}`: Slow / perturbed part of system as vector with elements of ring `R`
+- `Df::MatSpaceElem{QQMPolyRingElem}`: Jacobian of `f`
+- `Df_x0::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}`: Jacobian of `f` at non-singular point `x0`
+- `T::PolyRing{FracFieldElem{QQMPolyRingElem}}`: Ring in `x` over Fraction field `K`
+- `chi::Poly{FracFieldElem{QQMPolyRingElem}}`: Characteristic polynomial of `Df_x0`
+- `M::Vector{FracFieldElem{QQMPolyRingElem}}`: Slow manifold defined in all components of system
+- `x0::Vector{FracFieldElem{QQMPolyRingElem}}`: Non-singular point in the irreducible component of `V(f0)` containing the slow manifold
+- `K::FracField{QQMPolyRingElem}`: Fraction field in `p`
+- `P::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}`: Matrix with rational functions, such that `f0=P⋅Psi`
+- `Psi::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}`: Vector with polynomials, such that `f0=P⋅Psi`
+- `DPsi::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}`: Jacobian of `Psi`
+- `success::Vector{Bool}`: Indicates whether slow manifold `M`, non-singular point `x0` and product decomposition `f0=P⋅Psi` have been set successfully
 """
 mutable struct Reduction
   sf_separation::Vector{Bool}
   s::Int
-  R::MPolyRing{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}
-  x::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
-  p::Vector{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}
-  _p::Vector{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}
-  p_sf::Vector{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}
+  R::QQMPolyRing
+  x::Vector{QQMPolyRingElem}
+  p::Vector{QQMPolyRingElem}
+  _p::Vector{QQMPolyRingElem}
+  p_sf::Vector{QQMPolyRingElem}
   idx_slow_fast::Vector{Bool}
-  f::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
-  f0::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
-  f1::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
-  Df0::MatSpaceElem{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
-  Df0_at_x0::MatSpaceElem{FracFieldElem{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}
-  T::PolyRing{FracFieldElem{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}
-  chi::Poly{FracFieldElem{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}
-  M::Vector{FracFieldElem{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}
-  x0::Vector{FracFieldElem{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}
-  K::FracField{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
-  P::MatSpaceElem{FracFieldElem{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}
-  Psi::MatSpaceElem{FracFieldElem{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}
-  DPsi::MatSpaceElem{FracFieldElem{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}
+  f::Vector{QQMPolyRingElem}
+  f0::Vector{QQMPolyRingElem}
+  f1::Vector{QQMPolyRingElem}
+  Df::MatSpaceElem{QQMPolyRingElem}
+  Df_x0::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}
+  T::PolyRing{FracFieldElem{QQMPolyRingElem}}
+  chi::Poly{FracFieldElem{QQMPolyRingElem}}
+  M::Vector{FracFieldElem{QQMPolyRingElem}}
+  x0::Vector{FracFieldElem{QQMPolyRingElem}}
+  K::FracField{QQMPolyRingElem}
+  P::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}
+  Psi::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}
+  DPsi::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}
   success::Vector{Bool}
 end
-
 
 """
     $(TYPEDSIGNATURES)
@@ -61,10 +61,10 @@ end
 Split RHS of system into fast/unperturbed and slow/perturbed part for a given
 slow-fast separation of rates.
 """
-function splitsystem(problem::ReductionProblem, sf_separation::Vector{Bool})
-  p_tfpv = get_tfpv(problem, sf_separation)
-  f0 = [update_coefficients(_f, p_tfpv) for _f in problem.f]
-  f1 = problem.f .- f0 
+function splitsystem(f::Vector{QQMPolyRingElem}, p_sf::Vector{QQMPolyRingElem}, sf_separation::Vector{Bool})
+  R = parent(f[1])
+  f0 = [evaluate(fᵢ, p_sf[.!sf_separation], zero.(p_sf[.!sf_separation])) for fᵢ in f]
+  f1 = f .- f0 
   return f0, f1
 end
 
@@ -73,7 +73,7 @@ end
 
 Compute Jacobian of `f` with respect to `x`.
 """
-function jacobian(f::Vector{T}, x::Vector{T}) where T<: MPoly
+function jacobian(f::Vector{QQMPolyRingElem}, x::Vector{QQMPolyRingElem})
   matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in x] for fᵢ in f])
 end
 
@@ -130,39 +130,16 @@ function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::Un
   _p[problem.idx_slow_fast] = problem.p_sf.*sf_separation
   n = length(problem.x)
   r = n - s
-  f0, f1 = splitsystem(problem, sf_separation)
-  Df0 = jacobian(f0, problem.x)
+  f0, f1 = splitsystem(problem.f, problem.p_sf, sf_separation)
+  Df = jacobian(problem.f, problem.x)
   T, _ = polynomial_ring(K, "λ")
   M = K.(problem.x)
   x0 = zeros(K, n)
   P = zero_matrix(K,n,r)
   Psi = zero_matrix(K,r,1)
   DPsi = zero_matrix(K,r,n)
-  Df0_at_x0 = matrix(K, Matrix(Df0))
-  return Reduction(
-    sf_separation,
-    s,
-    R,
-    problem.x,
-    problem.p,
-    _p,
-    problem.p_sf,
-    problem.idx_slow_fast,
-    problem.f,
-    f0,
-    f1,
-    Df0,
-    Df0_at_x0,
-    T,
-    T(0),
-    M,
-    x0,
-    K,
-    P,
-    Psi,
-    DPsi,
-    zeros(Bool,3)
-  )
+  Df_x0 = matrix(K, Matrix(Df))
+  return Reduction(sf_separation, s, R, problem.x, problem.p, _p, problem.p_sf, problem.idx_slow_fast, problem.f, f0, f1, Df, Df_x0, T, T(0), M, x0, K, P, Psi, DPsi, zeros(Bool, 3))
 end
 
 function parse_ring(R, x)
@@ -186,7 +163,7 @@ function set_manifold!(reduction::Reduction, M::AbstractVector)::Bool
   M = parse_ring(reduction.K, M)
   n = length(reduction.x)
   @assert length(M) == n "The slow manifold M must be defined in $n components."
-  _f0 = [evaluate(fᵢ, M) for fᵢ in reduction.f0]
+  _f0 = [evaluate(fᵢ, [M; reduction.K.(reduction.p)]) for fᵢ in reduction.f0]
   f_vanishes = all(iszero.(_f0))
   if !f_vanishes 
     @warn "f0 does no vanish on the slow manifold"
@@ -197,8 +174,7 @@ function set_manifold!(reduction::Reduction, M::AbstractVector)::Bool
     # an eigenvalue λ has to factor the characteristic polynomial of the
     # jacobian at a non-singular point exactly with power s, i.e. there is no
     # reduction if the polynomial is given by λ^(s+1)•r(λ)
-    J = jacobian_tfpv_on_manifold(reduction)
-    coeffs = collect(coefficients(charpoly(J)))
+    coeffs = collect(coefficients(charpoly(jacobian_tfpv_on_manifold(reduction))))
     if all(coeffs[1:reduction.s + 1] .== 0)
       @info "There exists no reduction onto this manifold"
       # check if a generic point on the slow manifold is non-singular
@@ -241,7 +217,7 @@ a TFPV `π⁺`.
 See also: [`Reduction`](@ref), [`set_manifold!`](@ref)
 """
 function jacobian_tfpv_on_manifold(reduction::Reduction)
-  eval_mat(reduction.Df0, reduction.M)
+  eval_mat(reduction.Df, [reduction.M; reduction.K.(reduction._p)])
 end
 
 """
@@ -253,7 +229,7 @@ TFPV `π⁺`.
 See also: [`Reduction`](@ref), [`set_point!`](@ref), [`set_manifold!`](@ref)
 """
 function jacobian_tfpv_at_x0(reduction::Reduction)
-  eval_mat(reduction.Df0, [reduction.x0; reduction.K.(reduction._p)])
+  eval_mat(reduction.Df, [reduction.x0; reduction.K.(reduction._p)])
 end
 
 
@@ -262,14 +238,14 @@ function _set_point!(reduction::Reduction, x0::AbstractVector)::Bool
   n = length(reduction.x)
   @assert length(x0) == n "The point x0 must have $n components."
   # compute characteristic polynomial
-  Df0_at_x0 = eval_mat(reduction.Df0, x0)
-  chi = charpoly(reduction.T, Df0_at_x0)
+  Df_x0 = eval_mat(reduction.Df, [x0; reduction.K.(reduction._p)])
+  chi = charpoly(reduction.T, Df_x0)
   # check condition for coefficients
   c = collect(coefficients(chi))
   check_chi = all(iszero.(c[1:reduction.s])) && !iszero(c[reduction.s+1])
   if check_chi
     reduction.x0 = x0
-    reduction.Df0_at_x0 = Df0_at_x0
+    reduction.Df_x0 = Df_x0
     reduction.chi = chi
     reduction.success[2] = true
   end
@@ -415,7 +391,7 @@ function compute_reduction(reduction::Reduction)
   # Check if slow manifold is set 
   if reduction.success[1]
     # substitute components according to slow manifold
-    a = reduction.K.(reduction.M)
+    a = reduction.K.([reduction.M; reduction.p])
     f_red_subs = [evaluate(f, a) for f in f_red]
     return f_red, f_red_subs
   else
