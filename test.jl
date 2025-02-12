@@ -40,12 +40,13 @@ B, S, H = x = system_components(problem)
 # The Rosenzweig-MaxArthur system corresponds to the TFPV candidate 15 (See section 3.3 in the paper).
 # instantiate reduction 
 reduction = Reduction(problem, sf_separations[15])
-reduction.Df0
-
 set_manifold!(reduction, [B, S, 0])
-set_decomposition!(reduction, Ψ)
-g_raw, g = compute_reduction(reduction);
-# define product decomposion f0 = P⋅Psi (can be done via specifying Psi with V(Psi) = V(f⁰) in this case)
+set_decomposition!(reduction, V[15][1])
+g,_ = compute_reduction(reduction)
+
+
+
+
 
 function rewrite_rational(term)
   p = numerator(term)
@@ -55,10 +56,4 @@ function rewrite_rational(term)
   return h, r, q
 end
 
-rewrite_rational(g[1])
-
-
-# compute the reduced system
-display(g)
-
-reduction = 
+rewrite_rational.(g);

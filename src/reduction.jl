@@ -1,4 +1,3 @@
-
 ## Computing a reduction
 """
     $(TYPEDEF)
@@ -18,10 +17,10 @@ given slow-fast separation of rates.
 - `f::Vector{QQMPolyRingElem}`: RHS of system as vector with elements of ring `R`
 - `f0::Vector{QQMPolyRingElem}`: Fast / unperturbed part of system as vector with elements of ring `R`
 - `f1::Vector{QQMPolyRingElem}`: Slow / perturbed part of system as vector with elements of ring `R`
-- `Df::MatSpaceElem{QQMPolyRingElem}`: Jacobian of `f`
-- `Df_x0::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}`: Jacobian of `f` at non-singular point `x0`
+- `Df0::MatSpaceElem{QQMPolyRingElem}`: Jacobian of `f`
+- `Df0_at_x0::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}`: Jacobian of `f` at non-singular point `x0`
 - `T::PolyRing{FracFieldElem{QQMPolyRingElem}}`: Ring in `x` over Fraction field `K`
-- `chi::Poly{FracFieldElem{QQMPolyRingElem}}`: Characteristic polynomial of `Df_x0`
+- `chi::Poly{FracFieldElem{QQMPolyRingElem}}`: Characteristic polynomial of `Df0_at_x0`
 - `M::Vector{FracFieldElem{QQMPolyRingElem}}`: Slow manifold defined in all components of system
 - `x0::Vector{FracFieldElem{QQMPolyRingElem}}`: Non-singular point in the irreducible component of `V(f0)` containing the slow manifold
 - `K::FracField{QQMPolyRingElem}`: Fraction field in `p`
@@ -42,8 +41,8 @@ mutable struct Reduction
   f::Vector{QQMPolyRingElem}
   f0::Vector{QQMPolyRingElem}
   f1::Vector{QQMPolyRingElem}
-  Df::MatSpaceElem{QQMPolyRingElem}
-  Df_x0::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}
+  Df0::MatSpaceElem{QQMPolyRingElem}
+  Df0_at_x0::MatSpaceElem{FracFieldElem{QQMPolyRingElem}}
   T::PolyRing{FracFieldElem{QQMPolyRingElem}}
   chi::Poly{FracFieldElem{QQMPolyRingElem}}
   M::Vector{FracFieldElem{QQMPolyRingElem}}
@@ -73,7 +72,7 @@ end
 
 Compute Jacobian of `f` with respect to `x`.
 """
-function jacobian(f::Vector{QQMPolyRingElem}, x::Vector{QQMPolyRingElem})
+function jacobian(f, x)
   matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in x] for fᵢ in f])
 end
 
@@ -131,15 +130,15 @@ function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::Un
   n = length(problem.x)
   r = n - s
   f0, f1 = splitsystem(problem.f, problem.p_sf, sf_separation)
-  Df = jacobian(problem.f, problem.x)
+  Df0 = jacobian(problem.f, problem.x)
   T, _ = polynomial_ring(K, "λ")
   M = K.(problem.x)
   x0 = zeros(K, n)
   P = zero_matrix(K,n,r)
   Psi = zero_matrix(K,r,1)
   DPsi = zero_matrix(K,r,n)
-  Df_x0 = matrix(K, Matrix(Df))
-  return Reduction(sf_separation, s, R, problem.x, problem.p, _p, problem.p_sf, problem.idx_slow_fast, problem.f, f0, f1, Df, Df_x0, T, T(0), M, x0, K, P, Psi, DPsi, zeros(Bool, 3))
+  Df0_at_x0 = matrix(K, Matrix(Df0))
+  return Reduction(sf_separation, s, R, problem.x, problem.p, _p, problem.p_sf, problem.idx_slow_fast, problem.f, f0, f1, Df0, Df0_at_x0, T, T(0), M, x0, K, P, Psi, DPsi, zeros(Bool, 3))
 end
 
 function parse_ring(R, x)
@@ -163,7 +162,7 @@ function set_manifold!(reduction::Reduction, M::AbstractVector)::Bool
   M = parse_ring(reduction.K, M)
   n = length(reduction.x)
   @assert length(M) == n "The slow manifold M must be defined in $n components."
-  _f0 = [evaluate(fᵢ, [M; reduction.K.(reduction.p)]) for fᵢ in reduction.f0]
+  _f0 = [evaluate(fᵢ, [reduction.K.(reduction.p); M]) for fᵢ in reduction.f0]
   f_vanishes = all(iszero.(_f0))
   if !f_vanishes 
     @warn "f0 does no vanish on the slow manifold"
@@ -217,7 +216,7 @@ a TFPV `π⁺`.
 See also: [`Reduction`](@ref), [`set_manifold!`](@ref)
 """
 function jacobian_tfpv_on_manifold(reduction::Reduction)
-  eval_mat(reduction.Df, [reduction.M; reduction.K.(reduction._p)])
+  eval_mat(reduction.Df0, [reduction.M; reduction.K.(reduction._p)])
 end
 
 """
@@ -229,7 +228,7 @@ TFPV `π⁺`.
 See also: [`Reduction`](@ref), [`set_point!`](@ref), [`set_manifold!`](@ref)
 """
 function jacobian_tfpv_at_x0(reduction::Reduction)
-  eval_mat(reduction.Df, [reduction.x0; reduction.K.(reduction._p)])
+  eval_mat(reduction.Df0, [reduction.x0; reduction.K.(reduction._p)])
 end
 
 
@@ -238,14 +237,14 @@ function _set_point!(reduction::Reduction, x0::AbstractVector)::Bool
   n = length(reduction.x)
   @assert length(x0) == n "The point x0 must have $n components."
   # compute characteristic polynomial
-  Df_x0 = eval_mat(reduction.Df, [x0; reduction.K.(reduction._p)])
-  chi = charpoly(reduction.T, Df_x0)
+  Df0_at_x0 = eval_mat(reduction.Df0, [reduction.K.(reduction._p); x0])
+  chi = charpoly(reduction.T, Df0_at_x0)
   # check condition for coefficients
   c = collect(coefficients(chi))
   check_chi = all(iszero.(c[1:reduction.s])) && !iszero(c[reduction.s+1])
   if check_chi
     reduction.x0 = x0
-    reduction.Df_x0 = Df_x0
+    reduction.Df0_at_x0 = Df0_at_x0
     reduction.chi = chi
     reduction.success[2] = true
   end
@@ -333,6 +332,27 @@ function get_P(reduction::Reduction, Psi)
   end
 end
 
+# try computing matrix of rational functions P from Psi
+function get_P2(reduction::Reduction, Psi) 
+  if size(Psi, 1) == 1
+    return reduction.f0.//Psi
+  else 
+    idx = [false for _ in eachindex(reduction.f0)]
+    for i in eachindex(reduction.f0)
+      if is_algebraically_independent([reduction.f0[idx]..., reduction.f0[i]])
+        idx[i] = true
+      end
+    end
+    U, Q, H = reduce_with_quotients_and_unit(reduction.f0, Psi)
+    if any(H .!= 0)
+      @warn "Could not automatically compute P"
+      return
+    else
+      return U*Q
+    end
+  end
+end
+
 """
     $(TYPEDSIGNATURES)
 
@@ -391,7 +411,7 @@ function compute_reduction(reduction::Reduction)
   # Check if slow manifold is set 
   if reduction.success[1]
     # substitute components according to slow manifold
-    a = reduction.K.([reduction.M; reduction.p])
+    a = reduction.K.([reduction.p; reduction.M])
     f_red_subs = [evaluate(f, a) for f in f_red]
     return f_red, f_red_subs
   else
@@ -433,7 +453,7 @@ function compute_directional_reduction(reduction::Reduction, γ::Function)
   # Check if slow manifold is set 
   if reduction.success[1]
     # substitute components according to slow manifold
-    a = reduction.K.([reduction.M; reduction.p])
+    a = reduction.K.([reduction.p; reduction.M])
     f_red_subs = [evaluate(f, a) for f in f_red]
     return f_red, f_red_subs
   else

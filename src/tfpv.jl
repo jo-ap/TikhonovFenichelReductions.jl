@@ -94,11 +94,37 @@ they can be used with Oscar.jl. Return the polynomial Ring `R = ℚ[x,p]`
 together with `x`, `p` and `f` parsed to the appropriate OSCAR types.
 """
 function parse_system(f::Function, x::Vector{String}, p::Vector{String})
-  R, v = polynomial_ring(QQ, [x..., p...])
-  _x = v[1:length(x)]
-  _p = v[length(x)+1:end]
+  R, v = polynomial_ring(QQ, [p..., x...])
+  _p = v[1:length(p)]
+  _x = v[length(p)+1:end]
   _f = f(_x, _p)
   return R, _x, _p, _f
+end
+
+"""
+    $(TYPEDSIGNATURES) 
+
+Parse a polynomial in the ring `QQ(p)[x]` into rational function field over `QQ[x,p]`.
+"""
+function parse_variety_generator(problem::ReductionProblem, Y::T) where T<:MPolyRingElem
+  ce = coefficients_and_exponents(Y)
+  s = parent(problem.f[1])(0)
+  for (c,α) in ce 
+    p = evaluate(numerator(c), problem.p)
+    q = evaluate(denominator(c), problem.p)
+    s += p//q*prod(problem.x.^α)
+  end
+  return s
+end
+
+"""
+    $(TYPEDSIGNATURES) 
+
+Parse generators of the varieties as returned by `tfpv_candidates` into
+rational function field over `QQ[x,p]`.
+"""
+function parse_varieties(problem::ReductionProblem, V::Vector{Vector{Vector{T}}}) where T<:MPolyRingElem
+  return [[[parse_variety_generator(problem, Yᵢ) for Yᵢ in Y] for Y in Vₙ] for Vₙ in V]
 end
 
 """
@@ -366,5 +392,7 @@ function tfpv_candidates(problem::ReductionProblem)
   end
   idx_tfpv = any.(idx_keep)
   gens_components = [gens.(groebner_basis.(v; complete_reduction=true)) for v in components]
+  gens_components = parse_varieties(problem, gens_components)
   return slow_fast[idx_tfpv], gens_components, dim_components, idx_keep[idx_tfpv]
 end
+

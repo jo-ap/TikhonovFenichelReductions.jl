@@ -145,8 +145,8 @@ The first two components of ```g``` define the reduced system and can be rewritt
 ```
 which is exactly the Rosenzweig-MacArthur model.
 
-The slow manifold is attractive if all non-zero eigenvalues of the Jacobian at
-the non-singular `x0` point have negative real part. 
+The slow manifold is attractive if all non-zero eigenvalues of the Jacobian of
+``f(\cdot, \pi^\star)`` at the non-singular `x0` point have negative real part.
 ```@example 1 
 # pretty-print Jacobian at x0
 J = jacobian_tfpv_at_x0(reduction)
