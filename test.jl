@@ -1,5 +1,6 @@
 
 using Oscar # optional (results in prettier printing and loads Oscar functions to Main namespace)
+using Debugger
 using Revise
 using TikhonovFenichelReductions
 
@@ -39,63 +40,25 @@ B, S, H = x = system_components(problem)
 # The Rosenzweig-MaxArthur system corresponds to the TFPV candidate 15 (See section 3.3 in the paper).
 # instantiate reduction 
 reduction = Reduction(problem, sf_separations[15])
+reduction.Df0
 
-using Debugger 
-@enter Reduction(problem, sf_separations[15])
-
-Ψ = V[15][1]
-typeof(Ψ[1])
-
-sf_separation = sf_separations[15]
-
-R = parent(problem.f[1])
-K = fraction_field(R)
-_p = TikhonovFenichelReductions.get_tfpv(problem, sf_separation)
-n = length(problem.x)
-r = n - s
-f0, f1 = TikhonovFenichelReductions.splitsystem(problem, sf_separation)
-Df = jacobian(problem.f, problem.x)
-T, _ = polynomial_ring(K, "λ")
-M = K.(problem.x)
-x0 = zeros(K, n)
-P = zero_matrix(K,n,r)
-
-P .= f0.//Ψ
-DPsi = jacobian(Ψ, problem.x)
-
-# compute reduced system
-A = DPsi*P
-Q = P*inv(A)*DPsi
-Iₙ = diagonal_matrix(K(1), n)
-f1 = matrix_space(K, n, 1)(f1)
-f_red_raw = (Iₙ - Q)*f1
-# reshape as vector
-f_red = reshape(Matrix(f_red_raw), n)
-a = K.(M)
-  f_red_subs = [evaluate(f, a) for f in f_red]
-  return f_red, f_red_subs
-else
-  @warn "Slow manifold has not been defined succesfully. Reduced system is only returned in raw form, i.e. the reduced components are not substituted according to the slow manfold."
-  return f_red, nothing
-end
- Df = jacobian(problem.f, problem.x)
-
-x0 = K.([B, S, 0])
-Df_x0 = TikhonovFenichelReductions.eval_mat(Df, x0)
-
-  chi = charpoly(T, Df_x0)
-Df_x0 = TikhonovFenichelReductions.eval_mat(Df, [x0; reduction.K.(reduction._p)])
-  
-# look at the variety that contains the slow manifold
-V[15] # => M₀ = {(B,S,0) | B,S ∈ ℝ}
-dim_V[15] # has dimension 2 
 set_manifold!(reduction, [B, S, 0])
-
+set_decomposition!(reduction, Ψ)
+g_raw, g = compute_reduction(reduction);
 # define product decomposion f0 = P⋅Psi (can be done via specifying Psi with V(Psi) = V(f⁰) in this case)
-set_decomposition!(reduction, [H])
+
+function rewrite_rational(term)
+  p = numerator(term)
+  q = denominator(term)
+  h,r = divrem(p,q)
+  println(string(h) * " + (" * string(r) * ")//(" * string(q) * ")")
+  return h, r, q
+end
+
+rewrite_rational(g[1])
+
 
 # compute the reduced system
-g_raw, g = compute_reduction(reduction);
 display(g)
 
 reduction = 
