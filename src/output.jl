@@ -84,7 +84,7 @@ Use keyword argument `latex=true` to print LaTeX code instead.
 
 See also: [`tfpv_candidates`](@ref), [`print_tfpv`](@ref), [`print_results`](@ref)
 """
-function print_varieties(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}},
+function print_varieties(V::Vector{Vector{Vector{FracFieldElem{QQMPolyRingElem}}}},
                          dim_V::Vector{Vector{Int}};
                          latex::Bool=false,
                          idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[]) 
@@ -92,7 +92,7 @@ function print_varieties(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldElem
   _print_varieties(V, dim_V, latex, idx)
 end
 
-function _print_varieties(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}},
+function _print_varieties(V::Vector{Vector{Vector{FracFieldElem{QQMPolyRingElem}}}},
                          dim_V::Vector{Vector{Int}},
                          latex::Bool,
                          idx::AbstractVector{Int})
@@ -123,7 +123,7 @@ function _print_varieties(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldEle
     return
   end
 end
-function _print_varieties(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}},
+function _print_varieties(V::Vector{Vector{Vector{FracFieldElem{QQMPolyRingElem}}}},
                          dim_V::Vector{Vector{Int}},
                          latex::Bool,
                          idx::Vector{Bool})
@@ -189,3 +189,22 @@ function print_system(reduction::Reduction; latex=false)
   end
 end 
 
+function print_reduction(g::Vector{FracFieldElem{QQMPolyRingElem}}; factor::Bool=false) 
+  rewrite_rational.(g; factor=factor) 
+  return 
+end
+function rewrite_rational(term; factor=false)
+  p = numerator(term)
+  q = denominator(term)
+  h,r = divrem(p,q)
+  if factor 
+    h = h == 0 ? h : Oscar.factor(h)
+    r = r == 0 ? r : Oscar.factor(r)
+  end
+  if r == 0 
+    println(replace(string(h), " * " => "*", "1 * " => "")) 
+  else
+    println(replace(string(h) * " + (" * string(r) * ")//(" * string(q) * ")", " * " => "*", "1 * " => ""))
+  end
+  return h, r, q
+end

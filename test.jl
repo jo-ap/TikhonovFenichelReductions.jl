@@ -44,16 +44,22 @@ set_manifold!(reduction, [B, S, 0])
 set_decomposition!(reduction, V[15][1])
 g,_ = compute_reduction(reduction)
 
+import AbstractAlgebra.Generic: FracFieldElem
+
+
+reduction,g = Reduction(problem, sf_separations[15], V[15][1], [B, S, 0])
+
+
+TikhonovFenichelReductions.print_rational_system(g)
+TikhonovFenichelReductions.print_rational_system(g; factor=true)
+
+normal_form([B, S, H], ideal(numerator.(V[11][2])))
 
 
 
+_g = rewrite_rational.(g; factor=true);
 
-function rewrite_rational(term)
-  p = numerator(term)
-  q = denominator(term)
-  h,r = divrem(p,q)
-  println(string(h) * " + (" * string(r) * ")//(" * string(q) * ")")
-  return h, r, q
-end
+display(g)
+
 
 rewrite_rational.(g);

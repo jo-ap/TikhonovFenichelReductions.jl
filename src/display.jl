@@ -44,7 +44,7 @@ function Base.show(io::IO, ::MIME"text/plain", reduction::Reduction)
     println(io, " M = [" * join(string.(reduction.M), ", ") * "]")
     println(io, " P = $(reduction.P)")
     println(io, " Ψ = [" * join([string(ψ) for ψ in reduction.Psi], ", ") * "]") # bug in Oscar? string.(reduction.Psi) throws error
-    println(io, " Df(x_0) = $(reduction.Df_x0)")
+    println(io, " Df(x_0) = $(reduction.Df0_x0)")
   end
 end
 

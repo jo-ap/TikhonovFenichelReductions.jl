@@ -12,8 +12,8 @@ Find reductions onto the same slow manifold and return their numeric index.
 
 See also: [`tfpv_candidates`](@ref)
 """
-function similar_reductions(V::Vector{Vector{Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}},
-                            Y::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}})
+function similar_reductions(V::Vector{Vector{Vector{FracFieldElem{QQMPolyRingElem}}}},
+                            Y::Vector{FracFieldElem{QQMPolyRingElem}})
   idx_bool = [false for _ in V]
   for k in eachindex(V) 
     idx_bool[k] = any([Y == Vₖ for Vₖ in V[k]])
@@ -79,7 +79,7 @@ Obtain all possible choices of slow manifolds with dimension `s` given `V` and
 See also: [`tfpv_candidates`](@ref)
 """
 function unique_slow_manifolds(problem::ReductionProblem,
-                               V::Vector{Vector{Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}}},
+                               V::Vector{Vector{Vector{FracFieldElem{QQMPolyRingElem}}}},
                                dim_V::Vector{Vector{Int}})
   V_flat = vcat(V...)
   dim_flat = vcat(dim_V...)

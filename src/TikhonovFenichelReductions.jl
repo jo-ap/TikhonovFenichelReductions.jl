@@ -16,7 +16,8 @@ export ReductionProblem,
   jacobian_tfpv_on_manifold, jacobian_tfpv_at_x0,
   set_manifold!, set_point!, set_decomposition!, 
   compute_reduction, compute_directional_reduction,
-  similar_reductions, unique_slow_manifolds, compute_bulk_reductions
+  similar_reductions, unique_slow_manifolds, compute_bulk_reductions,
+  print_reduction
 
 ## Dependencies
 using DocStringExtensions

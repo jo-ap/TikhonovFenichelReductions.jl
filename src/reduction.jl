@@ -140,6 +140,21 @@ function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::Un
   Df0_at_x0 = matrix(K, Matrix(Df0))
   return Reduction(sf_separation, s, R, problem.x, problem.p, _p, problem.p_sf, problem.idx_slow_fast, problem.f, f0, f1, Df0, Df0_at_x0, T, T(0), M, x0, K, P, Psi, DPsi, zeros(Bool, 3))
 end
+function Reduction(
+  problem::ReductionProblem,
+  sf_separation::Vector{Bool},
+  V::Vector{FracFieldElem{QQMPolyRingElem}},
+  M::Vector{Any})
+  reduction = Reduction(problem, sf_separation)
+  sm = set_manifold!(reduction, M)
+  sd = set_decomposition!(reduction, V)
+  if sm & sd 
+    _,g = compute_reduction(reduction)
+    return reduction, g
+  else 
+    return reduction, nothing
+  end
+end 
 
 function parse_ring(R, x)
   try x = R.(x)
@@ -333,23 +348,27 @@ function get_P(reduction::Reduction, Psi)
 end
 
 # try computing matrix of rational functions P from Psi
-function get_P2(reduction::Reduction, Psi) 
-  if size(Psi, 1) == 1
-    return reduction.f0.//Psi
-  else 
-    idx = [false for _ in eachindex(reduction.f0)]
-    for i in eachindex(reduction.f0)
-      if is_algebraically_independent([reduction.f0[idx]..., reduction.f0[i]])
-        idx[i] = true
-      end
+function get_decomposition(reduction::Reduction) 
+  F, p = rational_function_field(QQ, string.(reduction.p))
+  R, x = polynomial_ring(F, string.(reduction.x))
+  f0 = [sum([c*prod([p; x].^α) for (c,α) in coefficients_and_exponents(f)]) for f in reduction.f0]
+  idx = [false for _ in eachindex(f0)]
+  for i in eachindex(f0)
+    if is_algebraically_independent([f0[idx]..., f0[i]])
+      idx[i] = true
     end
-    U, Q, H = reduce_with_quotients_and_unit(reduction.f0, Psi)
-    if any(H .!= 0)
-      @warn "Could not automatically compute P"
-      return
-    else
-      return U*Q
-    end
+  end
+  Psi = reduction.f0[idx]
+  if length(Psi) > (length(reduction.f) -reduction.s)
+    @warn "Could not automatically compute P"
+    return
+  end
+  U, Q, H = reduce_with_quotients_and_unit(reduction.f0, Psi)
+  if any(H .!= 0)
+    @warn "Could not automatically compute P"
+    return
+  else
+    return U*Q
   end
 end
 
@@ -461,3 +480,5 @@ function compute_directional_reduction(reduction::Reduction, γ::Function)
     return f_red, nothing
   end
 end
+
+
