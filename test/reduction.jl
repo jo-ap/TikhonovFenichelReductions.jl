@@ -14,6 +14,7 @@ e₀, k₁, k₋₁, k₂ = system_parameters(prob)
 @test set_manifold!(red_i, [S, e₀*k₁*S//(k₁*S + k₋₁)])
 @test set_point!(red_i, [0,0])
 @test set_decomposition!(red_i, [k₁*S*C - e₀*k₁*S + k₋₁*C])
+@test set_decomposition!(red_i, V[i][1])
 @test set_decomposition!(red_i, [1; -1], [k₁*S*C - e₀*k₁*S + k₋₁*C])
 
 # compute reduction
@@ -29,7 +30,8 @@ R = compute_bulk_reductions(prob, sf_separations, idx_similar, [C], [S,0]; idx_c
 # Access the `Reduction` object with the indices as in `idx_similar`
 reduction_3 = R[3][1]
 @test reduction_3.M == [S, 0]
-@test Matrix(reduction_3.Df) == [C*k₁ - e₀*k₁ S*k₁ + k₋₁; -C*k₁ + e₀*k₁   -S*k₁ - k₋₁ - k₂]
+@test Matrix(reduction_3.Df0) == [-e₀*k₁+k₁*C k₁*S+k₋₁; e₀*k₁-k₁*C -k₁*S-k₋₁-k₂]
+@test Matrix(reduction_3.Df0_at_x0) == [0 k₁*S+k₋₁; 0 -k₁*S-k₋₁-k₂]
 @test all(Matrix(reduction_3.P) .== [S*k₁ + k₋₁; -S*k₁ - k₋₁ - k₂])
 @test all(Matrix(reduction_3.Psi) .== [C])
 

@@ -7,7 +7,7 @@
 # type checks
 @test isa(prob, ReductionProblem) 
 @test isa(sf_separations, Vector{Vector{Bool}})
-@test isa(V, Vector{Vector{Vector{TikhonovFenichelReductions.AbstractAlgebra.Generic.MPoly{TikhonovFenichelReductions.AbstractAlgebra.Generic.RationalFunctionFieldElem{TikhonovFenichelReductions.Nemo.QQFieldElem, TikhonovFenichelReductions.Nemo.QQMPolyRingElem}}}}})
+@test isa(V, Vector{Vector{Vector{TikhonovFenichelReductions.FracFieldElem{TikhonovFenichelReductions.QQMPolyRingElem}}}})
 @test isa(dim_V, Vector{Vector{Int}})
 
 @test prob.p_sf == prob.p[prob.idx_slow_fast] 
