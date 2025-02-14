@@ -180,17 +180,22 @@ function _print_results(
   _print_results(problem, sf_separations, V, dim_V, boolean_to_numeric(idx))
 end
 
-
-function print_system(reduction::Reduction; latex=false)
-  if latex
-    latexstring("f(x, \\tilde{\\pi}) = $(latexify(string.(reduction.f0); env=:raw)) + \\varepsilon $(latexify(string.(reduction.f1); env=:raw))")
-  else
-    "f(x,π̃) = (" * join(string.(reduction.f0), ", ") * ") + ε(" * join(string.(reduction.f1), ", ") * ")"
+function print_reduction(reduction::Reduction, g::Vector{FracFieldElem{QQMPolyRingElem}}; factor::Bool=false, padfront::Bool=false)
+  idx_components = reduction.x .== reduction.M
+  _g = rewrite_rational.(g[idx_components]; factor=factor) 
+  dxdt = ["d$u/dt" for u in string.(reduction.x[idx_components])]
+  string_length = maximum(length.(dxdt))
+  pad = padfront ? " " : ""
+  for i in eachindex(_g)
+    h, r, q = _g[i]
+    dudt = dxdt[i]
+    str = pad * padstring(dudt, string_length; padfront=false) * " = "
+    if r == 0 
+      println(str * replace(string(h), " * " => "*", "1 * " => "")) 
+    else
+      println(str * replace(string(h) * " + (" * string(r) * ")//(" * string(q) * ")", " * " => "*", "1 * " => ""))
+    end
   end
-end 
-
-function print_reduction(g::Vector{FracFieldElem{QQMPolyRingElem}}; factor::Bool=false) 
-  rewrite_rational.(g; factor=factor) 
   return 
 end
 function rewrite_rational(term; factor=false)
@@ -201,10 +206,8 @@ function rewrite_rational(term; factor=false)
     h = h == 0 ? h : Oscar.factor(h)
     r = r == 0 ? r : Oscar.factor(r)
   end
-  if r == 0 
-    println(replace(string(h), " * " => "*", "1 * " => "")) 
-  else
-    println(replace(string(h) * " + (" * string(r) * ")//(" * string(q) * ")", " * " => "*", "1 * " => ""))
-  end
   return h, r, q
 end
+
+
+

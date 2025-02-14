@@ -231,7 +231,7 @@ a TFPV `π⁺`.
 See also: [`Reduction`](@ref), [`set_manifold!`](@ref)
 """
 function jacobian_tfpv_on_manifold(reduction::Reduction)
-  eval_mat(reduction.Df0, [reduction.M; reduction.K.(reduction._p)])
+  eval_mat(reduction.Df0, [reduction.K.(reduction._p); reduction.M])
 end
 
 """
@@ -243,7 +243,7 @@ TFPV `π⁺`.
 See also: [`Reduction`](@ref), [`set_point!`](@ref), [`set_manifold!`](@ref)
 """
 function jacobian_tfpv_at_x0(reduction::Reduction)
-  eval_mat(reduction.Df0, [reduction.x0; reduction.K.(reduction._p)])
+  eval_mat(reduction.Df0, [reduction.K.(reduction._p); reduction.x0])
 end
 
 

@@ -54,12 +54,12 @@ function compute_bulk_reductions(problem::ReductionProblem,
   for i in idx
     red_i = Reduction(problem, sf_separation[i]);
     println("Reduction $i")
-    show_slow_fast(red_i)
+    show_slow_fast(red_i; padfront=false)
     if set_manifold!(red_i, M)
       set_decomposition!(red_i, Psi)
       if all(red_i.success)
         _, g_i = compute_reduction(red_i);
-        display(g_i[idx_components])
+        print_reduction(red_i, g_i; padfront=false)
         push!(G, (i, (red_i, g_i)))
       end
     end

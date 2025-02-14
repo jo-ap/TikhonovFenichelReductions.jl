@@ -13,10 +13,11 @@ end
 
 Print slow and fast parameters.
 """
-function show_slow_fast(reduction::Reduction)
+function show_slow_fast(reduction::Reduction; padfront=true)
   slow, fast = _get_slow_fast(reduction)
-  println(" slow: " * join(string.(slow), ", "))
-  println(" fast: " * join(string.(fast), ", "))
+  pad = padfront ? " " : ""
+  println(pad * "slow: " * join(string.(slow), ", "))
+  println(pad * "fast: " * join(string.(fast), ", "))
 end
 
 function Base.show(io::IO, ::MIME"text/plain", problem::ReductionProblem)
@@ -29,9 +30,10 @@ function Base.show(io::IO, ::MIME"text/plain", problem::ReductionProblem)
     println(io, " x = [" * join(string.(problem.x), ", ") * "]");
     println(io, " p = [" * join(string.(problem.p), ", ") * "]");
   end
-  println(io, " f: Function $(problem._f) from $(typeof(problem._f).name.module) defining ODE system") 
+  print(io, " f: Function $(problem._f) from $(typeof(problem._f).name.module) defining ODE system") 
+  max_width = maximum(length.(string.(problem.x)))
   for (x,dxdt) in zip(problem.x, problem.f)
-    println(io, "   d$(string(x))/dt = " * string(dxdt))
+    print(io, "\n   " * padstring("d$x/dt", max_width + 4; padfront=false) * " = " * string(dxdt))
   end
 end
 
@@ -39,12 +41,12 @@ function Base.show(io::IO, ::MIME"text/plain", reduction::Reduction)
   println(io, "Reduction for dimension s = $(reduction.s) with")
   slow, fast = _get_slow_fast(reduction)
   println(io, "  slow: " * join(string.(slow), ", "))
-  println(io, "  fast: " * join(string.(fast), ", "))
+  print(io, "  fast: " * join(string.(fast), ", "))
   if all(reduction.success)
-    println(io, " M = [" * join(string.(reduction.M), ", ") * "]")
-    println(io, " P = $(reduction.P)")
-    println(io, " Ψ = [" * join([string(ψ) for ψ in reduction.Psi], ", ") * "]") # bug in Oscar? string.(reduction.Psi) throws error
-    println(io, " Df(x_0) = $(reduction.Df0_x0)")
+    print(io, "\n M = [" * join(string.(reduction.M), ", ") * "]")
+    print(io, "\n P = $(reduction.P)")
+    print(io, "\n Ψ = [" * join([string(ψ) for ψ in reduction.Psi], ", ") * "]") # bug in Oscar? string.(reduction.Psi) throws error
+    print(io, "\n Df(x_0) = $(reduction.Df0_at_x0)")
   end
 end
 
