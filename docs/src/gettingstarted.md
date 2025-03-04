@@ -16,8 +16,8 @@ Load the package and its dependency [Oscar.jl](https://www.oscar-system.org/).
 Note that loading Oscar is optional, but results in prettier printing of
 types and imports useful functions.
 ```@example 1
-using Oscar # optional
 using TikhonovFenichelReductions
+using TikhonovFenichelReductions.Oscar # optional
 ```
 Define the components, parameters and the RHS of the system. 
 ```@example 1
