@@ -403,6 +403,7 @@ version = "1.8.0"
 [[deps.Oscar]]
 deps = ["AbstractAlgebra", "AlgebraicSolving", "Distributed", "GAP", "Hecke", "JSON", "JSON3", "LazyArtifacts", "Markdown", "Nemo", "Pkg", "Polymake", "Random", "RandomExtensions", "Serialization", "Singular", "TOPCOM_jll", "UUIDs", "cohomCalg_jll"]
 git-tree-sha1 = "10aa8ba25928a5e761ea03ceb762775b87037108"
+pinned = true
 uuid = "f1435218-dba5-11e9-1e4d-f1a5fab5fc13"
 version = "1.2.1"
 
