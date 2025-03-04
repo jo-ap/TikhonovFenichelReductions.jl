@@ -333,18 +333,33 @@ function _set_decomposition!(reduction::Reduction, P::VecOrMat, Psi)
 end
   
 # try computing matrix of rational functions P from Psi
+
 function get_P(reduction::Reduction, Psi) 
   if size(Psi, 1) == 1
     return reduction.f0.//Psi
   else 
     U, Q, H = reduce_with_quotients_and_unit(reduction.f0, Psi)
-    if any(H .!= 0)
-      @warn "Could not automatically compute P"
-      return
-    else
-      return U*Q
+    if all(H .== 0)
+      return Psi, U*Q
     end
+    _Psi = find_independent_polys(reduction.f0)
+    U, Q, H = reduce_with_quotients_and_unit(reduction.f0, _Psi)
+    if all(H .== 0)
+      return _Psi, U*Q
+    end
+    @warn "Could not set P automatically."
+    return Psi, nothing
   end
+end
+
+function find_independent_polys(f::Vector)
+  idx = [false for _ in f]
+  for i in eachindex(f)
+    if is_algebraically_independent([f[idx]..., f[i]])
+      idx[i] = true
+    end 
+  end 
+  return f[idx]
 end
 
 # try computing matrix of rational functions P from Psi
@@ -389,7 +404,7 @@ rational equations as polynomials by multiplying appropriately with
 parameters occurring in a denominator).
 """
 function set_decomposition!(reduction::Reduction, Psi)
-  P = get_P(reduction, Psi)
+  Psi, P = get_P(reduction, Psi)
   isnothing(P) ? false : set_decomposition!(reduction, P, Psi)
 end
 
