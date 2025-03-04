@@ -336,7 +336,7 @@ end
 
 function get_P(reduction::Reduction, Psi) 
   if size(Psi, 1) == 1
-    return reduction.f0.//Psi
+    return Psi, reduction.f0.//Psi
   else 
     U, Q, H = reduce_with_quotients_and_unit(reduction.f0, Psi)
     if all(H .== 0)
