@@ -191,9 +191,11 @@ function print_reduction(reduction::Reduction, g::Vector{FracFieldElem{QQMPolyRi
     dudt = dxdt[i]
     str = pad * padstring(dudt, string_length; padfront=false) * " = "
     if r == 0 
-      println(str * replace(string(h), " * " => "*", "1 * " => "")) 
+      _h = h == 0 ? "0" : string(h)
+      println(str * replace(_h, " * " => "*", "1 * " => "")) 
     else
-      println(str * replace(string(h) * " + (" * string(r) * ")//(" * string(q) * ")", " * " => "*", "1 * " => ""))
+      _h = h == 0 ? "" : string(h)
+      println(str * replace(_h * " + (" * string(r) * ")//(" * string(q) * ")", " * " => "*", "1 * " => ""))
     end
   end
   return 
