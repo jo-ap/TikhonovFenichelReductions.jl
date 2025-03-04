@@ -1,7 +1,7 @@
 name = "TikhonovFenichelReductions"
 uuid = "66629163-d46e-44ca-9a00-7025b1e168e6"
 authors = ["jo-ap"]
-version = "0.2.5"
+version = "0.2.6"
 
 [deps]
 AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
