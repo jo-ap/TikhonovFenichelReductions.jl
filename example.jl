@@ -36,11 +36,11 @@ s = 2
 problem = ReductionProblem(f, x, p, s)
 
 # find slow-fast separations that are TFPVs
-sf_separations, V, dim_V = tfpv_candidates(problem);
+@time sf_separations, V, dim_V = tfpv_candidates(problem);
 
 # find all general TFPVs using necessary conditions on the determinants of D₁f
 # G is a Gröbner basis for this, such that every TFPV of dimension s lies in V(G)
-G = tfpv_groebner_basis(problem)
+@time G = tfpv_groebner_basis(problem)
 
 # Typically, the computation of the Gröbner basis in tfpv_groebner_basis is
 # much slower than the computation for slow-fast fast separations in
