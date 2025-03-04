@@ -13,6 +13,4 @@ Oscar = "f1435218-dba5-11e9-1e4d-f1a5fab5fc13"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [compat]
-OrderedCollections = "1.6.3"
 Oscar = "1.0.0 - 1.2.1"
-Pkg = "1.11.0"
