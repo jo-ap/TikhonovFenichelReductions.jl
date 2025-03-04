@@ -7,8 +7,8 @@
 
 ## Load packages
 
-using Oscar # optional (results in prettier printing and loads Oscar functions to Main namespace)
 using TikhonovFenichelReductions
+using TikhonovFenichelReductions.Oscar # optional (results in prettier printing and loads Oscar functions to Main namespace)
 
 ## Define system
 
