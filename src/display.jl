@@ -1,25 +1,5 @@
 import Base 
 
-function _get_slow_fast(reduction::Reduction)
-  p = reduction.p_sf
-  sf_separation = reduction.sf_separation
-  slow = p[.!sf_separation]
-  fast = p[sf_separation]
-  return slow, fast
-end
-
-"""
-    $(TYPEDSIGNATURES)
-
-Print slow and fast parameters.
-"""
-function show_slow_fast(reduction::Reduction; padfront=true)
-  slow, fast = _get_slow_fast(reduction)
-  pad = padfront ? " " : ""
-  println(pad * "slow: " * join(string.(slow), ", "))
-  println(pad * "fast: " * join(string.(fast), ", "))
-end
-
 function Base.show(io::IO, ::MIME"text/plain", problem::ReductionProblem)
   println(io, "ReductionProblemlem for dimension s = $(problem.s)")
   if !all(problem.idx_slow_fast)
@@ -30,23 +10,24 @@ function Base.show(io::IO, ::MIME"text/plain", problem::ReductionProblem)
     println(io, " x = [" * join(string.(problem.x), ", ") * "]");
     println(io, " p = [" * join(string.(problem.p), ", ") * "]");
   end
-  print(io, " f: Function $(problem._f) from $(typeof(problem._f).name.module) defining ODE system") 
-  max_width = maximum(length.(string.(problem.x)))
-  for (x,dxdt) in zip(problem.x, problem.f)
-    print(io, "\n   " * padstring("d$x/dt", max_width + 4; padfront=false) * " = " * string(dxdt))
-  end
+  print(io, " f: Function $(problem._f) from $(typeof(problem._f).name.module) defining ODE system\n") 
+  print(io, _get_system_str(string.(problem.x), string.(problem.f); padfront=2))
 end
 
 function Base.show(io::IO, ::MIME"text/plain", reduction::Reduction)
   println(io, "Reduction for dimension s = $(reduction.s) with")
-  slow, fast = _get_slow_fast(reduction)
-  println(io, "  slow: " * join(string.(slow), ", "))
-  print(io, "  fast: " * join(string.(fast), ", "))
+  print(io, _get_slow_fast_str(reduction; padfront=1))
   if all(reduction.success)
-    print(io, "\n M = [" * join(string.(reduction.M), ", ") * "]")
-    print(io, "\n P = $(reduction.P)")
-    print(io, "\n Ψ = [" * join([string(ψ) for ψ in reduction.Psi], ", ") * "]") # bug in Oscar? string.(reduction.Psi) throws error
-    print(io, "\n Df(x_0) = $(reduction.Df0_at_x0)")
+    print(io, "\n M      = [" * join(string.(reduction.M), ", ") * "]")
+    print(io, "\n P      = $(reduction.P)")
+    print(io, "\n Ψ      = [" * join([string(ψ) for ψ in reduction.Psi], ", ") * "]") # bug in Oscar? string.(reduction.Psi) throws error
+    print(io, "\n x₀     = [" * join(string.(reduction.x0), ", ") * "]")
+    print(io, "\n Df(x₀) = $(reduction.Df0_at_x0)")
+  end
+  if any(reduction.reduction_cached)
+    str = _get_reduced_system_str(reduction; padfront=2)
+    str_reduced_system = reduction.reduction_cached[2] ?  "\n Reduced system:" :  "\n Formal reduced system:"
+    print(io, str_reduced_system * "\n" * str)
   end
 end
 
