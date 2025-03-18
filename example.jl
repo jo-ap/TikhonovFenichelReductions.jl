@@ -39,13 +39,16 @@ problem = ReductionProblem(f, x, p, s)
 sf_separations, V, dim_V = tfpv_candidates(problem);
 
 # print slow-fast separations and corresponding slow manifolds with their dimension
+print_tfpv(problem, sf_separations)
+print_varieties(V, dim_V)
+
 print_results(problem, sf_separations, V, dim_V)
 
 # find all general TFPVs using necessary conditions on the determinants of D₁f
 # G is a Gröbner basis for this, such that every TFPV of dimension s lies in V(G)
-G = tfpv_groebner_basis(problem)
+G = tfpv_candidates_groebner(problem)
 
-# Typically, the computation of the Gröbner basis in tfpv_groebner_basis is
+# Typically, the computation of the Gröbner basis in tfpv_candidates_groebner is
 # much slower than the computation for slow-fast fast separations in
 # tfpv_candidates, which only computes the irreducible components of V(f(⋅,p_sf))
 # and their dimension via a minimal primary computation and the Krull
@@ -75,18 +78,19 @@ set_manifold!(reduction, [B, S, 0])
 # define product decomposion f0 = P⋅Psi (can be done via specifying Psi with V(Psi) = V(f⁰) in this case)
 set_decomposition!(reduction, [H])
 
-# most of the time you can simply pass the generators of the irreducible component of V(f⁰)
-set_decomposition!(reduction, V[15][1])
-
 # compute the reduced system
-_, g = compute_reduction(reduction);
+compute_reduction!(reduction);
 
-print_reduction(reduction, g)
+# display reduced system in repl 
+print_reduced_system(reduction)
+print_reduced_system(reduction; factor=true)
 
 # check if g as the RHS of the reduced system is the same as in the paper 
 dBdt = ρ*B*(1-B) - α*(η + β)*B*S//(δ + γ*B)
 dSdt = -η*S + γ*(η + β)*B*S//(δ + γ*B)
-all(iszero.(g[1:2] .- [dBdt, dSdt])) 
+all(iszero.(reduction.g .- [dBdt, dSdt])) 
+
+# print to latex 
 
 # slow manifold is attractive if all non-zero eigenvalues of Df at x0 have negative real part
 jacobian_tfpv_at_x0(reduction)
@@ -100,10 +104,7 @@ V_unique = unique_slow_manifolds(problem, V, dim_V)
 idx_similar = similar_reductions(V, V_unique[4])
 
 # compute reductions for all TFPVs that have the same manifold (we can choose the same P-Ψ decomposion for f⁰)
-R = compute_bulk_reductions(problem, sf_separations, idx_similar, [H], [B,S,0]; idx_components=[1,2]);
+R = compute_bulk_reductions(problem, sf_separations, idx_similar, V_unique[4], [B,S,0]);
 
-# Access the `Reduction` object and reduced system with the indices as in `idx_similar`
-reduction_3 = R[3][1]
-g_3 = R[3][2]
-
-
+# Access the `Reduction` object with the indices as in `idx_similar`
+reduction_3 = R[3]

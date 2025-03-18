@@ -26,8 +26,12 @@ Order = [:function, :type]
 
 ## Output
 ```@docs
+print_system
 print_results
 print_tfpv
 print_varieties
+print_reduced_system
+print_slow_fast
+rewrite_rational
 ```
 

@@ -1,32 +1,30 @@
 
 """
-    $(TYPEDEF)
-
 Type that defines a Tikhonov-Fenichel reduction problem, i.e. a polynomial ODE
 system, for which all slow-fast separations of rates yielding a reduction onto
 dimension `s` are considered. 
 
-### Fields 
-- `f::Vector{QQMPolyRingElem}`: RHS of ODE system as a vector of polynomials
-- `x::Vector{QQMPolyRingElem}`: Vector of dynamic variables
-- `p::Vector{QQMPolyRingElem}`: Vector of all parameters
-- `s::Int`: Dimension of reduced system
-- `p_sf::Vector{QQMPolyRingElem}`: Vector of parameters to be considered slow or fast (all others are considered fixed)
-- `idx_slow_fast::Vector{Bool}`: Boolean index, such that `p_sf=p[idx_slow_fast]`
-- `J::MatSpaceElem{QQMPolyRingElem}`: Jacobian of `f`
-- `_f::Function`: RHS of ODE system as a Julia function with arguments `x` and `p`
-
 The type `QQMPolyRingElem` is used in [Oscar.jl](https://www.oscar-system.org/)
-to represent elements of a polynomial ring; here this is `ℝ[x,p]`.
+to represent elements of a polynomial ring; here we this is `ℚ[p,x]`.
+
+### Fields
+    $(TYPEDFIELDS)
+
 """
-mutable struct ReductionProblem 
+struct ReductionProblem 
+  "RHS of ODE system as a vector of polynomials"
   f::Vector{QQMPolyRingElem}
+  "Vector of dynamic variables"
   x::Vector{QQMPolyRingElem}
+  "Vector of all parameters"
   p::Vector{QQMPolyRingElem}
+  "Dimension of reduced system"
   s::Int
+  "Vector of parameters that may be small (all others are considered fixed)"
   p_sf::Vector{QQMPolyRingElem}
+  "Boolean index, such that `p_sf=p[idx_slow_fast]`"
   idx_slow_fast::Vector{Bool}
-  J::MatSpaceElem{QQMPolyRingElem}
+  "RHS of ODE system as a Julia function with signature `_f(x,p)`"
   _f::Function
 end
 
@@ -51,20 +49,18 @@ appropriate types in
 so that the necessary conditions for the existence of a reduction onto an
 `s`-dimensional slow manifold can be evaluated.
 
-See also: [`tfpv_candidates`](@ref), [`tfpv_groebner_basis`](@ref)
+See also: [`tfpv_candidates`](@ref), [`tfpv_candidates_groebner`](@ref)
 """
 function ReductionProblem(
   f::Function, 
-  x::Vector{String}, 
-  p::Vector{String}, 
+  x::Vector{T}, 
+  p::Vector{T}, 
   s::Int; 
-  idx_slow_fast::Vector{Bool}=Bool[])
+  idx_slow_fast::Vector{Bool}=[true for _ in p]) where T<:Union{String,Symbol}
   @assert s < length(x) "the dimension of the reduced system must be smaller than that of the full system, i.e. s < n"
   _, _x, _p, _f = parse_system(f, x, p)
-  idx_slow_fast = length(idx_slow_fast) > 0 ? idx_slow_fast : [true for i in 1:length(p)]   
   _p_sf = _p[idx_slow_fast]
-  J = jacobian(_f, _x)
-  ReductionProblem(_f, _x, _p, s, _p_sf, idx_slow_fast, J, f)
+  ReductionProblem(_f, _x, _p, s, _p_sf, idx_slow_fast, f)
 end
 
 """
@@ -112,7 +108,8 @@ function parse_variety_generator(problem::ReductionProblem, Y::T) where T<:MPoly
   for (c,α) in ce 
     p = evaluate(numerator(c), problem.p)
     q = evaluate(denominator(c), problem.p)
-    s += p//q*prod(problem.x.^α)
+    @assert q == 1 # todo: check if this is always the case? If not, should not be a problem?
+    s += p*prod(problem.x.^α)
   end
   return s
 end
@@ -203,11 +200,13 @@ TFPVs lie in its vanishing set.
 
 See also: [`tfpv_candidates`](@ref) 
 """
-function tfpv_groebner_basis(problem::ReductionProblem)
+function tfpv_candidates_groebner(problem::ReductionProblem)
   # number of dimensions to reduce the system by
   r = length(problem.x) - problem.s
+  # Jacobian of the full system
+  J = jacobian(problem.f, problem.x)
   # determinants of all k×k minors of J for k>r
-  d = get_determinants(problem.J, r)
+  d = get_determinants(J, r)
   # All polynomials that generate the ideal used to determine TFPVs
   poly_gens = [problem.f; d]
   # Build ideal from polynomial expressions 
@@ -250,7 +249,7 @@ end
 # irreducible component implies that topological and Krull dimension are equal. 
 # Since we require such a point later, we may use the exact dimension already. 
 
-# See also: [`tfpv_groebner_basis`](@ref)
+# See also: [`tfpv_candidates_groebner`](@ref)
 # """
 # function dimension_criterion(
 #   problem::ReductionProblem; 
@@ -340,16 +339,16 @@ symbolically by computing normal forms with respect to a Gröbner basis `G`, s.t
 `V(G)=Y`. 
 
 To obtain all general TFPVs and not just slow-fast separations, one can use the
-function `tfpv_groebner_basis`.
+function `tfpv_candidates_groebner`.
 
-See also: [`tfpv_groebner_basis`](@ref), [`print_results`](@ref), [`print_tfpv`](@ref), [`print_varieties`](@ref)
+See also: [`tfpv_candidates_groebner`](@ref), [`print_results`](@ref), [`print_tfpv`](@ref), [`print_varieties`](@ref)
 """
 function tfpv_candidates(problem::ReductionProblem)
   # check all possible slow-fast separations for sufficient conditions to be a TFPV for dimension s
   slow_fast = num2bin.(1:(2^length(problem.p_sf)-2), length(problem.p_sf)) 
   # define all polynomials and the Jacobian of f in ℝ(p_sf)[x]
   F, _p = rational_function_field(QQ, string.(problem.p))
-  R, _x = polynomial_ring(F, string.(problem.x))
+  _, _x = polynomial_ring(F, string.(problem.x))
   f = problem._f(_x, _p)
   J = matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in _x] for fᵢ in f])
   # keep track of which slow-fast separation satisfies the conditions and save
@@ -358,15 +357,13 @@ function tfpv_candidates(problem::ReductionProblem)
   components = Vector{Vector{MPolyIdeal}}()
   dim_components = Vector{Vector{Int}}()
   for i in eachindex(slow_fast)
-    sf = slow_fast[i]
-    tfpv_candidate = get_tfpv(_p, problem.idx_slow_fast, sf)
+    tfpv_candidate = get_tfpv(_p, problem.idx_slow_fast, slow_fast[i])
     f0 = problem._f(_x, tfpv_candidate)
     I = ideal(f0)
-    dim_I = dim(I)
-    if dim_I < problem.s
+    if dim(I) < problem.s
       idx_keep[i] = [false]
     else
-      PD = primary_decomposition(ideal(f0))
+      PD = primary_decomposition(I)
       Y = [Q[2] for Q in PD]
       dim_Y = dim.(Y)
       # set the slow parameters to zero in Jacobian

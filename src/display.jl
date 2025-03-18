@@ -1,4 +1,3 @@
-import Base 
 
 function Base.show(io::IO, ::MIME"text/plain", problem::ReductionProblem)
   println(io, "ReductionProblemlem for dimension s = $(problem.s)")
@@ -20,7 +19,7 @@ function Base.show(io::IO, ::MIME"text/plain", reduction::Reduction)
   if all(reduction.success)
     print(io, "\n M      = [" * join(string.(reduction.M), ", ") * "]")
     print(io, "\n P      = $(reduction.P)")
-    print(io, "\n Ψ      = [" * join([string(ψ) for ψ in reduction.Psi], ", ") * "]") # bug in Oscar? string.(reduction.Psi) throws error
+    print(io, "\n Ψ      = [" * join([string(ψ) for ψ in reduction.Psi], ", ") * "]") 
     print(io, "\n x₀     = [" * join(string.(reduction.x0), ", ") * "]")
     print(io, "\n Df(x₀) = $(reduction.Df0_at_x0)")
   end

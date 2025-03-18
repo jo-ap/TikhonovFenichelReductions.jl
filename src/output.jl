@@ -21,11 +21,17 @@ function padstring(s::String, width::Int; padfront::Bool=true)
 end
 
 """
-    $(TYPEDSIGNATURES)
+    print_tfpv(
+      [io::IO,] 
+      problem::ReductionProblem,
+      sf_separations::Vector{Vector{Bool}}; 
+      latex::Bool=false,
+      idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[]
+    )
 
-    Print slow-fast separations to terminal or use `latex=true` to print LaTeX
-instead.
-Optionally only print subset defined by (boolean or numeric) index set `idx`.
+Print slow-fast separations to terminal or use `latex=true` to print LaTeX
+instead. Optionally only print subset defined by (boolean or numeric) index set
+`idx`.
 """
 function print_tfpv(
   io::IO,
@@ -53,11 +59,11 @@ function _print_tfpv(
   if latex
     parameters = [latexify(p_sfᵢ; env=:raw) for p_sfᵢ in string.(problem.p_sf)]
     m = length(parameters)
-    str = "\\begin{array}{r$(repeat('c',length(problem.p_sf)))} i & $(join(parameters .* "^\\star", " & ")) \\\\ \n"
+    str = "\$\\begin{array}{r$(repeat('c',length(problem.p_sf)))} i & $(join(parameters .* "^\\star", " & ")) \\\\ \n"
     for i in idx
       str *= "$i & " * join([sf_separations[i][k] ? parameters[k] : "\\cdot" for k = 1:m], " & ") * " \\\\ \n"
     end
-    str *= "\\end{array}"
+    str *= "\\end{array}\$"
   else
     subscripts = ["₀","₁","₂","₃","₄","₅","₆","₇","₈","₉"]
     numbers = string.(0:9)
@@ -86,7 +92,13 @@ function _print_tfpv(
 end
 
 """
-    $(TYPEDSIGNATURES)
+    print_varieties(
+      [io::IO,]
+      V::Vector{Vector{Vector{QQMPolyRingElem}}},
+      dim_V::Vector{Vector{Int}};
+      latex::Bool=false,
+      idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[]
+    ) 
 
 Print generators of ideals corresponding to the irreducible components of
 varieties `V(f0)` for TFPV candidates and their dimension (`V` and `dim_V` as
@@ -97,7 +109,7 @@ See also: [`tfpv_candidates`](@ref), [`print_tfpv`](@ref), [`print_results`](@re
 """
 function print_varieties(
   io::IO, 
-  V::Vector{Vector{Vector{FracFieldElem{QQMPolyRingElem}}}},
+  V::Vector{Vector{Vector{QQMPolyRingElem}}},
   dim_V::Vector{Vector{Int}};
   latex::Bool=false,
   idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[]) 
@@ -105,7 +117,7 @@ function print_varieties(
   _print_varieties(io::IO, V, dim_V, latex, idx)
 end
 function print_varieties(
-  V::Vector{Vector{Vector{FracFieldElem{QQMPolyRingElem}}}},
+  V::Vector{Vector{Vector{QQMPolyRingElem}}},
   dim_V::Vector{Vector{Int}};
   latex::Bool=false,
   idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[]) 
@@ -115,37 +127,38 @@ end
 
 function _print_varieties(
   io::IO, 
-  V::Vector{Vector{Vector{FracFieldElem{QQMPolyRingElem}}}},
+  V::Vector{Vector{Vector{QQMPolyRingElem}}},
   dim_V::Vector{Vector{Int}},
   latex::Bool,
   idx::AbstractVector{Int})
   if latex
-    str = "\\begin{array}{rll} i & \\mathcal{V}(f(\\cdot, \\pi^\\star)) & \\dim_{\\textrm{Krull}} \\\\ \n"
+    str = "\\[\n\\begin{array}{rll} i & \\mathcal{V}(f(\\cdot, \\pi^\\star)) & \\dim_{\\textrm{Krull}} \\\\ \n"
     for i in idx
       str *= "$i"
       for j in eachindex(V[i])
-        str *= " & \\langle " * join(latexify.(string.(V[i][j]); env=:raw, cdot=false), ", ") * " \\rangle & $(dim_V[i][j]) \\\\ \n"
+        str *= " & \\langle " * join(latexify.(string.(V[i][j]); env=:raw, mult_symbol=""), ", ") * " \\rangle & $(dim_V[i][j]) \\\\ \n"
       end
     end
-    str *= "\\end{array}"
+    str *= "\\end{array}\n\\]"
   else
     subscripts = ["₀","₁","₂","₃","₄","₅","₆","₇","₈","₉"]
     numbers = string.(0:9)
     max_width = ndigits(length(V)) 
     pad = "$(repeat(" ", max_width + 4))"
+    str = ""
     for i in idx
       V_str = ["[" * replace(join(string.(V[i][j]), ", ")) * "], $(dim_V[i][j])" for j in eachindex(V[i])]
-      str = "V" * 
+      str *= "V" * 
         join([subscripts[string(n) .== numbers][1] for n in string(i)], "") * 
         "$(repeat(" ", max_width - ndigits(i))) : " * 
-        join(V_str, "\n" * pad)
+        join(V_str, "\n" * pad) * "\n"
     end
   end
   println(io::IO, str)
 end
 function _print_varieties(
   io::IO,
-  V::Vector{Vector{Vector{FracFieldElem{QQMPolyRingElem}}}},
+  V::Vector{Vector{Vector{QQMPolyRingElem}}},
   dim_V::Vector{Vector{Int}},
   latex::Bool,
   idx::Vector{Bool})
@@ -154,7 +167,14 @@ function _print_varieties(
 end
 
 """
-    $(TYPEDSIGNATURES)
+    print_results(
+      [io::IO,]
+      problem::ReductionProblem,
+      sf_separations::Vector{Vector{Bool}},
+      V,
+      dim_V::Vector{Vector{Int}};
+      idx::Union{AbstractVector{Int}, Vector{Bool}} = Int[]
+    )
 
 Print slow-fast separations that are TFPVs and generators for the corresponding
 irreducible components of `V(f0)` together with their Krull dimension.
@@ -214,7 +234,13 @@ function _print_results(
 end
 
 """
-    $(TYPEDSIGNATURES)
+    print_reduced_system(
+      [io::IO,] 
+      reduction::Reduction; 
+      rewrite::Bool=true,
+      factor::Bool=false, 
+      latex::Bool=false
+    )
 
 Print the reduced system (after `compute_reduction!` has been called
 successfully on the `Reduction` object). 
@@ -231,11 +257,17 @@ phase space.
 
 See also: [`rewrite_rational`](@ref), [`print_tfpv`](@ref), [`print_varieties`](@ref)
 """
-function print_reduced_system(io::IO, reduction::Reduction; rewrite::Bool=true, factor::Bool=false)
-  println(io, _get_reduced_system_str(reduction; rewrite=rewrite, factor=factor, padfront=0))
+function print_reduced_system(io::IO, reduction::Reduction; rewrite::Bool=true, factor::Bool=false, latex::Bool=false)
+  str = _get_reduced_system_str(reduction; rewrite=rewrite, factor=factor, padfront=0)
+  if latex 
+    str_latex = [replace(latexify(s; env=:raw, mult_symbol=""), "=" => "&=") for s in split(str, "\n")]
+    replace.(str_latex, "=" => "aaa")
+    str = "\\[\n\\begin{aligned}\n" * join(str_latex, "\\\\\n") * "\n\\end{aligned}\n\\]"
+  end
+  println(io, str)
 end
-function print_reduced_system(reduction::Reduction; rewrite::Bool=true, factor::Bool=false)
-  println(stdout, _get_reduced_system_str(reduction; rewrite=rewrite, factor=factor, padfront=0))
+function print_reduced_system(reduction::Reduction; rewrite::Bool=true, factor::Bool=false, latex::Bool=false)
+  print_reduced_system(stdout, reduction; rewrite, factor, latex)
 end
 
 function _get_reduced_system_str(reduction::Reduction; rewrite::Bool=true, factor::Bool=false, padfront::Int=0)
@@ -253,14 +285,13 @@ function _get_reduced_system_str(reduction::Reduction; rewrite::Bool=true, facto
     _g = rewrite_rational.(g; factor=factor)
     for i in eachindex(_g)
       h, r, q = _g[i]
-      dudt = dxdt[i]
-      str = pad * padstring(dudt, string_length; padfront=false) * " = "
+      str = pad * padstring(dxdt[i], string_length; padfront=false) * " = "
       if r == 0 
-        _h = h == 0 ? "0" : string(h)
+        _h = h == 0 ? "0" : string(h) 
         str_out[i] = str *  replace(_h, " * " => "*", "1 * " => "") 
       else
-        _h = h == 0 ? "" : string(h)
-        str_out[i] = str * replace(_h * " + (" * string(r) * ")//(" * string(q) * ")", " * " => "*", "1 * " => "") 
+        _h = h == 0 ? "" : string(h) * " + "
+        str_out[i] = str * replace(_h * "(" * string(r) * ")//(" * string(q) * ")", " * " => "*", "1 * " => "") 
       end
     end
   else 
@@ -278,8 +309,7 @@ Decompose a rational function `f = p/q` into polynomial and rational part, i.e.
 return `f = h + r/q`, where `p,q,h,r` are polynomials.
 
 ### Arguments 
-- `factor`: Indicate whether the RHS should be decomposed into polynomial and
-rational part (default is `true`)
+- `factor`: Whether all polynomials should be factorized (default is `false`)
 
 See also: [`print_reduced_system`](@ref)
 """
@@ -295,7 +325,7 @@ function rewrite_rational(term::FracFieldElem{QQMPolyRingElem}; factor::Bool=fal
 end
 
 """
-    $(TYPEDSIGNATURES)
+    print_slow_fast([io::IO,] reduction::Reduction)
 
 Print slow and fast parameters.
 """
@@ -315,9 +345,9 @@ end
 
 
 """
-    $(TYPEDSIGNATURES)
+    print_system([io::IO,] problem::ReductionProblem; latex::Bool=false)
 
-Print ODE system.
+Print input ODE system.
 """
 function print_system(io::IO, problem::ReductionProblem; latex::Bool=false)
   print(io, _get_system_str(string.(problem.x), string.(problem.f); latex=latex))
@@ -327,11 +357,11 @@ print_system(problem::ReductionProblem; latex::Bool=false) = print_system(stdout
 function _get_system_str(x::Vector{String}, f::Vector{String}; padfront::Int=0, latex::Bool=false)
   dxdt = ["d$u/dt" for u in x]
   if latex
-    str_out = "\\begin{align}\n"
+    str_out = "\\[\n\\begin{aligned}\n"
     for i in eachindex(f) 
-      str_out *= latexify(dxdt[i]; env=:raw) * " &= " * latexify(f[i]; env=:raw) * "\\\\\n"
+      str_out *= latexify(dxdt[i]; env=:raw) * " &= " * latexify(f[i]; mult_symbol="", env=:raw) * "\\\\\n"
     end
-    str_out *= "\\end{align}"
+    str_out *= "\\end{aligned}\n\\]"
     return str_out
   else
     str_out = ["" for _ in f]

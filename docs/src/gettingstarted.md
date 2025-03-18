@@ -58,8 +58,9 @@ affine variety
 ```
 and their dimension, where ``\pi^\star`` is defined by the corresponding
 slow-fast separation in `sf_separation`. 
-Note that we later check whether the variety taken in ``\mathbb{R}^n`` has the
-same dimension (i.e. if there exists a real non-singular point).
+Note that later have to check manually whether the variety taken in
+``\mathbb{R}^n`` has the same dimension (i.e. if there exists a real
+non-singular point).
 
 ```@example 1
 sf_separation, V, dim_V = tfpv_candidates(problem)
@@ -69,7 +70,7 @@ You can also get all general TFPVs by computing a Gröbner basis `G` that
 reflects necessary conditions on the parameters of the system. 
 Note that this is potentially a very computationally intensive task.
 ```@example 1
-G = tfpv_groebner_basis(problem)
+G = tfpv_candidates_groebner(problem)
 ```
 
 Show the results: All possible slow-fast separation of rates 
@@ -125,18 +126,27 @@ component containing the non-singular point.
 
 Lastly, we define a product decomposition ``f(\cdot,\pi^\star) = P \cdot \psi``
 with ``\mathcal{V}(\psi) = \mathcal{V}(f(\cdot,\pi^\star))``.
-If ``n-s=1``, as is the case here, this can always be done by specifying only
-``\psi``:
+This can be done by specifying only ``\psi`` using the generators of the
+irreducible component of ``\mathcal{V}(f^{(0)})`` that corresponds to the slow
+manifold.
+Then, the methods automatically computes ``P``.
 ```@example 1
-set_decomposition!(reduction, [H])
+set_decomposition!(reduction, V[15][1])
 ```
-Now we can compute the reduced system.
+
+Now we can compute and show the reduced system.
 ```@example 1
-_, g = compute_reduction(reduction)
+compute_reduction!(reduction)
+print_reduced_system(reduction)
 ```
-This returns the system before and after variables are substituted as defined
-by the slow manifold, respectively.
-The first two components of ```g``` define the reduced system and can be rewritten as 
+This updates the reduction object, which now contains the reduced system before
+and after variables are substituted as defined by the slow manifold.
+You can see how the reduction object is updated:
+```@example 1 
+reduction
+```
+The first two components of ```reduction.g``` define the reduced system and can
+be rewritten as 
 ```math
 \begin{align*}
 \frac{dB}{dt} &= \rho B (1 - B) - \alpha(\eta + \beta) S \frac{B}{\delta + \gamma B} \\
