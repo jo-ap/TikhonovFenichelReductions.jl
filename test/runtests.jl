@@ -1,3 +1,4 @@
+using Aqua
 using Test
 using TikhonovFenichelReductions
 
@@ -16,15 +17,26 @@ end
 prob = ReductionProblem(f, x, p, 1; idx_slow_fast = [true, true, false, true])
 sf_separations, V, dim_V = tfpv_candidates(prob);
 
-@testset "Finding TFPVs" begin
-  include("tfpv.jl") 
-end
+@testset "TikhonovFenichelReductions Tests" begin
 
-@testset "Computing Reductions" begin
-  include("reduction.jl") 
-end
+  @testset "Finding TFPVs" begin
+    include("tfpv.jl") 
+  end
 
-@testset "Output" begin
-  include("output.jl")
-end
+  @testset "Computing Reductions" begin
+    include("reduction.jl") 
+  end
 
+  @testset "CatalystExt" begin
+    include("catalyst.jl")
+  end
+
+  @testset "Output" begin
+    include("output.jl")
+  end
+
+  @testset "Aqua" begin
+    Aqua.test_all(TikhonovFenichelReductions)
+  end
+
+end
