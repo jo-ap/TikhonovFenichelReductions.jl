@@ -412,7 +412,7 @@ function _set_decomposition!(reduction::Reduction, P::VecOrMat, Psi)
 end
   
 # try computing matrix of rational functions P from Psi
-function get_P(reduction::Reduction, Psi::Vector{QQMPolyRingElem})
+function get_decomposition(reduction::Reduction, Psi::Vector{QQMPolyRingElem})
   if size(Psi, 1) == 1
     return reduction.f0.//Psi
   else 
@@ -423,15 +423,16 @@ function get_P(reduction::Reduction, Psi::Vector{QQMPolyRingElem})
     U, Q, H = reduce_with_quotients_and_unit(_f0, _Psi)
     if all(H .== 0)
       P = matrix(reduction.F, [Rx_to_F(f, reduction) for f in U*Q])
-      return P
+      return P, Psi
     end
-    # _Psi = find_independent_polys(reduction.f0)
-    # U, Q, H = reduce_with_quotients_and_unit(reduction.f0, _Psi)
-    # if all(H .== 0)
-    #   return _Psi, U*Q
-    # end
+    _Psi = find_independent_polys(reduction.f0)
+    U, Q, H = reduce_with_quotients_and_unit(reduction.f0, _Psi)
+    if all(H .== 0)
+      @info "Automatically updated Psi"
+      return U*Q, _Psi
+    end
     @warn "Could not set P automatically."
-    return nothing
+    return nothing, Psi
   end
 end
 
@@ -462,7 +463,7 @@ rational equations as polynomials by multiplying appropriately with
 parameters occurring in a denominator).
 """
 function set_decomposition!(reduction::Reduction, Psi)
-  P = get_P(reduction, Psi)
+  P, Psi = get_decomposition(reduction, Psi)
   isnothing(P) ? false : set_decomposition!(reduction, P, Psi)
 end
 

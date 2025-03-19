@@ -103,15 +103,43 @@ end
 Parse a polynomial in the ring `QQ(p)[x]` into rational function field over `QQ[x,p]`.
 """
 function parse_variety_generator(problem::ReductionProblem, Y::T) where T<:MPolyRingElem
+  # cancel parameters in denominators
+  # parse in appropriate ring
   ce = coefficients_and_exponents(Y)
   s = parent(problem.f[1])(0)
   for (c,α) in ce 
     p = evaluate(numerator(c), problem.p)
-    q = evaluate(denominator(c), problem.p)
-    @assert q == 1 # todo: check if this is always the case? If not, should not be a problem?
+    # q = evaluate(denominator(c), problem.p)
+    # @assert q == 1 # todo: check if this is always the case? If not, should not be a problem?
     s += p*prod(problem.x.^α)
   end
   return s
+end
+
+function rewrite_variety_gen(p)
+  while true
+    c = coefficients(p)
+    for _c in c
+      denom = denominator(_c)
+      if denom != 1 
+        p = denom * p 
+        break
+      end
+    end
+    break
+  end
+  return p
+end
+
+function simplify_variety_gens(problem, Y)
+  _Y = [rewrite_variety_gen(p) for p in gens(Y)]
+  GB = groebner_basis(Y; complete_reduction=true)
+  _Y_GB = gens(GB)
+  if length(_Y_GB) == length(problem.x) - problem.s
+    return _Y_GB
+  else 
+    return _Y
+  end
 end
 
 """
@@ -388,8 +416,10 @@ function tfpv_candidates(problem::ReductionProblem)
     end
   end
   idx_tfpv = any.(idx_keep)
-  gens_components = [gens.(groebner_basis.(v; complete_reduction=true)) for v in components]
+  # gens_components = [gens.(groebner_basis.(v; complete_reduction=true)) for v in components]
+  # gens_components = parse_varieties(problem, gens_components)
+  gens_components = [[simplify_variety_gens(problem, Q) for Q in Y] for Y in components]
   gens_components = parse_varieties(problem, gens_components)
-  return slow_fast[idx_tfpv], gens_components, dim_components, idx_keep[idx_tfpv]
+  return slow_fast[idx_tfpv], gens_components, dim_components, components #, idx_keep[idx_tfpv], components
 end
 
