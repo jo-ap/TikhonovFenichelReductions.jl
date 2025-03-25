@@ -3,7 +3,7 @@ module CatalystExt
 using Catalyst
 using DocStringExtensions
 using TikhonovFenichelReductions 
-using TikhonovFenichelReductions.Oscar
+using Oscar 
 
 """
     $(TYPEDSIGNATURES)
