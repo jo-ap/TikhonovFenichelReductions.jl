@@ -29,6 +29,52 @@ struct ReductionProblem
 end
 
 """
+Type that holds information on the slow manifold as an irreducible component of
+the variety `V(f0)`.
+
+    $(TYPEDFIELDS)
+"""
+struct SlowManifold
+  "associated ideal in Rx"
+  ideal::MPolyIdeal
+  "generators of associated ideal parsed to R"
+  gens_R::Vector{QQMPolyRingElem}
+  "groebner basis of associated ideal in Rx"
+  groebner_basis::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
+  "groebner basis of associated ideal parsed to R"
+  groebner_basis_R::Vector{QQMPolyRingElem}
+  "Matrix T, such that `gens(I)*T=groebner_basis`"
+  T::MatSpaceElem{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
+  "Krull dimension of associated ideal"
+  dim::Int64
+end
+
+function SlowManifold(I::MPolyIdeal, dim::Int64, problem::ReductionProblem) 
+  _I = ideal(rewrite_variety_generator.(gens(I)))
+  gens_R = [parse_variety_generator(problem, rewrite_variety_generator(g)) for g in gens(_I)]
+  @assert I == _I
+  G, _T = groebner_basis_with_transformation_matrix(_I; complete_reduction=true)
+  G = gens(G)
+  # cancel_monomial_leading_coefficients!(G, _T)
+  T = transpose(_T)
+  gb_R = [parse_variety_generator(problem, rewrite_variety_generator(g)) for g in G]
+  return SlowManifold(_I, gens_R, G, gb_R, T, dim)
+end
+
+# function cancel_monomial_leading_coefficients!(G::Vector{<:MPolyRingElem}, T::MatSpaceElem)
+#   lc = leading_coefficient.(G)
+#   for j in eachindex(lc)
+#     if !isone(lc[j]) && is_monomial(G[j])
+#       for i in 1:size(T,1)
+#         T[i,j] *= 1//lc[j]
+#       end
+#       G[j] *= 1//lc[j]
+#     end
+#   end
+#   return nothing
+# end
+
+"""
     $(TYPEDSIGNATURES)
 
 Constructor for `ReductionProblem` Type.
@@ -49,7 +95,7 @@ appropriate types in
 so that the necessary conditions for the existence of a reduction onto an
 `s`-dimensional slow manifold can be evaluated.
 
-See also: [`tfpv_candidates`](@ref), [`tfpv_candidates_groebner`](@ref)
+See also: [`tfpvs_and_manifolds`](@ref), [`tfpvs_groebner`](@ref)
 """
 function ReductionProblem(
   f::Function, 
@@ -100,23 +146,33 @@ end
 """
     $(TYPEDSIGNATURES) 
 
-Parse a polynomial in the ring `QQ(p)[x]` into rational function field over `QQ[x,p]`.
+Parse a polynomial in the ring `Rx = QQ(p)[x]` into `R = QQ[x,p]`.
+
+See also: [`rewrite_variety_generator`](@ref)
 """
-function parse_variety_generator(problem::ReductionProblem, Y::T) where T<:MPolyRingElem
-  # cancel parameters in denominators
-  # parse in appropriate ring
+function parse_variety_generator(problem::ReductionProblem, Y::MPoly{RationalFunctionFieldElem{QQFieldElem,QQMPolyRingElem}})
   ce = coefficients_and_exponents(Y)
   s = parent(problem.f[1])(0)
   for (c,α) in ce 
     p = evaluate(numerator(c), problem.p)
-    # q = evaluate(denominator(c), problem.p)
-    # @assert q == 1 # todo: check if this is always the case? If not, should not be a problem?
+    q = denominator(c)
+    @assert q == 1 "Generators for slow manifold are not preprocessed correctly"
     s += p*prod(problem.x.^α)
   end
   return s
 end
 
-function rewrite_variety_gen(p)
+"""
+    $(TYPEDSIGNATURES) 
+
+Rewrite a generating polynomial of a variety as a subset in the phase space,
+i.e. a polynomial in `Rx = QQ(p)[x]`, by multiplying with parameters occuring
+in the denominator.
+Thus, the resulting polynomial can be parsed to the ring `R = QQ[p,x]`.
+
+See also: [`parse_variety_generator`](@ref)
+"""
+function rewrite_variety_generator(p::MPoly{RationalFunctionFieldElem{QQFieldElem,QQMPolyRingElem}})
   while true
     c = coefficients(p)
     for _c in c
@@ -129,27 +185,6 @@ function rewrite_variety_gen(p)
     break
   end
   return p
-end
-
-function simplify_variety_gens(problem, Y)
-  _Y = [rewrite_variety_gen(p) for p in gens(Y)]
-  GB = groebner_basis(Y; complete_reduction=true)
-  _Y_GB = gens(GB)
-  if length(_Y_GB) == length(problem.x) - problem.s
-    return _Y_GB
-  else 
-    return _Y
-  end
-end
-
-"""
-    $(TYPEDSIGNATURES) 
-
-Parse generators of the varieties as returned by `tfpv_candidates` into
-rational function field over `QQ[x,p]`.
-"""
-function parse_varieties(problem::ReductionProblem, V::Vector{Vector{Vector{T}}}) where T<:MPolyRingElem
-  return [[[parse_variety_generator(problem, Yᵢ) for Yᵢ in Y] for Y in Vₙ] for Vₙ in V]
 end
 
 """
@@ -226,9 +261,9 @@ polynomial conditions above.
 This function computes a generating set for this elimination ideal and all
 TFPVs lie in its vanishing set.
 
-See also: [`tfpv_candidates`](@ref) 
+See also: [`tfpvs_and_manifolds`](@ref) 
 """
-function tfpv_candidates_groebner(problem::ReductionProblem)
+function tfpvs_groebner(problem::ReductionProblem)
   # number of dimensions to reduce the system by
   r = length(problem.x) - problem.s
   # Jacobian of the full system
@@ -277,7 +312,7 @@ end
 # irreducible component implies that topological and Krull dimension are equal. 
 # Since we require such a point later, we may use the exact dimension already. 
 
-# See also: [`tfpv_candidates_groebner`](@ref)
+# See also: [`tfpvs_groebner`](@ref)
 # """
 # function dimension_criterion(
 #   problem::ReductionProblem; 
@@ -367,11 +402,11 @@ symbolically by computing normal forms with respect to a Gröbner basis `G`, s.t
 `V(G)=Y`. 
 
 To obtain all general TFPVs and not just slow-fast separations, one can use the
-function `tfpv_candidates_groebner`.
+function `tfpvs_groebner`.
 
-See also: [`tfpv_candidates_groebner`](@ref), [`print_results`](@ref), [`print_tfpv`](@ref), [`print_varieties`](@ref)
+See also: [`tfpvs_groebner`](@ref), [`print_results`](@ref), [`print_tfpvs`](@ref), [`print_slow_manifolds`](@ref)
 """
-function tfpv_candidates(problem::ReductionProblem)
+function tfpvs_and_manifolds(problem::ReductionProblem)
   # check all possible slow-fast separations for sufficient conditions to be a TFPV for dimension s
   slow_fast = num2bin.(1:(2^length(problem.p_sf)-2), length(problem.p_sf)) 
   # define all polynomials and the Jacobian of f in ℝ(p_sf)[x]
@@ -381,45 +416,42 @@ function tfpv_candidates(problem::ReductionProblem)
   J = matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in _x] for fᵢ in f])
   # keep track of which slow-fast separation satisfies the conditions and save
   # irreducible components of V(f0) and their dimensions
-  idx_keep = Vector{Vector{Bool}}(undef, length(slow_fast))
-  components = Vector{Vector{MPolyIdeal}}()
-  dim_components = Vector{Vector{Int}}()
+  idx_keep = zeros(Bool, length(slow_fast))
+  slow_manifolds = Vector{Vector{SlowManifold}}(undef, length(slow_fast))
   for i in eachindex(slow_fast)
-    tfpv_candidate = get_tfpv(_p, problem.idx_slow_fast, slow_fast[i])
-    f0 = problem._f(_x, tfpv_candidate)
-    I = ideal(f0)
-    if dim(I) < problem.s
-      idx_keep[i] = [false]
-    else
-      PD = primary_decomposition(I)
-      Y = [Q[2] for Q in PD]
-      dim_Y = dim.(Y)
-      # set the slow parameters to zero in Jacobian
-      J_p_sf = map(f -> update_cofficients(f, tfpv_candidate), J)
-      keep_i = [false for _ in Y]
-      for j in eachindex(Y) 
-        # check if dimension of irreducible component Yⱼ is as desired
-        if dim_Y[j] == problem.s
-          # substitute x = x0 ∈ Yⱼ
-          # we need that Y[j] is the radical of Qᵢ in order for normal forms work !
-          M = map(f -> normal_form(f, Y[j]), J_p_sf)
-          # Let Χ(τ) = τⁿ+ σₙ₋₁(x,p_sf)τ⁽ⁿ⁻¹⁾ + … + σ₁(x,p_sf)τ + σ₀(x,p_sf) be the characteristic polynomial 
-          # for x0 ∈ Yⱼ and p_sf⁺ a TFPV for dimension s we have σₛ(x0,p_sf⁺) ≠ 0 
-          keep_i[j] = coeff(charpoly(M), problem.s) != 0
-        end 
-      end
-      idx_keep[i] = keep_i
-      if any(keep_i)
-        push!(components, Y)
-        push!(dim_components, dim_Y)
-      end
+    keep_i, Y, dim_Y = get_slow_manifolds(problem, _x, _p, slow_fast[i], J)
+    if any(keep_i)
+      idx_keep[i] = true
+      slow_manifolds[i] = [SlowManifold(Y[k], dim_Y[k], problem) for k in eachindex(Y)]
     end
   end
-  idx_tfpv = any.(idx_keep)
-  # gens_components = [gens.(groebner_basis.(v; complete_reduction=true)) for v in components]
-  # gens_components = parse_varieties(problem, gens_components)
-  gens_components = [[simplify_variety_gens(problem, Q) for Q in Y] for Y in components]
-  gens_components = parse_varieties(problem, gens_components)
-  return slow_fast[idx_tfpv], gens_components, dim_components, components #, idx_keep[idx_tfpv], components
+  return slow_fast[idx_keep], slow_manifolds[idx_keep]
 end
 
+function get_slow_manifolds(problem, _x, _p, slow_fast, J)
+  tfpv_candidate = get_tfpv(_p, problem.idx_slow_fast, slow_fast)
+  f0 = problem._f(_x, tfpv_candidate)
+  I = ideal(f0)
+  if dim(I) < problem.s
+    return [false], nothing, nothing 
+  else
+    PD = primary_decomposition(I)
+    Y = [Q[2] for Q in PD]
+    dim_Y = dim.(Y)
+    # set the slow parameters to zero in Jacobian
+    J_p_sf = map(f -> update_cofficients(f, tfpv_candidate), J)
+    keep_i = [false for _ in Y]
+    for j in eachindex(Y) 
+      # check if dimension of irreducible component Yⱼ is as desired
+      if dim_Y[j] == problem.s
+        # substitute x = x0 ∈ Yⱼ
+        # we need that Y[j] is the radical of Qᵢ in order for normal forms work !
+        M = map(f -> normal_form(f, Y[j]), J_p_sf)
+        # Let Χ(τ) = τⁿ+ σₙ₋₁(x,p_sf)τ⁽ⁿ⁻¹⁾ + … + σ₁(x,p_sf)τ + σ₀(x,p_sf) be the characteristic polynomial 
+        # for x0 ∈ Yⱼ and p_sf⁺ a TFPV for dimension s we have σₛ(x0,p_sf⁺) ≠ 0 
+        keep_i[j] = coeff(charpoly(M), problem.s) != 0
+      end 
+    end
+  end
+  return keep_i, Y, dim_Y
+end

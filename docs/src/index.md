@@ -50,7 +50,7 @@ Most TFPVs we are interested in are of this type, because they directly relate
 to a slow-fast separation of processes.
 However, there might exist TFPVs that are characterized by more complicated
 expressions in the original parameters being small. 
-The function `tfpv_candidates` implements this approach, i.e. it yields all
+The function `tfpvs_and_manifolds` implements this approach, i.e. it yields all
 slow-fast separations of rates that are TFPVs.
 Roughly speaking, this checks for all possible slow-fast separations of rates
 whether there exists an irreducible component of the affine variety
@@ -85,7 +85,7 @@ Then, every TFPV must result in the vanishing of each polynomial in the set
 \mathcal{V}(I\cap\mathbb{R}[\pi])``.
 Thus, we may obtain more complicated expressions in the parameters that can be
 considered small parameters (instead of just slow-fast separations of rates).
-``G\cap\mathbb{R}[\pi]`` can be computed by calling `tfpv_candidates_groebner`. 
+``G\cap\mathbb{R}[\pi]`` can be computed by calling `tfpvs_groebner`. 
 Given a TFPV defined by rational expressions, one can rewrite the original
 system with a new parameter equal to this expression, which makes it a slow-fast
 separation of rates. 

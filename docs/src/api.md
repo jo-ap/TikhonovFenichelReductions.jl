@@ -1,4 +1,4 @@
-# API Reference
+# API
 
 ## Finding Tikhonov-Fenichel Parameter Values
 ```@autodocs
@@ -28,8 +28,8 @@ Order = [:function, :type]
 ```@docs
 print_system
 print_results
-print_tfpv
-print_varieties
+print_tfpvs
+print_slow_manifolds
 print_reduced_system
 print_slow_fast
 rewrite_rational

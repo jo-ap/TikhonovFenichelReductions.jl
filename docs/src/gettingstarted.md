@@ -6,6 +6,16 @@ Run
 add https://github.com/jo-ap/tikhonovfenichelreductions.jl
 ~~~
 in Julia package Mode.
+!!! note "Installation"
+    TikhonovFenichelReductions.jl relies on Oscar.jl, which requieres at least
+    6GB of free memory for the installation (the Oscar-Team recommends at least
+    16GB).
+    On Windows, Oscar.jl needs to be installed using the Windows Subsystem for
+    Linux (WSL).
+    Instructions can be found in the
+    [documentation](https://www.oscar-system.org/getting-started/install-win/).
+    
+
 
 ## Example
 Here we consider the derivation of the Rosenzweig-MacArthur model as a
@@ -58,29 +68,33 @@ affine variety
 ```
 and their dimension, where ``\pi^\star`` is defined by the corresponding
 slow-fast separation in `sf_separation`. 
+This is information is stored using the type `SlowManifold` (although
+technically this is an affine variety, which is implicitly given and can only
+be thought of a manifold if it is non-singular).
 Note that later have to check manually whether the variety taken in
 ``\mathbb{R}^n`` has the same dimension (i.e. if there exists a real
-non-singular point).
+non-singular point), which then at least locally renders this variety a
+manifold.
 
 ```@example 1
-sf_separation, V, dim_V = tfpv_candidates(problem)
+tfpvs, manifolds = tfpvs_and_manifolds(problem)
 ```
 
 You can also get all general TFPVs by computing a Gröbner basis `G` that
 reflects necessary conditions on the parameters of the system. 
 Note that this is potentially a very computationally intensive task.
 ```@example 1
-G = tfpv_candidates_groebner(problem)
+G = tfpvs_groebner(problem)
 ```
 
 Show the results: All possible slow-fast separation of rates 
 ```@example 1
-print_tfpv(problem, sf_separation)
+print_tfpvs(problem, tfpvs)
 ```
 and the corresponding irreducible components containing the slow manifold and their
 Krull dimension
 ```@example 1
-print_varieties(V, dim_V)
+print_slow_manifolds(manifolds)
 ```
 
 For further use, we need to make the variables (the system components and
@@ -92,16 +106,16 @@ B, S, H = system_components(problem)
 α, β, γ, δ, η, ρ = system_parameters(problem)
 
 # instantiate reduction 
-reduction = Reduction(problem, sf_separation[15])
+reduction = Reduction(problem, tfpvs[15])
 ```
 
 To find the slow manifold, we can consider the affine variety defined by the vanishing of
 ```@example 1
-V[15]
+manifolds[15][1].gens_R
 ```
 which has (complex) dimension
 ```@example 1
-dim_V[15] 
+manifolds[15][1].dim
 ```
 as a variety. 
 We can see, that there is only one irreducible component, so the slow manifold is 
@@ -129,10 +143,13 @@ with ``\mathcal{V}(\psi) = \mathcal{V}(f(\cdot,\pi^\star))``.
 This can be done by specifying only ``\psi`` using the generators of the
 irreducible component of ``\mathcal{V}(f^{(0)})`` that corresponds to the slow
 manifold.
-Then, the methods automatically computes ``P``.
+Then, the methods automatically computes ``P``, which relies on having exactly
+``r`` generators of the variety corresponding to the slow manifold.
 ```@example 1
-set_decomposition!(reduction, V[15][1])
+set_decomposition!(reduction, manifolds[15][1])
 ```
+In most cases, this method should work, but you can also manually set ``P`` and
+``Psi``.
 
 Now we can compute and show the reduced system.
 ```@example 1

@@ -9,7 +9,8 @@ function Base.show(io::IO, ::MIME"text/plain", problem::ReductionProblem)
     println(io, " x = [" * join(string.(problem.x), ", ") * "]");
     println(io, " p = [" * join(string.(problem.p), ", ") * "]");
   end
-  print(io, " f: Function $(problem._f) from $(typeof(problem._f).name.module) defining ODE system\n") 
+  # print(io, " f: Function $(problem._f) from $(typeof(problem._f).name.module) defining ODE system\n") 
+  print(io, " ODE system:\n") 
   print(io, _get_system_str(string.(problem.x), string.(problem.f); padfront=2))
 end
 

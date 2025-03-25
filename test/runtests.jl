@@ -15,7 +15,6 @@ function f(x, p)
 end
 
 prob = ReductionProblem(f, x, p, 1; idx_slow_fast = [true, true, false, true])
-sf_separations, V, dim_V = tfpv_candidates(prob);
 
 @testset "TikhonovFenichelReductions Tests" begin
 

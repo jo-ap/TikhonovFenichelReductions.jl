@@ -1,6 +1,7 @@
 ## Output functions
 
-boolean_to_numeric(idx_bool) = (1:length(idx_bool))[idx_bool]
+assert_numeric_idx(idx::Vector{Bool}) = (1:length(idx))[idx]
+assert_numeric_idx(idx::AbstractVector{Int}) = idx
 
 """
     $(TYPEDSIGNATURES)
@@ -21,41 +22,43 @@ function padstring(s::String, width::Int; padfront::Bool=true)
 end
 
 """
-    print_tfpv(
+    print_tfpvs(
       [io::IO,] 
       problem::ReductionProblem,
       sf_separations::Vector{Vector{Bool}}; 
       latex::Bool=false,
-      idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[]
+      idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(sf_separations)
     )
 
 Print slow-fast separations to terminal or use `latex=true` to print LaTeX
 instead. Optionally only print subset defined by (boolean or numeric) index set
 `idx`.
 """
-function print_tfpv(
-  io::IO,
-  problem::ReductionProblem,
-  sf_separations::Vector{Vector{Bool}}; 
-  latex::Bool=false,
-  idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[])
-  idx = idx == [] ? (1:length(sf_separations)) : idx
-  _print_tfpv(io, problem, sf_separations, latex, idx)
+function print_tfpvs(
+    io::IO,
+    problem::ReductionProblem,
+    sf_separations::Vector{Vector{Bool}}; 
+    latex::Bool=false,
+    idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(sf_separations)
+  )
+  _print_tfpvs(io, problem, sf_separations, latex, assert_numeric_idx(idx))
 end
-function print_tfpv(
-  problem::ReductionProblem,
-  sf_separations::Vector{Vector{Bool}}; 
-  latex::Bool=false,
-  idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[])
-  print_tfpv(stdout, problem, sf_separations; latex=latex, idx=idx)
+function print_tfpvs(
+    problem::ReductionProblem,
+    sf_separations::Vector{Vector{Bool}}; 
+    latex::Bool=false,
+    idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(sf_separations)
+  )
+  _print_tfpvs(stdout, problem, sf_separations, latex, assert_numeric_idx(idx))
 end
 
-function _print_tfpv(
-  io::IO, 
-  problem::ReductionProblem,
-  sf_separations::Vector{Vector{Bool}},
-  latex::Bool,
-  idx::AbstractVector{Int})
+function _print_tfpvs(
+    io::IO, 
+    problem::ReductionProblem,
+    sf_separations::Vector{Vector{Bool}},
+    latex::Bool,
+    idx::AbstractVector{Int}
+  )
   if latex
     parameters = [latexify(p_sfᵢ; env=:raw) for p_sfᵢ in string.(problem.p_sf)]
     m = length(parameters)
@@ -81,62 +84,50 @@ function _print_tfpv(
   end
   println(io, str)
 end
-function _print_tfpv(
-  io::IO, 
-  problem::ReductionProblem,
-  sf_separations::Vector{Vector{Bool}},
-  latex::Bool,
-  idx::Vector{Bool})
-  @assert length(sf_separations) == length(idx) "`sf_separations` and `idx` must have same length"
-  _print_tfpv(io, problem, sf_separations, latex, boolean_to_numeric(idx))
-end
 
 """
-    print_varieties(
+    print_slow_manifolds(
       [io::IO,]
-      V::Vector{Vector{Vector{QQMPolyRingElem}}},
-      dim_V::Vector{Vector{Int}};
+      V::Vector{Vector{SlowManifold}};
       latex::Bool=false,
-      idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[]
+      idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(V)
     ) 
 
 Print generators of ideals corresponding to the irreducible components of
-varieties `V(f0)` for TFPV candidates and their dimension (`V` and `dim_V` as
-returned by or `tfpv_candidates`).
+varieties `V(f0)` for TFPV candidates and their dimension as returned by
+`tfpvs_and_manifolds` (these are wrapped in the type `SlowManifold`).
 Use keyword argument `latex=true` to print LaTeX code instead.
 
-See also: [`tfpv_candidates`](@ref), [`print_tfpv`](@ref), [`print_results`](@ref)
+See also: [`tfpvs_and_manifolds`](@ref), [`print_tfpvs`](@ref), [`print_results`](@ref)
 """
-function print_varieties(
-  io::IO, 
-  V::Vector{Vector{Vector{QQMPolyRingElem}}},
-  dim_V::Vector{Vector{Int}};
-  latex::Bool=false,
-  idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[]) 
-  idx = idx == [] ? (1:length(V)) : idx
-  _print_varieties(io::IO, V, dim_V, latex, idx)
+function print_slow_manifolds(
+    io::IO, 
+    V::Vector{Vector{SlowManifold}};
+    latex::Bool=false,
+    idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(V)
+  )
+  _print_slow_manifolds(io::IO, V, latex, assert_numeric_idx(idx))
 end
-function print_varieties(
-  V::Vector{Vector{Vector{QQMPolyRingElem}}},
-  dim_V::Vector{Vector{Int}};
-  latex::Bool=false,
-  idx::Union{AbstractVector{Int}, Vector{Bool}}=Int[]) 
-  idx = idx == [] ? (1:length(V)) : idx
-  _print_varieties(stdout, V, dim_V, latex, idx)
+function print_slow_manifolds(
+    V::Vector{Vector{SlowManifold}};
+    latex::Bool=false,
+    idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(V)
+  )
+  _print_slow_manifolds(stdout, V, latex, assert_numeric_idx(idx))
 end
 
-function _print_varieties(
-  io::IO, 
-  V::Vector{Vector{Vector{QQMPolyRingElem}}},
-  dim_V::Vector{Vector{Int}},
-  latex::Bool,
-  idx::AbstractVector{Int})
+function _print_slow_manifolds(
+    io::IO, 
+    V::Vector{Vector{SlowManifold}},
+    latex::Bool,
+    idx::AbstractVector{Int}
+  )
   if latex
     str = "\\[\n\\begin{array}{rll} i & \\mathcal{V}(f(\\cdot, \\pi^\\star)) & \\dim_{\\textrm{Krull}} \\\\ \n"
     for i in idx
       str *= "$i"
       for j in eachindex(V[i])
-        str *= " & \\langle " * join(latexify.(string.(V[i][j]); env=:raw, mult_symbol=""), ", ") * " \\rangle & $(dim_V[i][j]) \\\\ \n"
+        str *= " & \\langle " * join(latexify.(string.(V[i][j].gens_R); env=:raw, mult_symbol=""), ", ") * " \\rangle & $(V[i][j].dim) \\\\ \n"
       end
     end
     str *= "\\end{array}\n\\]"
@@ -147,7 +138,7 @@ function _print_varieties(
     pad = "$(repeat(" ", max_width + 4))"
     str = ""
     for i in idx
-      V_str = ["[" * replace(join(string.(V[i][j]), ", ")) * "], $(dim_V[i][j])" for j in eachindex(V[i])]
+      V_str = ["[" * replace(join(string.(V[i][j].gens_R), ", ")) * "], $(V[i][j].dim)" for j in eachindex(V[i])]
       str *= "V" * 
         join([subscripts[string(n) .== numbers][1] for n in string(i)], "") * 
         "$(repeat(" ", max_width - ndigits(i))) : " * 
@@ -156,81 +147,60 @@ function _print_varieties(
   end
   println(io::IO, str)
 end
-function _print_varieties(
-  io::IO,
-  V::Vector{Vector{Vector{QQMPolyRingElem}}},
-  dim_V::Vector{Vector{Int}},
-  latex::Bool,
-  idx::Vector{Bool})
-  idx = idx == [] ? (1:length(V)) : boolean_to_numeric(idx)
-  println(_print_varieties(io, V, dim_V, latex, idx))
-end
 
 """
     print_results(
       [io::IO,]
       problem::ReductionProblem,
       sf_separations::Vector{Vector{Bool}},
-      V,
-      dim_V::Vector{Vector{Int}};
-      idx::Union{AbstractVector{Int}, Vector{Bool}} = Int[]
+      V::Vector{Vector{SlowManifold}};
+      idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(V)
     )
 
 Print slow-fast separations that are TFPVs and generators for the corresponding
-irreducible components of `V(f0)` together with their Krull dimension.
+irreducible components of `V(f0)` together with their Krull dimension as stored
+in `SlowManifold` object.
 
 ### Arguments 
 - `problem`: `ReductionProblem` 
 - `sf_separations`: Boolean indices defining all TFPVs `π⁺` that are slow-fast separations (0: slow, 1: fast).
-- `V`: Generators for the irreducible component of the affine varietiy `V(f(⋅,π⁺))` for each slow-fast separation.
-- `dim_V`: Krull dimensions of the ideals generated by the elements in `V` (this equals the dimension of `V(f(⋅,π⁺))` in the affine space `ℂⁿ` or its real part, given that it contains a real non-singular point).
+- `V`: Generators for the irreducible component of the affine varietiy `V(f(⋅,π⁺))` for each slow-fast separation and their respective dimension.
 - `idx`: (optional) index vector to include only certain TFPVs (boolean or numeric)
 
-See also: [`tfpv_candidates`](@ref), [`print_tfpv`](@ref), [`print_varieties`](@ref)
+See also: [`tfpvs_and_manifolds`](@ref), [`print_tfpvs`](@ref), [`print_slow_manifolds`](@ref)
 """
 function print_results(
-  io::IO,
-  problem::ReductionProblem,
-  sf_separations::Vector{Vector{Bool}},
-  V,
-  dim_V::Vector{Vector{Int}};
-  idx::Union{AbstractVector{Int}, Vector{Bool}} = Int[])
-  _print_results(io, problem, sf_separations, V, dim_V, idx)
+    io::IO,
+    problem::ReductionProblem,
+    sf_separations::Vector{Vector{Bool}},
+    V::Vector{Vector{SlowManifold}};
+    idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(V)
+  )
+  _print_results(io, problem, sf_separations, V, assert_numeric_idx(idx))
 end
 function print_results(
-  problem::ReductionProblem,
-  sf_separations::Vector{Vector{Bool}},
-  V,
-  dim_V::Vector{Vector{Int}};
-  idx::Union{AbstractVector{Int}, Vector{Bool}} = Int[])
-  _print_results(stdout, problem, sf_separations, V, dim_V, idx)
+    problem::ReductionProblem,
+    sf_separations::Vector{Vector{Bool}},
+    V::Vector{Vector{SlowManifold}};
+    idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(V)
+  )
+  _print_results(stdout, problem, sf_separations, V, assert_numeric_idx(idx))
 end
 
 function _print_results(
-  io::IO,
-  problem::ReductionProblem,
-  sf_separations::Vector{Vector{Bool}},
-  V,
-  dim_V::Vector{Vector{Int}},
-  idx::Union{AbstractVector{Int}, Vector{Bool}} = Int[])
-  idx = idx == [] ? (1:length(sf_separations)) : idx
+    io::IO,
+    problem::ReductionProblem,
+    sf_separations::Vector{Vector{Bool}},
+    V::Vector{Vector{SlowManifold}},
+    idx::Union{AbstractVector{Int}, Vector{Bool}}
+  )
   for i in idx
     println(io, "$i")
     idx_fast = sf_separations[i]
     println(io, " π̃: [" * join([idx_fast[k] ? string(problem.p_sf[k]) : "0" for k = 1:length(idx_fast)], ", ") *"]")
-    V_str = ["[" * replace(join(string.(V[i][k]), ", ")) * "], $(dim_V[i][k])" for k in eachindex(V[i])]
+    V_str = ["[" * replace(join(string.(V[i][k].gens_R), ", ")) * "], $(V[i][k].dim)" for k in eachindex(V[i])]
     println(io, " V: " * join(V_str, "\n    ") * "\n")
   end
-end
-function _print_results(
-  io::IO,
-  problem::ReductionProblem,
-  sf_separations::Vector{Vector{Bool}},
-  V,
-  dim_V::Vector{Vector{Int}},
-  idx::Vector{Bool})
-  @assert length(sf_separations) == length(V) == length(dim_V) == length(idx) "`sf_separations`, `dim_V` and `V` all need to have the same length as `idx`"
-  _print_results(io, problem, sf_separations, V, dim_V, boolean_to_numeric(idx))
 end
 
 """
@@ -255,7 +225,7 @@ phase space.
 - `rewrite`: Whether the RHS should be decomposed into polynomial and rational part (default is `true`), see `rewrite_rational`
 - `factor`: Whether the polynomial parts should be factorized
 
-See also: [`rewrite_rational`](@ref), [`print_tfpv`](@ref), [`print_varieties`](@ref)
+See also: [`rewrite_rational`](@ref), [`print_tfpvs`](@ref), [`print_slow_manifolds`](@ref)
 """
 function print_reduced_system(io::IO, reduction::Reduction; rewrite::Bool=true, factor::Bool=false, latex::Bool=false)
   str = _get_reduced_system_str(reduction; rewrite=rewrite, factor=factor, padfront=0)

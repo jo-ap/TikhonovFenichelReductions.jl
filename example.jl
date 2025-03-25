@@ -8,7 +8,7 @@
 ## Load packages
 
 using TikhonovFenichelReductions
-using TikhonovFenichelReductions.Oscar # optional (results in prettier printing and loads Oscar functions to Main namespace)
+using Oscar # optional (results in prettier printing and loads Oscar functions to Main namespace)
 
 ## Define system
 
@@ -36,21 +36,21 @@ s = 2
 problem = ReductionProblem(f, x, p, s)
 
 # find slow-fast separations that are TFPVs
-sf_separations, V, dim_V = tfpv_candidates(problem);
+sf_separations, manifolds = tfpvs_and_manifolds(problem);
 
 # print slow-fast separations and corresponding slow manifolds with their dimension
-print_tfpv(problem, sf_separations)
-print_varieties(V, dim_V)
+print_tfpvs(problem, sf_separations)
+print_slow_manifolds(manifolds)
 
-print_results(problem, sf_separations, V, dim_V)
+print_results(problem, sf_separations, manifolds)
 
 # find all general TFPVs using necessary conditions on the determinants of D₁f
 # G is a Gröbner basis for this, such that every TFPV of dimension s lies in V(G)
-G = tfpv_candidates_groebner(problem)
+G = tfpvs_groebner(problem)
 
-# Typically, the computation of the Gröbner basis in tfpv_candidates_groebner is
+# Typically, the computation of the Gröbner basis in tfpvs_groebner is
 # much slower than the computation for slow-fast fast separations in
-# tfpv_candidates, which only computes the irreducible components of V(f(⋅,p_sf))
+# tfpvs_and_manifolds, which only computes the irreducible components of V(f(⋅,p_sf))
 # and their dimension via a minimal primary computation and the Krull
 # dimensions for the corresponding ideals. However, there might exist TFPVs
 # which are not slow-fast separations. Here, this is not the case, because G is
@@ -70,12 +70,14 @@ B, S, H = system_components(problem)
 # instantiate reduction 
 reduction = Reduction(problem, sf_separations[15])
 
-# look at the variety that contains the slow manifold
-V[15] # => M₀ = {(B,S,0) | B,S ∈ ℝ}
-dim_V[15] # has dimension 2 
+# look at the implicitly given manifold (i.e. variety) that contains the slow manifold
+manifolds[15][1].gens_R # => M₀ = {(B,S,0) | B,S ∈ ℝ}
+manifolds[15][1].dim # has dimension 2 
 set_manifold!(reduction, [B, S, 0])
 
-# define product decomposion f0 = P⋅Psi (can be done via specifying Psi with V(Psi) = V(f⁰) in this case)
+# define product decomposion f0 = P⋅Psi (this can be done via the corresponding manifold object)
+set_decomposition!(reduction, manifolds[15][1])
+# it is also possible to set this manually
 set_decomposition!(reduction, [H])
 
 # compute the reduced system
@@ -91,20 +93,42 @@ dSdt = -η*S + γ*(η + β)*B*S//(δ + γ*B)
 all(iszero.(reduction.g .- [dBdt, dSdt])) 
 
 # print to latex 
+print_reduced_system(stdout, reduction; latex=true)
 
 # slow manifold is attractive if all non-zero eigenvalues of Df at x0 have negative real part
 jacobian_tfpv_at_x0(reduction)
 
+# convenience function to compute reduction directly
+Reduction(problem, sf_separations[15], manifolds[15][1], parent(B).([B,S,0]))
+
 ## Compute multiple reductions at once
 
-# Get all unique slow manifolds for which reductions can exist
-V_unique = unique_slow_manifolds(problem, V, dim_V)
+# Get all unique slow manifolds of dimension 2 onto which reductions exist
+unique_manifolds = unique_slow_manifolds(problem, manifolds)
 
-# Get all indices for TFPVs with a reduction onto V(H)
-idx_similar = similar_reductions(V, V_unique[4])
+# print generators of affine varieties (i.e. implicit manifolds)
+for m in unique_manifolds 
+  println(join(string.(m.groebner_basis), ", "))
+end
 
-# compute reductions for all TFPVs that have the same manifold (we can choose the same P-Ψ decomposion for f⁰)
-R = compute_bulk_reductions(problem, sf_separations, idx_similar, V_unique[4], [B,S,0]);
+# we need to work in the rational function field over all vaiables 
+F = parent(B//S)
 
-# Access the `Reduction` object with the indices as in `idx_similar`
-reduction_3 = R[3]
+# define explicit description of each unique manifold
+M = [
+  F.([0,S,H]),
+  F.([1,S,H]),
+  F.([B,0,H]),
+  F.([B,S,0]),
+  F.([B,γ//η*B*H,H]),
+  F.([B,S,β//δ*S]),
+  F.([B,S,ρ//α*(1-B)])
+]
+
+# compute all reductions (with a manifold in M)
+R, idx = compute_all_reductions(problem, sf_separations, manifolds, M);
+
+# Access the `Reduction` object with the indices as in `manifolds`
+# Reduction for `sf_separations[1]` onto `manifolds[1][2]`
+R[1][2]
+

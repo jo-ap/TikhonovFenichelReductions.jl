@@ -1,4 +1,5 @@
 ## Computing a reduction
+
 """
 Type that holds all information to compute a Tikhonov-Fenichel reduction for a
 given slow-fast separation of rates.
@@ -106,7 +107,12 @@ end
 
 Compute Jacobian of `f` with respect to `x`.
 """
-function jacobian(f, x)
+function jacobian(f::Vector{T}, x::Vector{T}) where T<:MPolyRingElem
+  matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in x] for fᵢ in f])
+end
+function jacobian(f::MatSpaceElem{T}, x::Vector{T}) where T<:MPolyRingElem
+  @assert size(f, 2) == 1 "f must be n×1 Matrix"
+  f = reshape(Matrix(f), size(f,1))
   matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in x] for fᵢ in f])
 end
 
@@ -151,12 +157,11 @@ Constructor for `Reduction` Type.
 ### Arguments
 - `problem`: Reduction problem type holding information on system and dimension of reduction.
 - `sf_separation`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
-- `s::Int`: (optional) Dimension of slow manifold. Can be specified if a reduction corresponding to a TFPV for dimension different from `problem.s` should be considered (e.g. for manually computing a reduction for a given slow-fast separation that is not necessarily obtained via `tfpv_candidates`).
+- `s::Int`: (optional) Dimension of slow manifold. Can be specified if a reduction corresponding to a TFPV for dimension different from `problem.s` should be considered (e.g. for manually computing a reduction for a given slow-fast separation that is not necessarily obtained via `tfpvs_and_manifolds`).
 
 See also: [`set_manifold!`](@ref) [`set_decomposition!`](@ref)
 """
-function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::Union{Nothing,Int}=nothing)
-  s = isnothing(s) ? problem.s : s
+function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::Int=problem.s)
   R = parent(problem.f[1])
   F = fraction_field(R)
   Fp, _ = rational_function_field(QQ, string.(problem.p))
@@ -215,23 +220,23 @@ Convenience function that constructs an object of type `Reduction` and calls
 - `sf_separation`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
 - `V`: Generators of affine variety corresponding to the the slow manifold 
 - `M`: Slow manifold in explicit form
-- `s::Int`: (optional) Dimension of slow manifold. Can be specified if a reduction corresponding to a TFPV for dimension different from `problem.s` should be considered (e.g. for manually computing a reduction for a given slow-fast separation that is not necessarily obtained via `tfpv_candidates`).
+- `s::Int`: (optional) Dimension of slow manifold. Can be specified if a reduction corresponding to a TFPV for dimension different from `problem.s` should be considered (e.g. for manually computing a reduction for a given slow-fast separation that is not necessarily obtained via `tfpvs_and_manifolds`).
 
-See also: [`set_manifold!`](@ref) [`set_decomposition!`](@ref) [`tfpv_candidates`](@ref)
+See also: [`set_manifold!`](@ref) [`set_decomposition!`](@ref) [`tfpvs_and_manifolds`](@ref)
 """
 function Reduction(
   problem::ReductionProblem,
   sf_separation::Vector{Bool},
-  V::Vector{QQMPolyRingElem},
+  V::Union{SlowManifold, Vector{QQMPolyRingElem}},
   M::Vector{<:RingElem}; 
-  s::Union{Nothing,Int}=nothing)
+  s::Int=problem.s)
   reduction = Reduction(problem, sf_separation; s=s)
-  sm = set_manifold!(reduction, M)
-  sd = set_decomposition!(reduction, V)
-  if sm & sd 
+  set_manifold!(reduction, M)
+  set_decomposition!(reduction, V)
+  if all(reduction.success)
     compute_reduction!(reduction)
-    return reduction
   end
+  return reduction
 end 
 
 function parse_ring(R, x)
@@ -369,18 +374,40 @@ is a matrix of rational functions  and `Psi` is a vector of polynomials.
 
 See also: [`set_manifold!`](@ref) [`set_point!`](@ref) [`Reduction`](@ref)
 """
-function set_decomposition!(reduction::Reduction, P::Union{MatSpaceElem,VecOrMat}, Psi)
+function set_decomposition!(
+    reduction::Reduction,
+    P::Union{MatSpaceElem,VecOrMat},
+    Psi::Union{MatSpaceElem,Vector{QQMPolyRingElem}}
+  )
   _set_decomposition!(reduction, P, Psi)
+end
+
+"""
+    $(TYPEDSIGNATURES)
+
+Try to automatically compute matrix of rational functions `P` from given vector
+of polynomials `Psi`, such that `f0=P⋅Psi` and `V(f0)=V(Psi)` holds locally.
+
+NOTE: This always works if the drop in dimension `r=n-s=1`, but is experimental
+for `r>1`
+
+### Description
+`Psi` can be chosen from `r` algebraically independent entries of `f0`. 
+Practically, one can use the generators of the ideals defining the
+irreducible components of `V(f0)` as entries for `Psi` (possibly rewriting the
+rational equations as polynomials by multiplying appropriately with
+parameters occurring in a denominator).
+"""
+function set_decomposition!(reduction::Reduction, Psi::Union{SlowManifold,Vector{QQMPolyRingElem}})
+  P, Psi = get_decomposition(reduction, Psi)
+  isnothing(P) ? false : set_decomposition!(reduction, P, Psi)
 end
 
 function _set_decomposition!(reduction::Reduction, P::MatSpaceElem, Psi)
   n = length(reduction.x)
   r = n - reduction.s
-  try Psi = reshape(Psi, r, 1)
-  catch
-    println("Psi must be of size $r or $r×1")
-  end
-  DPsi = jacobian(reshape(Psi, r), reduction.x)
+  @assert size(Psi, 1) == r && size(Psi, 2) == 1 "Psi must be of size $r or $r×1"
+  DPsi = jacobian(Psi, reduction.x)
   DPsi = parent(reduction.DPsi)(reduction.F.(DPsi))
   Psi = reduction.F.(Psi)
   Psi = parent(reduction.Psi)(Psi)
@@ -402,19 +429,49 @@ end
 function _set_decomposition!(reduction::Reduction, P::VecOrMat, Psi)
   n = length(reduction.x)
   r = n - reduction.s
-  try P = reshape(P, n, r)
-  catch
-    println("P must be of size $n×$r")
-  end
+  @assert size(P,1) == n && size(P,2) == r "P must be of size $n×$r"
+  P = reshape(P, n, r)
   P = reduction.F.(P)
   P = parent(reduction.P)(P)
   _set_decomposition!(reduction, P, Psi)
 end
   
 # try computing matrix of rational functions P from Psi
+function get_decomposition(reduction::Reduction, slow_manifold::SlowManifold)
+  r = length(reduction.x) - reduction.s
+  p = gens(base_ring(reduction.Rx))
+  x = gens(reduction.Rx)
+  _f0 = reduction._f(x, get_tfpv(p, reduction.idx_slow_fast, reduction.sf_separation))
+  ## use generators for irreducible component as entries for Psi
+  if length(slow_manifold.gens_R) == r 
+    Psi = matrix(reduction.R, reshape(slow_manifold.gens_R, r, 1))
+    U, Q, H = reduce_with_quotients_and_unit(_f0, slow_manifold.groebner_basis)
+    if all(H .== 0)
+      _P = U*Q*slow_manifold.T
+      P = matrix([Rx_to_F(f, reduction) for f in _P])
+      return P, Psi
+    end
+  else
+    Ψ = find_independent_polys(_f0)
+    Psi = matrix(reduction.R, reshape(Ψ, r, 1))
+    Ψ = [R_to_Rx(f, reduction) for f in Ψ]
+    if length(Psi) == r 
+      U, Q, H = reduce_with_quotients_and_unit(_f0, Ψ)
+      if all(H .== 0)
+        P = U*Q
+        P = matrix([Rx_to_F(f, reduction) for f in P])
+        return P, Psi
+      end
+    end
+  end
+  @warn "Could not set product decomposition automatically."
+  return nothing, nothing
+end
 function get_decomposition(reduction::Reduction, Psi::Vector{QQMPolyRingElem})
+  r = length(reduction.x) - reduction.s
+  @assert size(Psi, 1) == r "Psi must have length r=$r"
   if size(Psi, 1) == 1
-    return reduction.f0.//Psi
+    return reduction.f0.//Psi, Psi
   else 
     p = gens(base_ring(reduction.Rx))
     x = gens(reduction.Rx)
@@ -425,18 +482,12 @@ function get_decomposition(reduction::Reduction, Psi::Vector{QQMPolyRingElem})
       P = matrix(reduction.F, [Rx_to_F(f, reduction) for f in U*Q])
       return P, Psi
     end
-    _Psi = find_independent_polys(reduction.f0)
-    U, Q, H = reduce_with_quotients_and_unit(reduction.f0, _Psi)
-    if all(H .== 0)
-      @info "Automatically updated Psi"
-      return U*Q, _Psi
-    end
     @warn "Could not set P automatically."
     return nothing, Psi
   end
 end
 
-function find_independent_polys(f::Vector)
+function find_independent_polys(f::Vector{<:MPolyRingElem})
   idx = [false for _ in f]
   for i in eachindex(f)
     if is_algebraically_independent([f[idx]..., f[i]])
@@ -444,27 +495,6 @@ function find_independent_polys(f::Vector)
     end 
   end 
   return f[idx]
-end
-
-"""
-    $(TYPEDSIGNATURES)
-
-Try to automatically compute matrix of rational functions `P` from given vector
-of polynomials `Psi`, such that `f0=P⋅Psi` and `V(f0)=V(Psi)` holds locally.
-
-NOTE: This always works if the drop in dimension `r=n-s=1`, but is experimental
-for `r>1`
-
-### Description
-Typically, `Psi` can be chosen from `s` independent entries of `f0`. 
-Practically one can consider the generators of the ideals defining the
-irreducible components of `V(f0)` as entries for `Psi` (possibly rewriting the
-rational equations as polynomials by multiplying appropriately with
-parameters occurring in a denominator).
-"""
-function set_decomposition!(reduction::Reduction, Psi)
-  P, Psi = get_decomposition(reduction, Psi)
-  isnothing(P) ? false : set_decomposition!(reduction, P, Psi)
 end
 
 """
@@ -479,7 +509,7 @@ to the slow manifold is set `reduction.g_raw` while the `s`-dimensional
 reduction on the slow manifold is given by `reduction.g`.
 A safe getter function for this is `get_reduced_system(reduction::Reduction)`.
 
-See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`set_point!`](@ref), [`compute_bulk_reductions`](@ref), [`Reduction`](@ref), [`print_reduced_system`](@ref)
+See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`set_point!`](@ref), [`compute_all_reductions`](@ref), [`Reduction`](@ref), [`print_reduced_system`](@ref)
 """
 function compute_reduction!(reduction::Reduction)
   # Check if P-Psi-composition is defined 

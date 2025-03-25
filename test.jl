@@ -1,65 +1,67 @@
+using Oscar
+import Oscar: IdealGens, AbstractAlgebra.Generic.MatSpaceElem
 
-using Oscar # optional (results in prettier printing and loads Oscar functions to Main namespace)
-using Debugger
-using Revise
-using TikhonovFenichelReductions
+F, (α, β) = rational_function_field(QQ, [:α, :β]);
+R, (x, y) = polynomial_ring(F, [:x, :y]);
+I = ideal([2*x, α*x + β*y]);
+G1 = Oscar.groebner_basis(I; complete_reduction=true)
+G2, T2 = groebner_basis_with_transformation_matrix(I; complete_reduction=true);
 
-## Define system
-
-# dynamic variables
-x = ["B", "S", "H"]
-
-# parameters
-p = ["α", "β", "γ", "δ", "η", "ρ"]
-
-# RHS of ODE system ẋ = f(x, p)
-function f(x, p)
-  B, S, H = x
-  α, β, γ, δ, η, ρ = p
-  return [
-    ρ*B*(1-B) - α*B*H,
-    -η*S + γ*B*H,
-    β*S- δ*H + η*S - γ*B*H
-  ]
+function reduce_leading_coefficients(G::IdealGens, T::MatSpaceElem)
+  G_gens = gens(G)
+  lc = leading_coefficient.(G_gens)
+  for j in eachindex(lc)
+    if !isone(lc[j])
+      for i in 1:size(T,2)
+        T[i,j] *= 1//lc[j]
+      end
+      G_gens[j] *= 1//lc[j]
+    end
+  end
+  _G = IdealGens(parent(G_gens[1]), G_gens, G.ord)
+  _G.isGB = G.isGB
+  _G.isReduced = G.isReduced
+  return _G, T
+end
+function reduce_leading_coefficients(G::IdealGens)
+  G_gens = gens(G)
+  lc = leading_coefficient.(G_gens)
+  for j in eachindex(lc)
+    if !isone(lc[j])
+      G_gens[j] *= 1//lc[j]
+    end
+  end
+  _G = IdealGens(parent(G_gens[1]), G_gens, G.ord)
+  _G.isGB = G.isGB
+  _G.isReduced = G.isReduced
+  return _G
 end
 
-# dimension of the reduced system
-s = 2
+_G1 = reduce_leading_coefficients(G1)
+@time _G2, _T2 = reduce_leading_coefficients((G2, T2))
+gens(I)*_T2 
 
-# create Problem
-problem = ReductionProblem(f, x, p, s)
+GB = groebner_basis_with_transformation_matrix(I; complete_reduction=true)
+GB2 = reduce_leading_coefficient(GB)
 
-# find slow-fast separations that are TFPVs
-@time sf_separations, V, dim_V = tfpv_candidates(problem);
+GB = groebner_basis_with_transformation_matrix(I; complete_reduction=true)
 
-print_results(problem, sf_separations, V, dim_V)
+G, T = groebner_basis_with_transformation_matrix(I; complete_reduction=true, reduce_leading_coefficient=true)
 
-B, S, H = x = system_components(problem)
-α, β, γ, δ, η, ρ = p = system_parameters(problem)
-
-# The Rosenzweig-MaxArthur system corresponds to the TFPV candidate 15 (See section 3.3 in the paper).
-# instantiate reduction 
-reduction = Reduction(problem, sf_separations[15])
-set_manifold!(reduction, [B, S, 0])
-set_decomposition!(reduction, V[15][1])
-g,_ = compute_reduction(reduction)
-
-import AbstractAlgebra.Generic: FracFieldElem
-
-
-reduction,g = Reduction(problem, sf_separations[15], V[15][1], [B, S, 0])
-
-
-TikhonovFenichelReductions.print_rational_system(g)
-TikhonovFenichelReductions.print_rational_system(g; factor=true)
-
-normal_form([B, S, H], ideal(numerator.(V[11][2])))
+G2
+U,Q,H = reduce_with_quotients_and_unit(gens(I), gens(G1));
+T1 = transpose(inv(U*Q))
+gens(I)*T1 == gens(G1)
 
 
 
-_g = rewrite_rational.(g; factor=true);
 
-display(g)
+I = ideal([x, 2*x + 3*y])
+G, T = groebner_basis_with_transformation_matrix(I; complete_reduction=true)
+G
+
+_, (x, y) = polynomial_ring(QQ, [:x, :y])
+groebner_basis_with_transformation_matrix(ideal([x, 2*x + 3*y]); complete_reduction=true)[1]
 
 
-rewrite_rational.(g);
+
