@@ -9,7 +9,6 @@ to represent elements of a polynomial ring; here we this is `ℚ[p,x]`.
 
 ### Fields
     $(TYPEDFIELDS)
-
 """
 struct ReductionProblem 
   "RHS of ODE system as a vector of polynomials"
@@ -24,8 +23,59 @@ struct ReductionProblem
   p_sf::Vector{QQMPolyRingElem}
   "Boolean index, such that `p_sf=p[idx_slow_fast]`"
   idx_slow_fast::Vector{Bool}
+  "Jacobian of `f` wrt `x`"
+  J::MatSpaceElem{QQMPolyRingElem}
   "RHS of ODE system as a Julia function with signature `_f(x,p)`"
   _f::Function
+  "Fraction field over R"
+  _F::FracField{QQMPolyRingElem}
+  "Field of rational functions in the parameters"
+  _Fp::RationalFunctionField{QQFieldElem, QQMPolyRingElem}
+  "Polynomial ring in x over the field `Fp`"
+  _Rx::MPolyRing{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}
+  "RHS of ODE system in polynomial ring Rx"
+  _f_Rx::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
+  "Vector of dynamic variables in polynomial ring Rx"
+  _x_Rx::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
+end
+
+"""
+    $(TYPEDSIGNATURES)
+
+Constructor for `ReductionProblem` Type.
+
+### Arguments 
+- `f(x,p)::Function`: Julia function defining the RHS of the ODE system 
+- `x::Vector{String}`: Vector of dynamic variables 
+- `p::Vector{String}`: Vector of all parameters
+- `s::Int`: Dimension of reduced system 
+- `idx_slow_fast::Vector{Bool}`: Boolean index for all rates that are either small or large (all others are considered fixed)
+
+### Description
+This function is used to set up the problem of finding Tikhonov-Fenichel
+Parameter Values for dimension `s`.
+The names of all variables and parameters in the system are parsed to
+appropriate types in
+[`Oscar.jl`](https://www.oscar-system.org/),
+so that the necessary conditions for the existence of a reduction onto an
+`s`-dimensional slow manifold can be evaluated.
+
+See also: [`tfpvs_and_manifolds`](@ref), [`tfpvs_groebner`](@ref)
+"""
+function ReductionProblem(
+    f::Function,
+    x::Vector{T},
+    p::Vector{T},
+    s::Int;
+    idx_slow_fast::Vector{Bool}=[true for _ in p]
+  ) where {T<:Union{String,Symbol}}
+  @assert s < length(x) "the dimension of the reduced system must be smaller than that of the full system, i.e. s < n"
+  R, Fp, Rx, f_R, x_R, p_R, f_Rx = parse_system(f, x, p)
+  F = fraction_field(R)
+  p_R_sf = p_R[idx_slow_fast]
+  J = jacobian(f_R, x_R)
+  x_Rx = gens(Rx)
+  ReductionProblem(f_R, x_R, p_R, s, p_R_sf, idx_slow_fast, J, f, F, Fp, Rx, f_Rx, x_Rx)
 end
 
 """
@@ -77,41 +127,6 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Constructor for `ReductionProblem` Type.
-
-### Arguments 
-- `f(x,p)::Function`: Julia function defining the RHS of the ODE system 
-- `x::Vector{String}`: Vector of dynamic variables 
-- `p::Vector{String}`: Vector of all parameters
-- `s::Int`: Dimension of reduced system 
-- `idx_slow_fast::Vector{Bool}`: Boolean index for all rates that are either small or large (all others are considered fixed)
-
-### Description
-This function is used to set up the problem of finding Tikhonov-Fenichel
-Parameter Values for dimension `s`.
-The names of all variables and parameters in the system are parsed to
-appropriate types in
-[Oscar.jl](https://www.oscar-system.org/),
-so that the necessary conditions for the existence of a reduction onto an
-`s`-dimensional slow manifold can be evaluated.
-
-See also: [`tfpvs_and_manifolds`](@ref), [`tfpvs_groebner`](@ref)
-"""
-function ReductionProblem(
-  f::Function, 
-  x::Vector{T}, 
-  p::Vector{T}, 
-  s::Int; 
-  idx_slow_fast::Vector{Bool}=[true for _ in p]) where T<:Union{String,Symbol}
-  @assert s < length(x) "the dimension of the reduced system must be smaller than that of the full system, i.e. s < n"
-  _, _x, _p, _f = parse_system(f, x, p)
-  _p_sf = _p[idx_slow_fast]
-  ReductionProblem(_f, _x, _p, s, _p_sf, idx_slow_fast, f)
-end
-
-"""
-    $(TYPEDSIGNATURES)
-
 Convenience function to get components of ODE system from instance of `ReductionProblem`. 
 
 See also: [`ReductionProblem`](@ref), [`system_parameters`](@ref)
@@ -135,12 +150,17 @@ Parse dynamic variables `x` and parameters `p` of polynomial ODE system so that
 they can be used with Oscar.jl. Return the polynomial Ring `R = ℚ[x,p]`
 together with `x`, `p` and `f` parsed to the appropriate OSCAR types.
 """
-function parse_system(f::Function, x::Vector{String}, p::Vector{String})
-  R, v = polynomial_ring(QQ, [p..., x...])
-  _p = v[1:length(p)]
-  _x = v[length(p)+1:end]
+function parse_system(f::Function, x::Vector{T}, p::Vector{T}) where T<:Union{String, Symbol}
+  # polynomial ring in p and x
+  R,_  = polynomial_ring(QQ, [p..., x...])
+  _p = gens(R)[1:length(p)]
+  _x = gens(R)[length(p)+1:end]
   _f = f(_x, _p)
-  return R, _x, _p, _f
+  # rational function field in p and polynomial ring in x 
+  Fp,_ = rational_function_field(QQ, p)
+  Rx,_ = polynomial_ring(Fp, x)
+  _f_Rx = f(gens(Rx), gens(Fp))
+  return R, Fp, Rx, _f, _x, _p, _f_Rx
 end
 
 """
@@ -266,10 +286,8 @@ See also: [`tfpvs_and_manifolds`](@ref)
 function tfpvs_groebner(problem::ReductionProblem)
   # number of dimensions to reduce the system by
   r = length(problem.x) - problem.s
-  # Jacobian of the full system
-  J = jacobian(problem.f, problem.x)
   # determinants of all k×k minors of J for k>r
-  d = get_determinants(J, r)
+  d = get_determinants(problem.J, r)
   # All polynomials that generate the ideal used to determine TFPVs
   poly_gens = [problem.f; d]
   # Build ideal from polynomial expressions 
@@ -376,13 +394,20 @@ function get_tfpv(p, idx_slow_fast, sf_separation)
   return _p
 end
 
-function update_cofficients(f, p)
+function get_f0_Rx(
+    problem::ReductionProblem,
+    tfpv::Vector{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}
+  )::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
+  x = gens(problem._Rx)
+  return problem._f(x, tfpv)
+end
+
+function update_cofficients(f::MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}, p::Vector{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}})
   if f == 0
     return f 
   else
     coeffs = [c for c in coefficients(f)]
     mons = [m for m in monomials(f)]
-    @assert sum(coeffs .* mons) == f
     coeffs_new = [evaluate(c, p) for c in coeffs]
     return sum(coeffs_new .* mons)
   end
@@ -410,48 +435,55 @@ function tfpvs_and_manifolds(problem::ReductionProblem)
   # check all possible slow-fast separations for sufficient conditions to be a TFPV for dimension s
   slow_fast = num2bin.(1:(2^length(problem.p_sf)-2), length(problem.p_sf)) 
   # define all polynomials and the Jacobian of f in ℝ(p_sf)[x]
-  F, _p = rational_function_field(QQ, string.(problem.p))
-  _, _x = polynomial_ring(F, string.(problem.x))
-  f = problem._f(_x, _p)
-  J = matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in _x] for fᵢ in f])
   # keep track of which slow-fast separation satisfies the conditions and save
   # irreducible components of V(f0) and their dimensions
-  idx_keep = zeros(Bool, length(slow_fast))
-  slow_manifolds = Vector{Vector{SlowManifold}}(undef, length(slow_fast))
-  for i in eachindex(slow_fast)
-    keep_i, Y, dim_Y = get_slow_manifolds(problem, _x, _p, slow_fast[i], J)
-    if any(keep_i)
-      idx_keep[i] = true
-      slow_manifolds[i] = [SlowManifold(Y[k], dim_Y[k], problem) for k in eachindex(Y)]
+  N = length(slow_fast)
+  idx_keep = zeros(Bool, N)
+  slow_manifolds = Vector{Vector{SlowManifold}}(undef, N)
+  for i in 1:N
+    tfpv_candidate = get_tfpv(gens(problem._Fp), problem.idx_slow_fast, slow_fast[i])
+    f0 = get_f0_Rx(problem, tfpv_candidate)
+    J_p_sf = jacobian(f0, problem._x_Rx)
+    I = ideal(f0)
+    if dim(I) >=  problem.s 
+      keep_i, Y, dim_Y = get_slow_manifolds(problem, I, J_p_sf)
+      if keep_i
+        idx_keep[i] = true
+        slow_manifolds[i] = [SlowManifold(Y[k], dim_Y[k], problem) for k in eachindex(Y)]
+      end
     end
   end
   return slow_fast[idx_keep], slow_manifolds[idx_keep]
 end
 
-function get_slow_manifolds(problem, _x, _p, slow_fast, J)
-  tfpv_candidate = get_tfpv(_p, problem.idx_slow_fast, slow_fast)
-  f0 = problem._f(_x, tfpv_candidate)
-  I = ideal(f0)
-  if dim(I) < problem.s
-    return [false], nothing, nothing 
-  else
-    PD = primary_decomposition(I)
-    Y = [Q[2] for Q in PD]
-    dim_Y = dim.(Y)
-    # set the slow parameters to zero in Jacobian
-    J_p_sf = map(f -> update_cofficients(f, tfpv_candidate), J)
-    keep_i = [false for _ in Y]
-    for j in eachindex(Y) 
-      # check if dimension of irreducible component Yⱼ is as desired
-      if dim_Y[j] == problem.s
-        # substitute x = x0 ∈ Yⱼ
-        # we need that Y[j] is the radical of Qᵢ in order for normal forms work !
-        M = map(f -> normal_form(f, Y[j]), J_p_sf)
-        # Let Χ(τ) = τⁿ+ σₙ₋₁(x,p_sf)τ⁽ⁿ⁻¹⁾ + … + σ₁(x,p_sf)τ + σ₀(x,p_sf) be the characteristic polynomial 
-        # for x0 ∈ Yⱼ and p_sf⁺ a TFPV for dimension s we have σₛ(x0,p_sf⁺) ≠ 0 
-        keep_i[j] = coeff(charpoly(M), problem.s) != 0
-      end 
-    end
+function get_slow_manifolds(
+    problem::ReductionProblem,
+    I::MPolyIdeal{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}},
+    J::MatSpaceElem{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
+  )
+  PD = primary_decomposition(I)
+  Y = [Q[2] for Q in PD]
+  dim_Y = dim.(Y)
+  # set the slow parameters to zero in Jacobian
+  keep_i = false
+  for j in eachindex(Y) 
+    # check if dimension of irreducible component Yⱼ is as desired
+    if dim_Y[j] == problem.s 
+      # substitute x = x0 ∈ Yⱼ
+      # we need that Y[j] is the radical of Qᵢ in order for normal forms work !
+      M = map(f -> normal_form(f, Y[j]), J)
+      # Let Χ(τ) = τⁿ+ σₙ₋₁(x,p_sf)τ⁽ⁿ⁻¹⁾ + … + σ₁(x,p_sf)τ + σ₀(x,p_sf) be the characteristic polynomial 
+      # for x0 ∈ Yⱼ and p_sf⁺ a TFPV for dimension s we have σₛ(x0,p_sf⁺) ≠ 0 
+      keep_i = keep_i || coeff(charpoly(M), problem.s) != 0
+      if keep_i 
+        break
+      end
+    end 
   end
   return keep_i, Y, dim_Y
 end
+
+
+
+
+

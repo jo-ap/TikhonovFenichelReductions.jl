@@ -9,31 +9,13 @@ given slow-fast separation of rates.
 
 """
 mutable struct Reduction
+  "information on input system"
+  problem::ReductionProblem
   "slow-fast separation (0: slow, 1: fast)"
-  sf_separation::Vector{Bool}
-  "Dimension of reduced system (= dimension of slow manifold)"
-  s::Int
-  "Polynomial ring `ℚ[p,x]`"
-  R::QQMPolyRing
-  "Polynomial ring `ℚ(p)[x]`"
-  Rx::MPolyRing{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}
-  "Rational function field `ℚ(p,x)`"
-  F::FracField{QQMPolyRingElem}
-  "Dynamic variables of system "
-  x::Vector{QQMPolyRingElem}
-  "Parameters of the system"
-  p::Vector{QQMPolyRingElem}
+  tfpv::Vector{Bool}
   "Parameters of the system where small ones are set to 0"
   _p::Vector{QQMPolyRingElem}
-  "Parameters that can be small (all others are considered fixed)"
-  p_sf::Vector{QQMPolyRingElem}
-  "Boolean indices, s.t. `p_sf=p[idx_slow_fast]`"
-  idx_slow_fast::Vector{Bool}
   "RHS of system as vector with elements of ring `R`"
-  f::Vector{QQMPolyRingElem}
-  "RHS of system as julia function with signature `_f(x,p)`"
-  _f::Function
-  "Fast part of the system"
   f0::Vector{QQMPolyRingElem}
   "Slow part of the system"
   f1::Vector{QQMPolyRingElem}
@@ -68,19 +50,19 @@ mutable struct Reduction
 end
 
 # conversion functions
-function R_to_Rx(f::QQMPolyRingElem, reduction::Reduction)
-  _p = gens(base_ring(reduction.Rx))
-  _x = gens(reduction.Rx)
-  f_Rx = zero(reduction.Rx)
+function R_to_Rx(problem::ReductionProblem, f::QQMPolyRingElem)
+  _p = gens(base_ring(problem._Rx))
+  _x = gens(problem._Rx)
+  f_Rx = zero(problem._Rx)
   for (c,a) in coefficients_and_exponents(f)
     f_Rx += c*prod([_p; _x].^a)
   end
   return f_Rx
 end
-function Rx_to_F(f::MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}, reduction::Reduction)
-  _p = gens(reduction.F)[1:length(reduction.p)]
-  _x = gens(reduction.F)[length(reduction.p)+1:end]
-  f_F = zero(reduction.F)
+function Rx_to_F(problem::ReductionProblem, f::MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}})
+  _p = gens(problem._F)[1:length(problem.p)]
+  _x = gens(problem._F)[length(problem.p)+1:end]
+  f_F = zero(problem._F)
   for (c,a) in coefficients_and_exponents(f)
     p = evaluate(numerator(c), _p)
     q = evaluate(denominator(c), _p)
@@ -108,12 +90,12 @@ end
 Compute Jacobian of `f` with respect to `x`.
 """
 function jacobian(f::Vector{T}, x::Vector{T}) where T<:MPolyRingElem
-  matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in x] for fᵢ in f])
+  return matrix(parent(f[1]), [[derivative(fᵢ, xⱼ) for xⱼ in x] for fᵢ in f])
 end
 function jacobian(f::MatSpaceElem{T}, x::Vector{T}) where T<:MPolyRingElem
   @assert size(f, 2) == 1 "f must be n×1 Matrix"
   f = reshape(Matrix(f), size(f,1))
-  matrix(parent(f[1]), [[derivative(fᵢ, xᵢ) for xᵢ in x] for fᵢ in f])
+  return jacobian(f, x)
 end
 
 """
@@ -162,35 +144,22 @@ Constructor for `Reduction` Type.
 See also: [`set_manifold!`](@ref) [`set_decomposition!`](@ref)
 """
 function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::Int=problem.s)
-  R = parent(problem.f[1])
-  F = fraction_field(R)
-  Fp, _ = rational_function_field(QQ, string.(problem.p))
-  Rx, _ = polynomial_ring(Fp, string.(problem.x))
   _p = copy(problem.p)
   _p[problem.idx_slow_fast] = problem.p_sf.*sf_separation
   n = length(problem.x)
   r = n - s
   f0, f1 = splitsystem(problem.f, problem.p_sf, sf_separation)
   Df0 = jacobian(problem.f, problem.x)
-  T, _ = polynomial_ring(F, "λ")
-  M = F.(problem.x)
-  x0 = zeros(F, n)
-  P = zero_matrix(F,n,r)
-  Psi = zero_matrix(F,r,1)
-  DPsi = zero_matrix(F,r,n)
-  Df0_at_x0 = matrix(F, Matrix(Df0))
-  return Reduction(sf_separation,
-                   s,
-                   R,
-                   Rx, 
-                   F,
-                   problem.x,
-                   problem.p,
+  T, _ = polynomial_ring(problem._F, "λ")
+  M = problem._F.(problem.x)
+  x0 = zeros(problem._F, n)
+  P = zero_matrix(problem._F,n,r)
+  Psi = zero_matrix(problem._F,r,1)
+  DPsi = zero_matrix(problem._F,r,n)
+  Df0_at_x0 = matrix(problem._F, Matrix(Df0))
+  return Reduction(problem,
+                   sf_separation,
                    _p,
-                   problem.p_sf,
-                   problem.idx_slow_fast,
-                   problem.f,
-                   problem._f,
                    f0,
                    f1,
                    Df0,
@@ -204,8 +173,8 @@ function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::In
                    DPsi,
                    zeros(Bool, 3),
                    zeros(Bool, n),
-                   zeros(F, n),
-                   zeros(F, s),
+                   zeros(problem._F, n),
+                   zeros(problem._F, s),
                    zeros(Bool,2)
                    )
 end
@@ -252,29 +221,30 @@ end
 
 Set the slow manifold by defining the values of the components of the system.
 Note that `M` must be defined as a vector with the same length as the system's
-components, i.e. `reduction.x`.
+components, i.e. `reduction.problem.x`.
 
 See also: [`Reduction`](@ref), [`set_decomposition!`](@ref), [`set_point!`](@ref)
 """
 function set_manifold!(reduction::Reduction, M::AbstractVector)::Bool
-  M = parse_ring(reduction.F, M)
-  n = length(reduction.x)
+  M = parse_ring(reduction.problem._F, M)
+  n = length(reduction.problem.x)
   @assert length(M) == n "The slow manifold M must be defined in $n components."
-  _f0 = [evaluate(fᵢ, [reduction.F.(reduction.p); M]) for fᵢ in reduction.f0]
+  _f0 = [evaluate(fᵢ, [reduction.problem._F.(reduction.problem.p); M]) for fᵢ in reduction.f0]
   f_vanishes = all(iszero.(_f0))
   if !f_vanishes 
     @warn "f0 does no vanish on the slow manifold"
   else
     reduction.M = M
     reduction.success[1] = true
-    reduction.idx_components = reduction.M .== reduction.x
+    reduction.idx_components = reduction.M .== reduction.problem.x
     # check if there exists a reduction
     # an eigenvalue λ has to factor the characteristic polynomial of the
     # jacobian at a non-singular point exactly with power s, i.e. there is no
     # reduction if the polynomial is given by λ^(s+1)•r(λ)
     coeffs = collect(coefficients(charpoly(jacobian_tfpv_on_manifold(reduction))))
-    if all(coeffs[1:reduction.s + 1] .== 0)
+    if all(coeffs[1:reduction.problem.s + 1] .== 0)
       @info "There exists no reduction onto this manifold"
+      return false
       # check if a generic point on the slow manifold is non-singular
     elseif !_set_point!(reduction, M)
       @warn "Could not set generic non-singular point on slow manifold"
@@ -315,7 +285,7 @@ a TFPV `π⁺`.
 See also: [`Reduction`](@ref), [`set_manifold!`](@ref)
 """
 function jacobian_tfpv_on_manifold(reduction::Reduction)
-  eval_mat(reduction.Df0, [reduction.F.(reduction._p); reduction.M])
+  eval_mat(reduction.Df0, [reduction.problem._F.(reduction._p); reduction.M])
 end
 
 """
@@ -327,20 +297,20 @@ TFPV `π⁺`.
 See also: [`Reduction`](@ref), [`set_point!`](@ref), [`set_manifold!`](@ref)
 """
 function jacobian_tfpv_at_x0(reduction::Reduction)
-  eval_mat(reduction.Df0, [reduction.F.(reduction._p); reduction.x0])
+  eval_mat(reduction.Df0, [reduction.problem._F.(reduction._p); reduction.x0])
 end
 
 
 function _set_point!(reduction::Reduction, x0::AbstractVector)::Bool
-  x0 = parse_ring(reduction.F, x0)
-  n = length(reduction.x)
+  x0 = parse_ring(reduction.problem._F, x0)
+  n = length(reduction.problem.x)
   @assert length(x0) == n "The point x0 must have $n components."
   # compute characteristic polynomial
-  Df0_at_x0 = eval_mat(reduction.Df0, [reduction.F.(reduction._p); x0])
+  Df0_at_x0 = eval_mat(reduction.Df0, [reduction.problem._F.(reduction._p); x0])
   chi = charpoly(reduction.T, Df0_at_x0)
   # check condition for coefficients
   c = collect(coefficients(chi))
-  check_chi = all(iszero.(c[1:reduction.s])) && !iszero(c[reduction.s+1])
+  check_chi = all(iszero.(c[1:reduction.problem.s])) && !iszero(c[reduction.problem.s+1])
   if check_chi
     reduction.x0 = x0
     reduction.Df0_at_x0 = Df0_at_x0
@@ -361,7 +331,7 @@ See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`Reduction`](@
 function set_point!(reduction::Reduction, x0::AbstractVector)::Bool
   retval = _set_point!(reduction, x0)
   if !retval
-    @warn "The eigenvalue λ does not factor the characteristic polynomial of D₁f(x0,p_sf) with power s=$(reduction.s)"
+    @warn "The eigenvalue λ does not factor the characteristic polynomial of D₁f(x0,p_sf) with power s=$(reduction.problem.s)"
   end
   return retval 
 end
@@ -404,14 +374,14 @@ function set_decomposition!(reduction::Reduction, Psi::Union{SlowManifold,Vector
 end
 
 function _set_decomposition!(reduction::Reduction, P::MatSpaceElem, Psi)
-  n = length(reduction.x)
-  r = n - reduction.s
+  n = length(reduction.problem.x)
+  r = n - reduction.problem.s
   @assert size(Psi, 1) == r && size(Psi, 2) == 1 "Psi must be of size $r or $r×1"
-  DPsi = jacobian(Psi, reduction.x)
-  DPsi = parent(reduction.DPsi)(reduction.F.(DPsi))
-  Psi = reduction.F.(Psi)
+  DPsi = jacobian(Psi, reduction.problem.x)
+  DPsi = parent(reduction.DPsi)(reduction.problem._F.(DPsi))
+  Psi = reduction.problem._F.(Psi)
   Psi = parent(reduction.Psi)(Psi)
-  P = reduction.F.(P)
+  P = reduction.problem._F.(P)
   # check if product decomposition is correct
   # parse f0 as matrix, so that they can be compared
   M = P*Psi
@@ -427,39 +397,40 @@ function _set_decomposition!(reduction::Reduction, P::MatSpaceElem, Psi)
   return is_equal
 end
 function _set_decomposition!(reduction::Reduction, P::VecOrMat, Psi)
-  n = length(reduction.x)
-  r = n - reduction.s
+  n = length(reduction.problem.x)
+  r = n - reduction.problem.s
   @assert size(P,1) == n && size(P,2) == r "P must be of size $n×$r"
   P = reshape(P, n, r)
-  P = reduction.F.(P)
+  P = reduction.problem._F.(P)
   P = parent(reduction.P)(P)
   _set_decomposition!(reduction, P, Psi)
 end
   
 # try computing matrix of rational functions P from Psi
 function get_decomposition(reduction::Reduction, slow_manifold::SlowManifold)
-  r = length(reduction.x) - reduction.s
-  p = gens(base_ring(reduction.Rx))
-  x = gens(reduction.Rx)
-  _f0 = reduction._f(x, get_tfpv(p, reduction.idx_slow_fast, reduction.sf_separation))
+  R = parent(reduction.problem.x[1])
+  r = length(reduction.problem.x) - reduction.problem.s
+  p = gens(base_ring(reduction.problem._Rx))
+  x = gens(reduction.problem._Rx)
+  _f0 = reduction.problem._f(x, get_tfpv(p, reduction.problem.idx_slow_fast, reduction.tfpv))
   ## use generators for irreducible component as entries for Psi
   if length(slow_manifold.gens_R) == r 
-    Psi = matrix(reduction.R, reshape(slow_manifold.gens_R, r, 1))
+    Psi = matrix(R, reshape(slow_manifold.gens_R, r, 1))
     U, Q, H = reduce_with_quotients_and_unit(_f0, slow_manifold.groebner_basis)
     if all(H .== 0)
       _P = U*Q*slow_manifold.T
-      P = matrix([Rx_to_F(f, reduction) for f in _P])
+      P = matrix([Rx_to_F(reduction.problem, f) for f in _P])
       return P, Psi
     end
   else
     Ψ = find_independent_polys(_f0)
-    Psi = matrix(reduction.R, reshape(Ψ, r, 1))
-    Ψ = [R_to_Rx(f, reduction) for f in Ψ]
+    Psi = matrix(R, reshape(Ψ, r, 1))
+    Ψ = [R_to_Rx(reduction.problem, f) for f in Ψ]
     if length(Psi) == r 
       U, Q, H = reduce_with_quotients_and_unit(_f0, Ψ)
       if all(H .== 0)
         P = U*Q
-        P = matrix([Rx_to_F(f, reduction) for f in P])
+        P = matrix([Rx_to_F(reduction.problem, f) for f in P])
         return P, Psi
       end
     end
@@ -468,18 +439,18 @@ function get_decomposition(reduction::Reduction, slow_manifold::SlowManifold)
   return nothing, nothing
 end
 function get_decomposition(reduction::Reduction, Psi::Vector{QQMPolyRingElem})
-  r = length(reduction.x) - reduction.s
+  r = length(reduction.problem.x) - reduction.problem.s
   @assert size(Psi, 1) == r "Psi must have length r=$r"
   if size(Psi, 1) == 1
     return reduction.f0.//Psi, Psi
   else 
-    p = gens(base_ring(reduction.Rx))
-    x = gens(reduction.Rx)
-    _f0 = reduction._f(x, p .* reduction.sf_separation)
-    _Psi = [R_to_Rx(p, reduction) for p in Psi]
+    p = gens(base_ring(reduction.problem._Rx))
+    x = gens(reduction.problem._Rx)
+    _f0 = reduction.problem._f(x, p .* reduction.tfpv)
+    _Psi = [R_to_Rx(reduction.problem, p) for p in Psi]
     U, Q, H = reduce_with_quotients_and_unit(_f0, _Psi)
     if all(H .== 0)
-      P = matrix(reduction.F, [Rx_to_F(f, reduction) for f in U*Q])
+      P = matrix(reduction.problem._F, [Rx_to_F(reduction.problem, f) for f in U*Q])
       return P, Psi
     end
     @warn "Could not set P automatically."
@@ -519,12 +490,12 @@ function compute_reduction!(reduction::Reduction)
       @info "The non-singular point on the slow manifold has not been set successfully. Trying to compute the reduction anyway."
     end
     # dimensions
-    n = length(reduction.x)
+    n = length(reduction.problem.x)
     # compute reduced system
     A = reduction.DPsi*reduction.P
     Q = reduction.P*inv(A)*reduction.DPsi
-    Iₙ = diagonal_matrix(reduction.F(1), n)
-    f1 = matrix_space(reduction.F, n, 1)(reduction.f1)
+    Iₙ = diagonal_matrix(reduction.problem._F(1), n)
+    f1 = matrix_space(reduction.problem._F, n, 1)(reduction.f1)
     f_red_raw = (Iₙ - Q)*f1
     # reshape as vector
     f_red = reshape(Matrix(f_red_raw), n)
@@ -538,7 +509,7 @@ function compute_reduction!(reduction::Reduction)
   # Check if slow manifold is set 
   if reduction.success[1]
     # substitute components according to slow manifold
-    a = reduction.F.([reduction.p; reduction.M])
+    a = reduction.problem._F.([reduction.problem.p; reduction.M])
     f_red_subs = [evaluate(f, a) for f in f_red]
     reduction.g = f_red_subs[reduction.idx_components]
     reduction.reduction_cached[2] = true
@@ -577,9 +548,9 @@ end
 #   # compute γ'(0)
 #   Rδ, δ = polynomial_ring(reduction.R, :δ)
 #   dγ = derivative.(γ(reduction.p, δ))
-#   dγ_0 = matrix(reduction.F ,length(reduction.p), 1, evaluate.(dγ, 0))
+#   dγ_0 = matrix(reduction.problem._F ,length(reduction.p), 1, evaluate.(dγ, 0))
 #   # compute D₂f(x, p_sfˣ)
-#   D₂f = reduction.F.(eval_mat(jacobian(reduction.f, reduction.p), reduction.p, reduction._p))
+#   D₂f = reduction.problem._F.(eval_mat(jacobian(reduction.f, reduction.p), reduction.p, reduction._p))
 #   # Check if P-Psi-composition is defined 
 #   if reduction.success[3]
 #     # check if non-singular point is defined
@@ -591,7 +562,7 @@ end
 #     # compute reduced system
 #     A = reduction.DPsi*reduction.P
 #     Q = reduction.P*inv(A)*reduction.DPsi
-#     Iₙ = diagonal_matrix(reduction.F(1), n)
+#     Iₙ = diagonal_matrix(reduction.problem._F(1), n)
 #     f_red_raw = (Iₙ - Q)*D₂f*dγ_0
 #     # reshape as vector
 #     f_red = reshape(Matrix(f_red_raw), n)
@@ -603,7 +574,7 @@ end
 #   # Check if slow manifold is set 
 #   if reduction.success[1]
 #     # substitute components according to slow manifold
-#     a = reduction.F.([reduction.p; reduction.M])
+#     a = reduction.problem._F.([reduction.p; reduction.M])
 #     f_red_subs = [evaluate(f, a) for f in f_red]
 #     return f_red, f_red_subs
 #   else
@@ -613,9 +584,106 @@ end
 # end
 
 function _get_slow_fast(reduction::Reduction)
-  p = reduction.p_sf
-  sf_separation = reduction.sf_separation
+  p = reduction.problem.p_sf
+  sf_separation = reduction.tfpv
   slow = p[.!sf_separation]
   fast = p[sf_separation]
   return slow, fast
 end
+
+function Rx_to_F(problem::ReductionProblem, f::AbstractAlgebra.Generic.MPoly{AbstractAlgebra.Generic.RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}})
+  R = parent(problem.x[1])
+  _p = gens(R)[1:length(problem.p)]
+  _x = gens(R)[length(problem.p)+1:end]
+  f_F = zero(fraction_field(R))
+  for (c,a) in coefficients_and_exponents(f)
+    p = evaluate(numerator(c), _p)
+    q = evaluate(denominator(c), _p)
+    f_F += p*prod(_x.^a)//q
+  end
+  return f_F
+end
+
+function is_linear(p::MPolyRingElem, i::Int)
+  e = [exponent(p, k, i) for k=1:length(p)]
+  return any(e .> 0) && all(e .<= 1)
+end
+function is_linear(p::AbstractAlgebra.Generic.FracFieldElem, i::Int)
+  num, den = numerator(p), denominator(p)
+  e_num = [exponent(num, k, i) for k=1:length(num)]
+  e_den = [exponent(den, k, i) for k=1:length(den)]
+  return any(e_num .> 0) && all(e_num .<= 1) && all(e_den .== 0)
+end
+
+function solve_linear(p::Union{MPolyRingElem, AbstractAlgebra.Generic.FracFieldElem}, i::Int)
+  R = parent(p)
+  if is_linear(p, i)
+    # p = s + t = 0
+    t = evaluate(p, [i], R.([0]))
+    s = p - t
+    # s = c*v = -t => v = -t//c
+    c = evaluate(s, [i], R.([1]))
+    return -t//c
+  end
+  return nothing
+end
+
+function get_variables_in_poly(p::MPolyRingElem)
+  R = parent(p)
+  x_occurs = [false for _ in gens(R)] 
+  ce = coefficients_and_exponents(p)
+  for (_,e) in ce 
+    @. x_occurs = x_occurs || e .> 0
+  end
+  return x_occurs
+end
+function get_variables_in_poly(p::AbstractAlgebra.Generic.FracFieldElem)
+  x_occurs_num, x_occurs_den = get_variables_in_poly.([numerator(p), denominator(p)])
+  return x_occurs_num .|| x_occurs_den
+end
+
+function is_correct_manifold(problem, M, manifold)
+  vanishes = all([evaluate(p, M) == 0 for p in manifold.groebner_basis])
+  v = get_variables_in_poly.(M)
+  v_total = [false for _v in v[1]]
+  for i in eachindex(v) 
+    @. v_total = v_total || v[i] 
+  end
+  n_correct = sum(v_total) == problem.s
+  return vanishes && n_correct
+end
+
+"""
+    $(TYPEDSIGNATURES)
+
+Heuristic approach to get an explicit (i.e. parameterised) representation of
+the slow manifold.
+The function returns the (attempted) expicit manifold together with a boolean
+value indicating whether the manifold could be computed automatically.
+"""
+function get_explicit_manifold(problem, manifold)
+  R = base_ring(manifold.ideal)
+  M = gens(fraction_field(R))
+  G = fraction_field(R).(gens(manifold.ideal))
+  G_old = zero(G)
+  while !all(G .== G_old) #!is_correct_manifold(problem, M, manifold) && cnt <= max_cnt
+    for k in eachindex(G)
+      v = get_variables_in_poly.(G)
+      if any(v[k]) 
+        idx = (1:length(M))[v[k]]
+        for i in idx 
+          if is_linear(G[k], i)
+            val = solve_linear(G[k], i)
+            M = [evaluate(m, [i], [val]) for m in M]
+            G = [evaluate(g, M) for g in G]
+            break
+          end
+        end
+      end
+    end
+    G_old = G
+  end
+  M_F = [Rx_to_F(problem, numerator(m))//Rx_to_F(problem, denominator(m)) for m in M]
+  return M_F, is_correct_manifold(problem, M, manifold)
+end
+

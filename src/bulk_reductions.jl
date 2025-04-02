@@ -81,7 +81,7 @@ function compute_all_reductions(
   for k in eachindex(M)
     println("M[$k] = (" * join(string.(M[k]), ", ") * ")\n")
     for (i,j) in idx_M[k]
-      println("Reduction $i\n" * _get_slow_fast_str(R[i][j]; padfront=1))
+      println("Reduction $i.$j\n" * _get_slow_fast_str(R[i][j]; padfront=1))
       if set_manifold!(R[i][j], M[k])
         set_decomposition!(R[i][j], manifolds[i][j])
         if all(R[i][j].success)
@@ -98,8 +98,8 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Obtain all possible choices of slow manifolds with dimension `s` given `V` and
-`dim_V` as returned by `tfpvs_and_manifolds`.
+Obtain all possible choices of slow manifolds with dimension `s` given the
+manifolds as returned by `tfpvs_and_manifolds`.
 
 See also: [`tfpvs_and_manifolds`](@ref)
 """

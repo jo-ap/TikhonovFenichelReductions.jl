@@ -29,7 +29,7 @@ using DocStringExtensions
 using LaTeXStrings
 using Latexify
 using Oscar
-using Oscar.AbstractAlgebra.Generic: FracField, FracFieldElem, MatSpaceElem, MPoly, PolyRing, Poly, RationalFunctionFieldElem
+using Oscar.AbstractAlgebra.Generic: FracField, FracFieldElem, MatSpaceElem, MPoly, PolyRing, Poly, RationalFunctionField, RationalFunctionFieldElem
 
 
 const PROJECT_TOML = Pkg.TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))

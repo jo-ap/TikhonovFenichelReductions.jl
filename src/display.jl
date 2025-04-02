@@ -15,7 +15,7 @@ function Base.show(io::IO, ::MIME"text/plain", problem::ReductionProblem)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", reduction::Reduction)
-  println(io, "Reduction for dimension s = $(reduction.s) with")
+  println(io, "Reduction for dimension s = $(reduction.problem.s) with")
   print(io, _get_slow_fast_str(reduction; padfront=1))
   if all(reduction.success)
     print(io, "\n M      = [" * join(string.(reduction.M), ", ") * "]")

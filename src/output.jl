@@ -246,7 +246,7 @@ function _get_reduced_system_str(reduction::Reduction; rewrite::Bool=true, facto
     return ""
   end
   g = reduction.reduction_cached[2] ? reduction.g : reduction.g_raw
-  x = reduction.reduction_cached[2] ? reduction.x[reduction.idx_components] : reduction.x
+  x = reduction.reduction_cached[2] ? reduction.problem.x[reduction.idx_components] : reduction.problem.x
   dxdt = ["d$u/dt" for u in string.(x)]
   string_length = maximum(length.(dxdt))
   pad = repeat(" ", padfront)
