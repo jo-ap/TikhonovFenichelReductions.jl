@@ -648,7 +648,7 @@ function get_explicit_manifold(problem::ReductionProblem, variety::Variety)
   R = base_ring(variety.ideal)
   M = gens(fraction_field(R))
   G = fraction_field(R).(gens(variety.ideal))
-  G_old = zero(G)
+  G_old = zeros(fraction_field(R), length(G))
   while !all(G .== G_old) #!is_correct_variety(problem, M, variety) && cnt <= max_cnt
     for k in eachindex(G)
       v = get_variables_in_poly.(G)
