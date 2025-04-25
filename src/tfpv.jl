@@ -60,7 +60,7 @@ appropriate types in
 so that the necessary conditions for the existence of a reduction onto an
 `s`-dimensional slow manifold can be evaluated.
 
-See also: [`tfpvs_and_manifolds`](@ref), [`tfpvs_groebner`](@ref)
+See also: [`tfpvs_and_varieties`](@ref), [`tfpvs_groebner`](@ref)
 """
 function ReductionProblem(
     f::Function,
@@ -84,7 +84,7 @@ the variety `V(f0)`.
 
     $(TYPEDFIELDS)
 """
-struct SlowManifold
+struct Variety
   "associated ideal in Rx"
   ideal::MPolyIdeal
   "generators of associated ideal parsed to R"
@@ -99,7 +99,7 @@ struct SlowManifold
   dim::Int64
 end
 
-function SlowManifold(I::MPolyIdeal, dim::Int64, problem::ReductionProblem) 
+function Variety(I::MPolyIdeal, dim::Int64, problem::ReductionProblem) 
   _I = ideal(rewrite_variety_generator.(gens(I)))
   gens_R = [parse_variety_generator(problem, rewrite_variety_generator(g)) for g in gens(_I)]
   @assert I == _I
@@ -108,7 +108,7 @@ function SlowManifold(I::MPolyIdeal, dim::Int64, problem::ReductionProblem)
   # cancel_monomial_leading_coefficients!(G, _T)
   T = transpose(_T)
   gb_R = [parse_variety_generator(problem, rewrite_variety_generator(g)) for g in G]
-  return SlowManifold(_I, gens_R, G, gb_R, T, dim)
+  return Variety(_I, gens_R, G, gb_R, T, dim)
 end
 
 # function cancel_monomial_leading_coefficients!(G::Vector{<:MPolyRingElem}, T::MatSpaceElem)
@@ -281,7 +281,7 @@ polynomial conditions above.
 This function computes a generating set for this elimination ideal and all
 TFPVs lie in its vanishing set.
 
-See also: [`tfpvs_and_manifolds`](@ref) 
+See also: [`tfpvs_and_varieties`](@ref) 
 """
 function tfpvs_groebner(problem::ReductionProblem)
   # number of dimensions to reduce the system by
@@ -396,10 +396,10 @@ end
 
 function get_f0_Rx(
     problem::ReductionProblem,
-    tfpv::Vector{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}
+    sf_separation::Vector{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}
   )::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
   x = gens(problem._Rx)
-  return problem._f(x, tfpv)
+  return problem._f(x, sf_separation)
 end
 
 function update_cofficients(f::MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}, p::Vector{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}})
@@ -424,14 +424,13 @@ Find all slow-fast separations `π⁺` that are TFPVs by using the necessary con
 The irreducible components are obtained by computing a minimal primary decomposition. 
 The Jacobian at a point in an irreducible component `Y` is constructed
 symbolically by computing normal forms with respect to a Gröbner basis `G`, s.t.
-`V(G)=Y`. 
-
+`G` generates the vanishing ideal of `Y`.
 To obtain all general TFPVs and not just slow-fast separations, one can use the
 function `tfpvs_groebner`.
 
-See also: [`tfpvs_groebner`](@ref), [`print_results`](@ref), [`print_tfpvs`](@ref), [`print_slow_manifolds`](@ref)
+See also: [`tfpvs_groebner`](@ref), [`print_results`](@ref), [`print_tfpvs`](@ref), [`print_varieties`](@ref)
 """
-function tfpvs_and_manifolds(problem::ReductionProblem)
+function tfpvs_and_varieties(problem::ReductionProblem)
   # check all possible slow-fast separations for sufficient conditions to be a TFPV for dimension s
   slow_fast = num2bin.(1:(2^length(problem.p_sf)-2), length(problem.p_sf)) 
   # define all polynomials and the Jacobian of f in ℝ(p_sf)[x]
@@ -439,24 +438,24 @@ function tfpvs_and_manifolds(problem::ReductionProblem)
   # irreducible components of V(f0) and their dimensions
   N = length(slow_fast)
   idx_keep = zeros(Bool, N)
-  slow_manifolds = Vector{Vector{SlowManifold}}(undef, N)
+  varieties = Vector{Vector{Variety}}(undef, N)
   for i in 1:N
     tfpv_candidate = get_tfpv(gens(problem._Fp), problem.idx_slow_fast, slow_fast[i])
     f0 = get_f0_Rx(problem, tfpv_candidate)
     J_p_sf = jacobian(f0, problem._x_Rx)
     I = ideal(f0)
     if dim(I) >=  problem.s 
-      keep_i, Y, dim_Y = get_slow_manifolds(problem, I, J_p_sf)
+      keep_i, Y, dim_Y = _get_varieties(problem, I, J_p_sf)
       if keep_i
         idx_keep[i] = true
-        slow_manifolds[i] = [SlowManifold(Y[k], dim_Y[k], problem) for k in eachindex(Y)]
+        varieties[i] = [Variety(Y[k], dim_Y[k], problem) for k in eachindex(Y)]
       end
     end
   end
-  return slow_fast[idx_keep], slow_manifolds[idx_keep]
+  return slow_fast[idx_keep], varieties[idx_keep]
 end
 
-function get_slow_manifolds(
+function _get_varieties(
     problem::ReductionProblem,
     I::MPolyIdeal{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}},
     J::MatSpaceElem{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}

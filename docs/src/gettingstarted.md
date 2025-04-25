@@ -27,7 +27,7 @@ Note that loading Oscar is optional, but results in prettier printing of
 types and imports useful functions.
 ```@example 1
 using TikhonovFenichelReductions
-using TikhonovFenichelReductions.Oscar # optional
+using Oscar # optional
 ```
 Define the components, parameters and the RHS of the system. 
 ```@example 1
@@ -68,18 +68,15 @@ affine variety
 ```
 and their dimension, where ``\pi^\star`` is defined by the corresponding
 slow-fast separation in `sf_separation`. 
-This is information is stored using the type `SlowManifold` (although
-technically this is an affine variety, which is implicitly given and can only
-be thought of a manifold if it is non-singular).
+This is information is stored using the type `Variety`.
 Note that later have to check manually whether the variety taken in
 ``\mathbb{R}^n`` has the same dimension (i.e. if there exists a real
 non-singular point), which then at least locally renders this variety a
 manifold.
 
 ```@example 1
-tfpvs, manifolds = tfpvs_and_manifolds(problem)
+tfpvs, varieties = tfpvs_and_varieties(problem)
 ```
-
 You can also get all general TFPVs by computing a Gröbner basis `G` that
 reflects necessary conditions on the parameters of the system. 
 Note that this is potentially a very computationally intensive task.
@@ -94,7 +91,7 @@ print_tfpvs(problem, tfpvs)
 and the corresponding irreducible components containing the slow manifold and their
 Krull dimension
 ```@example 1
-print_slow_manifolds(manifolds)
+print_varieties(varieties)
 ```
 
 For further use, we need to make the variables (the system components and
@@ -111,11 +108,11 @@ reduction = Reduction(problem, tfpvs[15])
 
 To find the slow manifold, we can consider the affine variety defined by the vanishing of
 ```@example 1
-manifolds[15][1].gens_R
+varieties[15][1].gens_R
 ```
 which has (complex) dimension
 ```@example 1
-manifolds[15][1].dim
+varieties[15][1].dim
 ```
 as a variety. 
 We can see, that there is only one irreducible component, so the slow manifold is 
@@ -146,7 +143,7 @@ manifold.
 Then, the methods automatically computes ``P``, which relies on having exactly
 ``r`` generators of the variety corresponding to the slow manifold.
 ```@example 1
-set_decomposition!(reduction, manifolds[15][1])
+set_decomposition!(reduction, varieties[15][1])
 ```
 In most cases, this method should work, but you can also manually set ``P`` and
 ``Psi``.
@@ -181,4 +178,36 @@ show(stdout, "text/plain", J)
 ```
 Thus, the full system converges to the reduction as ``\varepsilon \to 0`` if 
 ``B \geq 0``. 
+
+## Bulk Computations 
+`TikhonovFenichelReductions.jl` has methods that simplify the computation of
+multiple reductions with the same manifold, since typically many different TFPVs
+share the same slow manifold.
+Additionally, the function `get_explicit_manifold` implements a heuristic 
+to find an explicit parametric description of the slow manifold.
+Thus, in simple enough cases, the computation of all reductions is fully
+automatic. 
+
+```@example 1
+all_V = unique_varieties(problem, varieties)
+all_M = [get_explicit_manifold(problem, V) for V in all_V] 
+
+# get reduction and indices of varieties that correspond to unique slow manifolds
+all_reductions, idx_M = compute_all_reductions(problem, tfpvs, varieties, [m[1] for m in all_M]);
+
+all_reductions[15][1]
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 

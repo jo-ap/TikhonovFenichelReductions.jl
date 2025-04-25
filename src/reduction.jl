@@ -12,7 +12,7 @@ mutable struct Reduction
   "information on input system"
   problem::ReductionProblem
   "slow-fast separation (0: slow, 1: fast)"
-  tfpv::Vector{Bool}
+  sf_separation::Vector{Bool}
   "Parameters of the system where small ones are set to 0"
   _p::Vector{QQMPolyRingElem}
   "RHS of system as vector with elements of ring `R`"
@@ -43,7 +43,7 @@ mutable struct Reduction
   idx_components::Vector{Bool}
   "Reduced system in general form (before substituting variables according to the slow manifold)"
   g_raw::Vector{FracFieldElem{QQMPolyRingElem}}
-  "Reduced system on the slow manifold (`s`-dimensional)"
+  "Reduced system on the slow manifold "
   g::Vector{FracFieldElem{QQMPolyRingElem}}
   "Whether `g` and `g_raw` are already computed"
   reduction_cached::Vector{Bool}
@@ -120,16 +120,12 @@ the additional argument `s` specifying the dimension.
 See also: [`Reduction`](@ref)
 
 """
-function slow_manifolds(problem::ReductionProblem, sf_separation::Vector{Bool})
-  F, p = rational_function_field(QQ, string.(problem.p))
-  _, x = polynomial_ring(F, string.(problem.x))
-  p_sf = p
-  p_sf[sf_separation .== 0] .= F(0)
-  f = problem._f(x,p_sf)
-  PD = primary_decomposition(ideal(f))
-  Q = [q[2] for q in PD]
-  dim_Q = dim.(Q)
-  return Q, dim_Q
+function get_varieties(problem::ReductionProblem, sf_separation::Vector{Bool})
+  tfpv_candidate = get_tfpv(gens(problem._Fp), problem.idx_slow_fast, sf_separation)
+  f0 = get_f0_Rx(problem, tfpv_candidate)
+  J = jacobian(f0, problem._x_Rx)
+  I = ideal(f0)
+  _get_varieties(problem, I, J)
 end
 
 """
@@ -139,7 +135,7 @@ Constructor for `Reduction` Type.
 ### Arguments
 - `problem`: Reduction problem type holding information on system and dimension of reduction.
 - `sf_separation`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
-- `s::Int`: (optional) Dimension of slow manifold. Can be specified if a reduction corresponding to a TFPV for dimension different from `problem.s` should be considered (e.g. for manually computing a reduction for a given slow-fast separation that is not necessarily obtained via `tfpvs_and_manifolds`).
+- `s::Int`: (optional) Dimension of slow manifold. Can be specified if a reduction corresponding to a TFPV for dimension different from `problem.s` should be considered (e.g. for manually computing a reduction for a given slow-fast separation that is not necessarily obtained via `tfpvs_and_varieties`).
 
 See also: [`set_manifold!`](@ref) [`set_decomposition!`](@ref)
 """
@@ -174,7 +170,7 @@ function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::In
                    zeros(Bool, 3),
                    zeros(Bool, n),
                    zeros(problem._F, n),
-                   zeros(problem._F, s),
+                   zeros(problem._F, n),
                    zeros(Bool,2)
                    )
 end
@@ -189,14 +185,14 @@ Convenience function that constructs an object of type `Reduction` and calls
 - `sf_separation`: Boolean index indicating slow-fast separation of rates (0: small, 1: large).
 - `V`: Generators of affine variety corresponding to the the slow manifold 
 - `M`: Slow manifold in explicit form
-- `s::Int`: (optional) Dimension of slow manifold. Can be specified if a reduction corresponding to a TFPV for dimension different from `problem.s` should be considered (e.g. for manually computing a reduction for a given slow-fast separation that is not necessarily obtained via `tfpvs_and_manifolds`).
+- `s::Int`: (optional) Dimension of slow manifold. Can be specified if a reduction corresponding to a TFPV for dimension different from `problem.s` should be considered (e.g. for manually computing a reduction for a given slow-fast separation that is not necessarily obtained via `tfpvs_and_varieties`).
 
-See also: [`set_manifold!`](@ref) [`set_decomposition!`](@ref) [`tfpvs_and_manifolds`](@ref)
+See also: [`set_manifold!`](@ref) [`set_decomposition!`](@ref) [`tfpvs_and_varieties`](@ref)
 """
 function Reduction(
   problem::ReductionProblem,
   sf_separation::Vector{Bool},
-  V::Union{SlowManifold, Vector{QQMPolyRingElem}},
+  V::Union{Variety, Vector{QQMPolyRingElem}},
   M::Vector{<:RingElem}; 
   s::Int=problem.s)
   reduction = Reduction(problem, sf_separation; s=s)
@@ -368,7 +364,7 @@ irreducible components of `V(f0)` as entries for `Psi` (possibly rewriting the
 rational equations as polynomials by multiplying appropriately with
 parameters occurring in a denominator).
 """
-function set_decomposition!(reduction::Reduction, Psi::Union{SlowManifold,Vector{QQMPolyRingElem}})
+function set_decomposition!(reduction::Reduction, Psi::Union{Variety,Vector{QQMPolyRingElem}})
   P, Psi = get_decomposition(reduction, Psi)
   isnothing(P) ? false : set_decomposition!(reduction, P, Psi)
 end
@@ -407,18 +403,18 @@ function _set_decomposition!(reduction::Reduction, P::VecOrMat, Psi)
 end
   
 # try computing matrix of rational functions P from Psi
-function get_decomposition(reduction::Reduction, slow_manifold::SlowManifold)
+function get_decomposition(reduction::Reduction, variety::Variety)
   R = parent(reduction.problem.x[1])
   r = length(reduction.problem.x) - reduction.problem.s
   p = gens(base_ring(reduction.problem._Rx))
   x = gens(reduction.problem._Rx)
-  _f0 = reduction.problem._f(x, get_tfpv(p, reduction.problem.idx_slow_fast, reduction.tfpv))
+  _f0 = reduction.problem._f(x, get_tfpv(p, reduction.problem.idx_slow_fast, reduction.sf_separation))
   ## use generators for irreducible component as entries for Psi
-  if length(slow_manifold.gens_R) == r 
-    Psi = matrix(R, reshape(slow_manifold.gens_R, r, 1))
-    U, Q, H = reduce_with_quotients_and_unit(_f0, slow_manifold.groebner_basis)
+  if length(variety.gens_R) == r 
+    Psi = matrix(R, reshape(variety.gens_R, r, 1))
+    U, Q, H = reduce_with_quotients_and_unit(_f0, variety.groebner_basis)
     if all(H .== 0)
-      _P = U*Q*slow_manifold.T
+      _P = U*Q*variety.T
       P = matrix([Rx_to_F(reduction.problem, f) for f in _P])
       return P, Psi
     end
@@ -446,7 +442,7 @@ function get_decomposition(reduction::Reduction, Psi::Vector{QQMPolyRingElem})
   else 
     p = gens(base_ring(reduction.problem._Rx))
     x = gens(reduction.problem._Rx)
-    _f0 = reduction.problem._f(x, p .* reduction.tfpv)
+    _f0 = reduction.problem._f(x, p .* reduction.sf_separation)
     _Psi = [R_to_Rx(reduction.problem, p) for p in Psi]
     U, Q, H = reduce_with_quotients_and_unit(_f0, _Psi)
     if all(H .== 0)
@@ -511,7 +507,7 @@ function compute_reduction!(reduction::Reduction)
     # substitute components according to slow manifold
     a = reduction.problem._F.([reduction.problem.p; reduction.M])
     f_red_subs = [evaluate(f, a) for f in f_red]
-    reduction.g = f_red_subs[reduction.idx_components]
+    reduction.g = f_red_subs
     reduction.reduction_cached[2] = true
   else
     @warn "Slow manifold has not been defined succesfully. Reduced system is only returned in raw form, i.e. the reduced components are not substituted according to the slow manfold."
@@ -585,23 +581,10 @@ end
 
 function _get_slow_fast(reduction::Reduction)
   p = reduction.problem.p_sf
-  sf_separation = reduction.tfpv
+  sf_separation = reduction.sf_separation
   slow = p[.!sf_separation]
   fast = p[sf_separation]
   return slow, fast
-end
-
-function Rx_to_F(problem::ReductionProblem, f::AbstractAlgebra.Generic.MPoly{AbstractAlgebra.Generic.RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}})
-  R = parent(problem.x[1])
-  _p = gens(R)[1:length(problem.p)]
-  _x = gens(R)[length(problem.p)+1:end]
-  f_F = zero(fraction_field(R))
-  for (c,a) in coefficients_and_exponents(f)
-    p = evaluate(numerator(c), _p)
-    q = evaluate(denominator(c), _p)
-    f_F += p*prod(_x.^a)//q
-  end
-  return f_F
 end
 
 function is_linear(p::MPolyRingElem, i::Int)
@@ -657,21 +640,21 @@ end
     $(TYPEDSIGNATURES)
 
 Heuristic approach to get an explicit (i.e. parameterised) representation of
-the slow manifold.
+the slow manifold from a variety.
 The function returns the (attempted) expicit manifold together with a boolean
 value indicating whether the manifold could be computed automatically.
 """
-function get_explicit_manifold(problem, manifold)
-  R = base_ring(manifold.ideal)
+function get_explicit_manifold(problem::ReductionProblem, variety::Variety)
+  R = base_ring(variety.ideal)
   M = gens(fraction_field(R))
-  G = fraction_field(R).(gens(manifold.ideal))
+  G = fraction_field(R).(gens(variety.ideal))
   G_old = zero(G)
-  while !all(G .== G_old) #!is_correct_manifold(problem, M, manifold) && cnt <= max_cnt
+  while !all(G .== G_old) #!is_correct_variety(problem, M, variety) && cnt <= max_cnt
     for k in eachindex(G)
       v = get_variables_in_poly.(G)
       if any(v[k]) 
         idx = (1:length(M))[v[k]]
-        for i in idx 
+        for i in idx
           if is_linear(G[k], i)
             val = solve_linear(G[k], i)
             M = [evaluate(m, [i], [val]) for m in M]
@@ -684,6 +667,6 @@ function get_explicit_manifold(problem, manifold)
     G_old = G
   end
   M_F = [Rx_to_F(problem, numerator(m))//Rx_to_F(problem, denominator(m)) for m in M]
-  return M_F, is_correct_manifold(problem, M, manifold)
+  return M_F, is_correct_manifold(problem, M, variety)
 end
 

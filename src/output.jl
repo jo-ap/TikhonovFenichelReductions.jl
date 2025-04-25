@@ -86,39 +86,39 @@ function _print_tfpvs(
 end
 
 """
-    print_slow_manifolds(
+    print_varieties(
       [io::IO,]
-      V::Vector{Vector{SlowManifold}};
+      V::Vector{Vector{Variety}};
       latex::Bool=false,
       idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(V)
     ) 
 
 Print generators of ideals corresponding to the irreducible components of
 varieties `V(f0)` for TFPV candidates and their dimension as returned by
-`tfpvs_and_manifolds` (these are wrapped in the type `SlowManifold`).
+`tfpvs_and_varieties` (these are wrapped in the type `Variety`).
 Use keyword argument `latex=true` to print LaTeX code instead.
 
-See also: [`tfpvs_and_manifolds`](@ref), [`print_tfpvs`](@ref), [`print_results`](@ref)
+See also: [`tfpvs_and_varieties`](@ref), [`print_tfpvs`](@ref), [`print_results`](@ref)
 """
-function print_slow_manifolds(
+function print_varieties(
     io::IO, 
-    V::Vector{Vector{SlowManifold}};
+    V::Vector{Vector{Variety}};
     latex::Bool=false,
     idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(V)
   )
-  _print_slow_manifolds(io::IO, V, latex, assert_numeric_idx(idx))
+  _print_varieties(io::IO, V, latex, assert_numeric_idx(idx))
 end
-function print_slow_manifolds(
-    V::Vector{Vector{SlowManifold}};
+function print_varieties(
+    V::Vector{Vector{Variety}};
     latex::Bool=false,
     idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(V)
   )
-  _print_slow_manifolds(stdout, V, latex, assert_numeric_idx(idx))
+  _print_varieties(stdout, V, latex, assert_numeric_idx(idx))
 end
 
-function _print_slow_manifolds(
+function _print_varieties(
     io::IO, 
-    V::Vector{Vector{SlowManifold}},
+    V::Vector{Vector{Variety}},
     latex::Bool,
     idx::AbstractVector{Int}
   )
@@ -153,13 +153,13 @@ end
       [io::IO,]
       problem::ReductionProblem,
       sf_separations::Vector{Vector{Bool}},
-      V::Vector{Vector{SlowManifold}};
+      V::Vector{Vector{Variety}};
       idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(V)
     )
 
 Print slow-fast separations that are TFPVs and generators for the corresponding
 irreducible components of `V(f0)` together with their Krull dimension as stored
-in `SlowManifold` object.
+in `Variety` object.
 
 ### Arguments 
 - `problem`: `ReductionProblem` 
@@ -167,13 +167,13 @@ in `SlowManifold` object.
 - `V`: Generators for the irreducible component of the affine varietiy `V(f(⋅,π⁺))` for each slow-fast separation and their respective dimension.
 - `idx`: (optional) index vector to include only certain TFPVs (boolean or numeric)
 
-See also: [`tfpvs_and_manifolds`](@ref), [`print_tfpvs`](@ref), [`print_slow_manifolds`](@ref)
+See also: [`tfpvs_and_varieties`](@ref), [`print_tfpvs`](@ref), [`print_varieties`](@ref)
 """
 function print_results(
     io::IO,
     problem::ReductionProblem,
     sf_separations::Vector{Vector{Bool}},
-    V::Vector{Vector{SlowManifold}};
+    V::Vector{Vector{Variety}};
     idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(V)
   )
   _print_results(io, problem, sf_separations, V, assert_numeric_idx(idx))
@@ -181,7 +181,7 @@ end
 function print_results(
     problem::ReductionProblem,
     sf_separations::Vector{Vector{Bool}},
-    V::Vector{Vector{SlowManifold}};
+    V::Vector{Vector{Variety}};
     idx::Union{AbstractVector{Int}, Vector{Bool}}=1:length(V)
   )
   _print_results(stdout, problem, sf_separations, V, assert_numeric_idx(idx))
@@ -191,7 +191,7 @@ function _print_results(
     io::IO,
     problem::ReductionProblem,
     sf_separations::Vector{Vector{Bool}},
-    V::Vector{Vector{SlowManifold}},
+    V::Vector{Vector{Variety}},
     idx::Union{AbstractVector{Int}, Vector{Bool}}
   )
   for i in idx
@@ -209,44 +209,51 @@ end
       reduction::Reduction; 
       rewrite::Bool=true,
       factor::Bool=false, 
-      latex::Bool=false
+      latex::Bool=false,
+      local_coordinates::Bool=true
     )
 
 Print the reduced system (after `compute_reduction!` has been called
 successfully on the `Reduction` object). 
-If the slow manifold was successfully specified, this returns the system in
-coordinates on this manifold (i.e. only the `s`-dimensional system without the
-reduced components is shown), if the reduction could be computed but the slow
-manifold was not set successfully, the reduced system is shown in the original
-phase space.
+If the slow manifold was successfully specified, this returns the system on the
+slow manifold. 
+If  `local_coordinates=true`, the reduced system is only given in
+`s`-dimensions (i.e. the local coordinates on the slow manifold). 
+If the reduction could be computed but the slow manifold was not set
+successfully, the reduced system is shown in the original phase space.
 
 ### Arguments 
 - `reduction`: `Reduction` holding the reduced system 
 - `rewrite`: Whether the RHS should be decomposed into polynomial and rational part (default is `true`), see `rewrite_rational`
 - `factor`: Whether the polynomial parts should be factorized
+- `latex`: Whether to print latex string 
+- `local_coordinates`: Whether to present reduced system in local coordinates on slow manifold (i.e. as `s` dimensional ODE system)
 
-See also: [`rewrite_rational`](@ref), [`print_tfpvs`](@ref), [`print_slow_manifolds`](@ref)
+See also: [`rewrite_rational`](@ref), [`print_tfpvs`](@ref), [`print_varieties`](@ref)
 """
-function print_reduced_system(io::IO, reduction::Reduction; rewrite::Bool=true, factor::Bool=false, latex::Bool=false)
-  str = _get_reduced_system_str(reduction; rewrite=rewrite, factor=factor, padfront=0)
-  if latex 
+function print_reduced_system(io::IO, reduction::Reduction; rewrite::Bool=true, factor::Bool=false, latex::Bool=false, local_coordinates::Bool=true)
+  str = _get_reduced_system_str(reduction; rewrite=rewrite, factor=factor, padfront=0, local_coordinates=local_coordinates)
+  if latex && str != ""
     str_latex = [replace(latexify(s; env=:raw, mult_symbol=""), "=" => "&=") for s in split(str, "\n")]
-    replace.(str_latex, "=" => "aaa")
     str = "\\[\n\\begin{aligned}\n" * join(str_latex, "\\\\\n") * "\n\\end{aligned}\n\\]"
   end
   println(io, str)
 end
-function print_reduced_system(reduction::Reduction; rewrite::Bool=true, factor::Bool=false, latex::Bool=false)
-  print_reduced_system(stdout, reduction; rewrite, factor, latex)
+function print_reduced_system(reduction::Reduction; rewrite::Bool=true, factor::Bool=false, latex::Bool=false, local_coordinates::Bool=true)
+  print_reduced_system(stdout, reduction; rewrite, factor, latex, local_coordinates)
 end
 
-function _get_reduced_system_str(reduction::Reduction; rewrite::Bool=true, factor::Bool=false, padfront::Int=0)
+function _get_reduced_system_str(reduction::Reduction; rewrite::Bool=true, factor::Bool=false, padfront::Int=0, local_coordinates::Bool=true)
   if !any(reduction.reduction_cached)
     @warn "Reduced system is not yet computed"
     return ""
   end
   g = reduction.reduction_cached[2] ? reduction.g : reduction.g_raw
-  x = reduction.reduction_cached[2] ? reduction.problem.x[reduction.idx_components] : reduction.problem.x
+  x = reduction.problem.x
+  if local_coordinates
+    g = g[reduction.idx_components]
+    x = x[reduction.idx_components]
+  end
   dxdt = ["d$u/dt" for u in string.(x)]
   string_length = maximum(length.(dxdt))
   pad = repeat(" ", padfront)
@@ -290,26 +297,32 @@ function rewrite_rational(term::FracFieldElem{QQMPolyRingElem}; factor::Bool=fal
   if factor 
     h = h == 0 ? h : Oscar.factor(h)
     r = r == 0 ? r : Oscar.factor(r)
+    q = Oscar.factor(q)
   end
   return h, r, q
 end
 
 """
-    print_slow_fast([io::IO,] reduction::Reduction)
+    print_slow_fast([io::IO,] reduction::Reduction; latex::Bool=false)
 
 Print slow and fast parameters.
 """
-function print_slow_fast(io::IO, reduction::Reduction)
-  print(io, _get_slow_fast_str(reduction; padfront=0))
+function print_slow_fast(io::IO, reduction::Reduction; latex::Bool=false)
+  print(io, _get_slow_fast_str(reduction; padfront=0, latex=latex))
 end
-function print_slow_fast(reduction::Reduction)
-  print(_get_slow_fast_str(reduction; padfront=0))
+function print_slow_fast(reduction::Reduction; latex::Bool=false)
+  print(_get_slow_fast_str(reduction; padfront=0, latex=latex))
 end
 
-function _get_slow_fast_str(reduction::Reduction; padfront::Int=0)
+function _get_slow_fast_str(reduction::Reduction; padfront::Int=0, latex::Bool=false)
   slow, fast = _get_slow_fast(reduction)
   pad = repeat(" ", padfront)
-  str = pad * "slow: " * join(string.(slow), ", ") * "\n" * pad * "fast: " * join(string.(fast), ", ")
+  if latex 
+    p = [reduction.sf_separation[i] ? latexify(string(reduction.problem.p_sf[i]); env=:raw) : "\\varepsilon " * latexify(string(reduction.problem.p_sf[i]); env=:raw) for i in eachindex(reduction.sf_separation)]
+    str = pad * "\$\\left(" * join(p, ", ")  * "\\right)\$"
+  else
+    str = pad * "slow: " * join(string.(slow), ", ") * "\n" * pad * "fast: " * join(string.(fast), ", ")
+  end
   return str
 end
 

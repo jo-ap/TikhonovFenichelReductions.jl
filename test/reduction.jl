@@ -1,10 +1,10 @@
 # Reduction instance 
-red_i = Reduction(prob, tfpvs[i])
+red_i = Reduction(problem, tfpvs[i])
 @test isa(red_i, Reduction)
 
 # make variables available
-S, C = system_components(prob)
-e₀, k₁, k₋₁, k₂ = system_parameters(prob)
+S, C = system_components(problem)
+e₀, k₁, k₋₁, k₂ = system_parameters(problem)
 
 # test splitting of system
 @test red_i.f0 == [-(k₁*e₀*S - (k₁*S + k₋₁)*C), k₁*e₀*S - (k₁*S + k₋₁)*C]
@@ -15,28 +15,30 @@ e₀, k₁, k₋₁, k₂ = system_parameters(prob)
 @test set_point!(red_i, [S, e₀*k₁*S//(k₁*S + k₋₁)])
 @test set_decomposition!(red_i, [1; -1], [k₁*S*C - e₀*k₁*S + k₋₁*C])
 @test set_decomposition!(red_i, [k₁*S*C - e₀*k₁*S + k₋₁*C])
-@test set_decomposition!(red_i, manifolds[i][1])
+@test set_decomposition!(red_i, varieties[i][1])
 
 # compute reduction
 @test compute_reduction!(red_i)
 @test red_i.g[1] == (-k₂*k₁*e₀*S*(k₁*S + k₋₁)//(k₁*k₋₁*e₀ + (k₁*S + k₋₁)^2))
 
 # convenience function for reduction
-red_i_conv = Reduction(prob, tfpvs[i], manifolds[i][1], parent(S//C).([S, e₀*k₁*S//(k₁*S + k₋₁)]))
+red_i_conv = Reduction(problem, tfpvs[i], varieties[i][1], parent(S//C).([S, e₀*k₁*S//(k₁*S + k₋₁)]))
 @test all([getfield(red_i_conv, name) == getfield(red_i, name) for name in fieldnames(Reduction)])
 
-# find all possible slow manifolds
-unique_manifolds = unique_slow_manifolds(prob, manifolds)
+# find all possible slow varieties
+all_varieties = unique_varieties(problem, varieties)
 
-# explicit description of manifolds
-F = parent(S//C)
+# explicit description of varieties
 M = [
-  F.([S, 0]),
-  F.([-k₋₁//k₁, C]),
-  F.([S, e₀*k₁*S//(k₁*S + k₋₁)])
+  problem._F.([S, 0]),
+  problem._F.([-k₋₁//k₁, C]),
+  problem._F.([k₋₁*C//(k₁*(e₀ - C)), C])
 ]
+M_auto = [get_explicit_manifold(problem, v) for v in all_varieties]
+@test all(all(M .== [m[1] for m in M_auto]))
 
-R, idx = compute_all_reductions(prob, tfpvs, manifolds, M);
+# compute all reductions
+R, idx_M = compute_all_reductions(problem, tfpvs, varieties, [m[1] for m in M_auto])
 
 # Access the `Reduction` object 
 reduction_3 = R[3][1]

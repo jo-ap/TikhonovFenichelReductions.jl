@@ -7,20 +7,21 @@ module TikhonovFenichelReductions
 
 export ReductionProblem, 
   system_components, system_parameters,
-  tfpvs_and_manifolds, 
+  tfpvs_and_varieties, 
   tfpvs_groebner,
   Reduction,
-  SlowManifold,
-  print_tfpvs, print_slow_manifolds, print_results, print_slow_fast, 
+  Variety,
+  get_varieties,
+  print_tfpvs, print_varieties, print_results, print_slow_fast, 
   print_system, print_reduced_system,
   rewrite_rational,
-  slow_manifolds,
   jacobian_tfpv_on_manifold, jacobian_tfpv_at_x0,
   set_manifold!, set_point!, set_decomposition!, 
   compute_reduction!, 
   # get_reduced_system,
   # compute_directional_reduction,
-  unique_slow_manifolds, compute_all_reductions, find_implicit_manifolds
+  unique_varieties, compute_all_reductions, find_varieties,
+  get_explicit_manifold
 
 ## Dependencies
 import Base 
@@ -28,9 +29,9 @@ import Pkg
 using DocStringExtensions
 using LaTeXStrings
 using Latexify
+using Logging
 using Oscar
 using Oscar.AbstractAlgebra.Generic: FracField, FracFieldElem, MatSpaceElem, MPoly, PolyRing, Poly, RationalFunctionField, RationalFunctionFieldElem
-
 
 const PROJECT_TOML = Pkg.TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))
 const VERSION_NUMBER = VersionNumber(PROJECT_TOML["version"])

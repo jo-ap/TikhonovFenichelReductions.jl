@@ -29,7 +29,7 @@ Order = [:function, :type]
 print_system
 print_results
 print_tfpvs
-print_slow_manifolds
+print_varieties
 print_reduced_system
 print_slow_fast
 rewrite_rational
