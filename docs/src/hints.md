@@ -6,9 +6,6 @@
 Note, that this is implemented as an extension and is therefore only supported
 by Julia `1.9+` (this prevents unnecessary precompilation when `Catalyst.jl` is
 not loaded).
-If you cannot use an up to date version of Julia, you can simply copy the few
-lines of code in `ext/CatalystExt.jl` to overload the constructor for a
-`ReductionProblem`. 
 
 Here is an example:
 ```@example 2

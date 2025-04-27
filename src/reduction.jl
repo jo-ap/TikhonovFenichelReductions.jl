@@ -409,7 +409,7 @@ function get_decomposition(reduction::Reduction, variety::Variety)
   p = gens(base_ring(reduction.problem._Rx))
   x = gens(reduction.problem._Rx)
   _f0 = reduction.problem._f(x, get_tfpv(p, reduction.problem.idx_slow_fast, reduction.sf_separation))
-  ## use generators for irreducible component as entries for Psi
+  # use generators for irreducible component as entries for Psi
   if length(variety.gens_R) == r 
     Psi = matrix(R, reshape(variety.gens_R, r, 1))
     U, Q, H = reduce_with_quotients_and_unit(_f0, variety.groebner_basis)
@@ -419,14 +419,16 @@ function get_decomposition(reduction::Reduction, variety::Variety)
       return P, Psi
     end
   else
-    Ψ = find_independent_polys(_f0)
-    Psi = matrix(R, reshape(Ψ, r, 1))
-    Ψ = [R_to_Rx(reduction.problem, f) for f in Ψ]
-    if length(Psi) == r 
-      U, Q, H = reduce_with_quotients_and_unit(_f0, Ψ)
+    # try to find r independent entries in f0 and use these as entries for Psi
+    idx_independent = find_independent_polys(_f0)
+    if sum(idx_independent) == r
+      Psi = matrix(R, reshape(reduction.f0[idx_independent], r, 1))
+      G, T = groebner_basis_with_transformation_matrix(ideal(_f0[idx_independent]); complete_reduction=true)
+      _T = transpose(T)
+      U, Q, H = reduce_with_quotients_and_unit(_f0, G)
       if all(H .== 0)
-        P = U*Q
-        P = matrix([Rx_to_F(reduction.problem, f) for f in P])
+        _P = U*Q*_T
+        P = matrix([Rx_to_F(reduction.problem, f) for f in _P])
         return P, Psi
       end
     end
@@ -461,7 +463,7 @@ function find_independent_polys(f::Vector{<:MPolyRingElem})
       idx[i] = true
     end 
   end 
-  return f[idx]
+  return idx
 end
 
 """
