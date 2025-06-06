@@ -36,13 +36,13 @@ s = 2
 problem = ReductionProblem(f, x, p, s)
 
 # find slow-fast separations that are TFPVs
-sf_separations, manifolds = tfpvs_and_manifolds(problem);
+sf_separations, varieties = tfpvs_and_varieties(problem);
 
 # print slow-fast separations and corresponding slow manifolds with their dimension
 print_tfpvs(problem, sf_separations)
-print_slow_manifolds(manifolds)
+print_varieties(varieties)
 
-print_results(problem, sf_separations, manifolds)
+print_results(problem, sf_separations, varieties)
 
 # find all general TFPVs using necessary conditions on the determinants of D₁f
 # G is a Gröbner basis for this, such that every TFPV of dimension s lies in V(G)
@@ -66,17 +66,17 @@ B, S, H = system_components(problem)
 
 ## Compute a reduced system
 
-# The Rosenzweig-MaxArthur system corresponds to the TFPV candidate 15 (See section 3.3 in the paper).
+# The Rosenzweig-MacArthur system corresponds to the TFPV candidate 15 (See section 3.3 in the paper).
 # instantiate reduction 
 reduction = Reduction(problem, sf_separations[15])
 
 # look at the implicitly given manifold (i.e. variety) that contains the slow manifold
-manifolds[15][1].gens_R # => M₀ = {(B,S,0) | B,S ∈ ℝ}
-manifolds[15][1].dim # has dimension 2 
+varieties[15][1].gens_R # => M₀ = {(B,S,0) | B,S ∈ ℝ}
+varieties[15][1].dim # has dimension 2 
 set_manifold!(reduction, [B, S, 0])
 
 # define product decomposion f0 = P⋅Psi (this can be done via the corresponding manifold object)
-set_decomposition!(reduction, manifolds[15][1])
+set_decomposition!(reduction, varieties[15][1])
 # it is also possible to set this manually
 set_decomposition!(reduction, [H])
 
@@ -90,7 +90,7 @@ print_reduced_system(reduction; factor=true)
 # check if g as the RHS of the reduced system is the same as in the paper 
 dBdt = ρ*B*(1-B) - α*(η + β)*B*S//(δ + γ*B)
 dSdt = -η*S + γ*(η + β)*B*S//(δ + γ*B)
-all(iszero.(reduction.g .- [dBdt, dSdt])) 
+all(iszero.(reduction.g[reduction.idx_components] .- [dBdt, dSdt])) 
 
 # print to latex 
 print_reduced_system(stdout, reduction; latex=true)
@@ -99,16 +99,16 @@ print_reduced_system(stdout, reduction; latex=true)
 jacobian_tfpv_at_x0(reduction)
 
 # convenience function to compute reduction directly
-Reduction(problem, sf_separations[15], manifolds[15][1], parent(B).([B,S,0]))
+Reduction(problem, sf_separations[15], varieties[15][1], parent(B).([B,S,0]))
 
 ## Compute multiple reductions at once
 
 # Get all unique slow manifolds of dimension 2 onto which reductions exist
-unique_manifolds = unique_slow_manifolds(problem, manifolds)
+all_varieties = unique_varieties(problem, varieties)
 
 # print generators of affine varieties (i.e. implicit manifolds)
-for m in unique_manifolds 
-  println(join(string.(m.groebner_basis), ", "))
+for V in all_varieties 
+  println(join(string.(V.groebner_basis), ", "))
 end
 
 # we need to work in the rational function field over all vaiables 
@@ -126,9 +126,17 @@ M = [
 ]
 
 # compute all reductions (with a manifold in M)
-R, idx = compute_all_reductions(problem, sf_separations, manifolds, M);
+R, idx = compute_all_reductions(problem, sf_separations, varieties, M; print=true);
 
 # Access the `Reduction` object with the indices as in `manifolds`
 # Reduction for `sf_separations[1]` onto `manifolds[1][2]`
 R[1][2]
+
+# note that there is a heuristic that can be used to compute all reductions automatically (this may fail for some varieties)
+# try to compute the manifolds automatically 
+M_auto = [get_explicit_manifold(problem, V) for V in all_varieties]
+# check if all manifolds are computed automatically
+@assert all([m[2] for m in M_auto])
+
+R, idx = compute_all_reductions(problem, sf_separations, varieties, [M[1] for M in M_auto]; print=true);
 
