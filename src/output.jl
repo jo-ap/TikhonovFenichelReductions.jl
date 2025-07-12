@@ -235,7 +235,7 @@ function print_reduced_system(io::IO, reduction::Reduction; rewrite::Bool=true, 
   str = _get_reduced_system_str(reduction; rewrite=rewrite, factor=factor, padfront=0, local_coordinates=local_coordinates)
   if latex && str != ""
     str_latex = [replace(latexify(s; env=:raw, mult_symbol=""), "=" => "&=") for s in split(str, "\n")]
-    str = "\\[\n\\begin{aligned}\n" * join(str_latex, "\\\\\n") * "\n\\end{aligned}\n\\]"
+    str = "\\begin{aligned}" * join(str_latex, "\\\\ \n") * "\\end{aligned}"
   end
   println(io, str)
 end
