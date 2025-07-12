@@ -1,6 +1,6 @@
 
 function Base.show(io::IO, ::MIME"text/plain", problem::ReductionProblem)
-  println(io, "ReductionProblemlem for dimension s = $(problem.s)")
+  println(io, "ReductionProblem for dimension s = $(problem.s)")
   if !all(problem.idx_slow_fast)
     println(io, " x    = [" * join(string.(problem.x), ", ") * "]");
     println(io, " p    = [" * join(string.(problem.p), ", ") * "]");
