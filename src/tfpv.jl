@@ -147,8 +147,7 @@ system_parameters(problem::ReductionProblem) = problem.p
     $(TYPEDSIGNATURES) 
 
 Parse dynamic variables `x` and parameters `p` of polynomial ODE system so that
-they can be used with Oscar.jl. Return the polynomial Ring `R = ℚ[x,p]`
-together with `x`, `p` and `f` parsed to the appropriate OSCAR types.
+they can be used with Oscar.jl. 
 """
 function parse_system(f::Function, x::Vector{T}, p::Vector{T}) where T<:Union{String, Symbol}
   # polynomial ring in p and x

@@ -19,6 +19,8 @@ mutable struct Reduction
   f0::Vector{QQMPolyRingElem}
   "Slow part of the system"
   f1::Vector{QQMPolyRingElem}
+  "Second order terms in ε"
+  higher_order_terms::Vector{QQMPolyRingElem}
   "Jacobian of `f0`"
   Df0::MatSpaceElem{QQMPolyRingElem}
   "Jacobian of `f0` at the non-singular point `x0`"
@@ -76,13 +78,42 @@ end
 
 Split RHS of system into fast/unperturbed and slow/perturbed part for a given
 slow-fast separation of rates.
+Terms in O(ε²) are discarded.
 """
-function splitsystem(f::Vector{QQMPolyRingElem}, p_sf::Vector{QQMPolyRingElem}, sf_separation::Vector{Bool})
+function split_system(f::Vector{QQMPolyRingElem}, p_sf::Vector{QQMPolyRingElem}, sf_separation::Vector{Bool})
   R = parent(f[1])
   f0 = [evaluate(fᵢ, p_sf[.!sf_separation], zero.(p_sf[.!sf_separation])) for fᵢ in f]
   f1 = f .- f0 
-  return f0, f1
+  # remove all terms from f1 that are in O(ε²)
+  r = [R(0) for _ in f1]
+  # get indices of parameters considered for slow-fast separation
+  idx_p = [any(v .== p_sf) for v in gens(R)]
+  idx_p_num = (1:ngens(R))[idx_p]
+  idx_slow_all = idx_p_num[.!sf_separation]
+  # store all terms in O(ε²) in 
+  for i in eachindex(f1)
+    ts = terms(f[i])
+    for t in ts
+      e = [exponent(t, 1, j) for j in idx_slow_all]
+      if sum(e) > 1 
+        r[i] += t
+      end
+    end
+  end
+  f1 = f1 .- r
+  # make sure splitting worked
+  @assert all(f0 .+ f1 .+ r .== f) "Something went wrong with splitting the system, please file a bug report at https://github.com/jo-ap/TikhonovFenichelReductions.jl"
+  return f0, f1, r 
 end
+
+# function second_order_terms(f::QQMPolyRingElem, x::Vector{QQMPolyRingElem})
+#   R = parent(f)
+#   t = terms(f)
+#   t2 = [evaluate(term, x, [R(2) for _ in x]) for term in t]
+#   idx_second_order = [evaluate(term, [R(1) for x in gens(R)]) > 2 for term in t2]
+#   return sum(terms[idx_second_order])
+# end
+
 
 """
     $(TYPEDSIGNATURES)
@@ -144,7 +175,7 @@ function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::In
   _p[problem.idx_slow_fast] = problem.p_sf.*sf_separation
   n = length(problem.x)
   r = n - s
-  f0, f1 = splitsystem(problem.f, problem.p_sf, sf_separation)
+  f0, f1, higher_order_terms = split_system(problem.f, problem.p_sf, sf_separation)
   Df0 = jacobian(problem.f, problem.x)
   T, _ = polynomial_ring(problem._F, "λ")
   M = problem._F.(problem.x)
@@ -158,6 +189,7 @@ function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::In
                    _p,
                    f0,
                    f1,
+                   higher_order_terms,
                    Df0,
                    Df0_at_x0,
                    T,

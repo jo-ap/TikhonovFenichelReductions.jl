@@ -17,6 +17,9 @@ end
 function Base.show(io::IO, ::MIME"text/plain", reduction::Reduction)
   println(io, "Reduction for dimension s = $(reduction.problem.s) with")
   print(io, _get_slow_fast_str(reduction; padfront=1))
+  if !all(is_zero.(reduction.higher_order_terms))
+    print(io, "\n O(ε²): [" * join(string.(reduction.higher_order_terms), ", ") * "]")
+  end
   if all(reduction.success)
     print(io, "\n M      = [" * join(string.(reduction.M), ", ") * "]")
     print(io, "\n P      = $(reduction.P)")
@@ -30,4 +33,5 @@ function Base.show(io::IO, ::MIME"text/plain", reduction::Reduction)
     print(io, str_reduced_system * "\n" * str)
   end
 end
+
 
