@@ -12,7 +12,7 @@ using Oscar # optional (results in prettier printing and loads Oscar functions t
 
 ## Define system
 
-# dynamic variables
+# state variables
 x = ["B", "S", "H"]
 
 # parameters

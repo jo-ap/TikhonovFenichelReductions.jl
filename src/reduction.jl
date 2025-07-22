@@ -386,8 +386,9 @@ end
 Try to automatically compute matrix of rational functions `P` from given vector
 of polynomials `Psi`, such that `f0=P⋅Psi` and `V(f0)=V(Psi)` holds locally.
 
-NOTE: This always works if the drop in dimension `r=n-s=1`, but is experimental
-for `r>1`
+NOTE: This always works if the drop in dimension `r=n-s=1`, but may fail for
+`r>1` (if the number of generators for the irreducible component of `V(f0)` is
+greater than `r`).
 
 ### Description
 `Psi` can be chosen from `r` algebraically independent entries of `f0`. 
@@ -675,8 +676,9 @@ end
 
 Heuristic approach to get an explicit (i.e. parameterised) representation of
 the slow manifold from a variety.
-The function returns the (attempted) expicit manifold together with a boolean
-value indicating whether the manifold could be computed automatically.
+If succesfull, the function returns the (attempted) explicit manifold together
+with a boolean value indicating whether the manifold could be computed
+automatically.
 """
 function get_explicit_manifold(problem::ReductionProblem, variety::Variety)
   R = base_ring(variety.ideal)

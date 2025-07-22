@@ -60,11 +60,12 @@ problem = ReductionProblem(f, x, p, s)
 Compute all slow-fast separations that are TFPVs by using necessary conditions
 for the existence of a reduction. 
 This returns a vector of boolean indices for each TFPV candidate, where ``0``
-corresponds to a small and ``1`` to a large parameter.
+corresponds to a small parameters, i.e. those multiplied by ``\varepsilon``,
+and ``1`` corresponds to a parameter in ``\mathcal{O}(1)``.
 In addition, we obtain the generators of the irreducible components of the
 affine variety 
 ```math
-\mathcal{V}_{\mathbb{C}}(f(\cdot,\pi^\star)) = \{x\in\mathbb{C}^n \mid \forall i : f_i(x,\pi^\star)=0\}
+\mathcal{V}_{\mathbb{C}}(f(\cdot,\pi^\star)) = \{x\in\mathbb{C}^n \mid f_i(x,\pi^\star)=0\}
 ```
 and their dimension, where ``\pi^\star`` is defined by the corresponding
 slow-fast separation in `sf_separation`. 
