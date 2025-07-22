@@ -674,7 +674,7 @@ end
 """
     $(TYPEDSIGNATURES)
 
-Heuristic approach to get an explicit (i.e. parameterised) representation of
+Heuristic approach to get an explicit (i.e. parameterized) representation of
 the slow manifold from a variety.
 If succesfull, the function returns the (attempted) explicit manifold together
 with a boolean value indicating whether the manifold could be computed
