@@ -60,9 +60,9 @@ function _print_tfpvs(
     idx::AbstractVector{Int}
   )
   if latex
-    parameters = [latexify(p_sfᵢ; env=:raw) for p_sfᵢ in string.(problem.p_sf)]
+    parameters = [latexify(p; env=:raw) for p in string.(problem.p)]
     m = length(parameters)
-    str = "\$\\begin{array}{r$(repeat('c',length(problem.p_sf)))} i & $(join(parameters .* "^\\star", " & ")) \\\\ \n"
+    str = "\$\\begin{array}{r$(repeat('c',length(problem.p)))} i & $(join(parameters .* "^\\star", " & ")) \\\\ \n"
     for i in idx
       str *= "$i & " * join([sf_separations[i][k] ? parameters[k] : "\\cdot" for k = 1:m], " & ") * " \\\\ \n"
     end
@@ -71,15 +71,15 @@ function _print_tfpvs(
     subscripts = ["₀","₁","₂","₃","₄","₅","₆","₇","₈","₉"]
     numbers = string.(0:9)
     max_width = ndigits(length(sf_separations)) 
-    field_widths = [length(p_sfᵢ) for p_sfᵢ in string.(problem.p_sf)]
-    str = "π $(repeat(" ", max_width-1)) = ($(join(string.(problem.p_sf), ", ")))\n"
+    field_widths = [length(pᵢ) for pᵢ in string.(problem.p)]
+    str = "π $(repeat(" ", max_width-1)) = ($(join(string.(problem.p), ", ")))\n"
     str *= repeat("_", length(str)-2) * "\n"
     for i in idx
       idx_fast = sf_separations[i]
       str *= "π" *
       join([subscripts[string(n) .== numbers][1] for n in string(i)], "") *
       "$(repeat(" ", max_width - ndigits(i))) = (" * 
-      join(padstring.([idx_fast[k] ? string(problem.p_sf[k]) : "0" for k = 1:length(idx_fast)], field_widths), ", ") *")\n"
+      join(padstring.([idx_fast[k] ? string(problem.p[k]) : "⋅" for k = 1:length(idx_fast)], field_widths), ", ") *")\n"
     end
   end
   println(io, str)
@@ -197,7 +197,7 @@ function _print_results(
   for i in idx
     println(io, "$i")
     idx_fast = sf_separations[i]
-    println(io, " π̃: [" * join([idx_fast[k] ? string(problem.p_sf[k]) : "0" for k = 1:length(idx_fast)], ", ") *"]")
+    println(io, " π̃: [" * join([idx_fast[k] ? string(problem.p[k]) : "0" for k = 1:length(idx_fast)], ", ") *"]")
     V_str = ["[" * replace(join(string.(V[i][k].gens_R), ", ")) * "], $(V[i][k].dim)" for k in eachindex(V[i])]
     println(io, " V: " * join(V_str, "\n    ") * "\n")
   end
@@ -243,6 +243,32 @@ function print_reduced_system(reduction::Reduction; rewrite::Bool=true, factor::
   print_reduced_system(stdout, reduction; rewrite, factor, latex, local_coordinates)
 end
 
+function get_system_str(f, u; rewrite::Bool=true, factor::Bool=false, padfront::Int=0)
+  dxdt = ["d$_u/dt" for _u in string.(u)]
+  string_length = maximum(length.(dxdt))
+  pad = repeat(" ", padfront)
+  str_out = ["" for _ in f]
+  if rewrite
+    _f = rewrite_rational.(f; factor=factor)
+    for i in eachindex(_f)
+      h, r, q = _f[i]
+      str = pad * padstring(dxdt[i], string_length; padfront=false) * " = "
+      if r == 0 
+        _h = h == 0 ? "0" : string(h) 
+        str_out[i] = str *  replace(_h, " * " => "*", "1 * " => "") 
+      else
+        _h = h == 0 ? "" : string(h) * " + "
+        str_out[i] = str * replace(_h * "(" * string(r) * ")//(" * string(q) * ")", " * " => "*", "1 * " => "") 
+      end
+    end
+  else 
+    for i in eachindex(f) 
+      str_out[i] *= pad * padstring(dxdt[i], string_length; padfront=false) * " = " * string(f[i])
+    end
+  end
+  return join(str_out, "\n")
+end
+
 function _get_reduced_system_str(reduction::Reduction; rewrite::Bool=true, factor::Bool=false, padfront::Int=0, local_coordinates::Bool=true)
   if !any(reduction.reduction_cached)
     @warn "Reduced system is not yet computed"
@@ -254,29 +280,7 @@ function _get_reduced_system_str(reduction::Reduction; rewrite::Bool=true, facto
     g = g[reduction.idx_components]
     x = x[reduction.idx_components]
   end
-  dxdt = ["d$u/dt" for u in string.(x)]
-  string_length = maximum(length.(dxdt))
-  pad = repeat(" ", padfront)
-  str_out = ["" for _ in g]
-  if rewrite
-    _g = rewrite_rational.(g; factor=factor)
-    for i in eachindex(_g)
-      h, r, q = _g[i]
-      str = pad * padstring(dxdt[i], string_length; padfront=false) * " = "
-      if r == 0 
-        _h = h == 0 ? "0" : string(h) 
-        str_out[i] = str *  replace(_h, " * " => "*", "1 * " => "") 
-      else
-        _h = h == 0 ? "" : string(h) * " + "
-        str_out[i] = str * replace(_h * "(" * string(r) * ")//(" * string(q) * ")", " * " => "*", "1 * " => "") 
-      end
-    end
-  else 
-    for i in eachindex(g) 
-      str_out[i] *= pad * padstring(dxdt[i], string_length; padfront=false) * " = " * string(g[i])
-    end
-  end
-  return join(str_out, "\n")
+  return get_system_str(g, x; rewrite=rewrite, factor=factor, padfront=padfront)
 end
 
 """
@@ -318,7 +322,7 @@ function _get_slow_fast_str(reduction::Reduction; padfront::Int=0, latex::Bool=f
   slow, fast = _get_slow_fast(reduction)
   pad = repeat(" ", padfront)
   if latex 
-    p = [reduction.sf_separation[i] ? latexify(string(reduction.problem.p_sf[i]); env=:raw) : "\\varepsilon " * latexify(string(reduction.problem.p_sf[i]); env=:raw) for i in eachindex(reduction.sf_separation)]
+    p = [reduction.sf_separation[i] ? latexify(string(reduction.problem.p[i]); env=:raw) : "\\varepsilon " * latexify(string(reduction.problem.p[i]); env=:raw) for i in eachindex(reduction.sf_separation)]
     str = pad * "\$\\left(" * join(p, ", ")  * "\\right)\$"
   else
     str = pad * "slow: " * join(string.(slow), ", ") * "\n" * pad * "fast: " * join(string.(fast), ", ")

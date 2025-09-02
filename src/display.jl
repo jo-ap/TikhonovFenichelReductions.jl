@@ -1,14 +1,8 @@
 
 function Base.show(io::IO, ::MIME"text/plain", problem::ReductionProblem)
   println(io, "ReductionProblem for dimension s = $(problem.s)")
-  if !all(problem.idx_slow_fast)
-    println(io, " x    = [" * join(string.(problem.x), ", ") * "]");
-    println(io, " p    = [" * join(string.(problem.p), ", ") * "]");
-    println(io, " p_sf = [" * join(string.(problem.p_sf), ", ") * "]");
-  else
-    println(io, " x = [" * join(string.(problem.x), ", ") * "]");
-    println(io, " p = [" * join(string.(problem.p), ", ") * "]");
-  end
+  println(io, " x = [" * join(string.(problem.x), ", ") * "]");
+  println(io, " p = [" * join(string.(problem.p), ", ") * "]");
   # print(io, " f: Function $(problem._f) from $(typeof(problem._f).name.module) defining ODE system\n") 
   print(io, " ODE system:\n") 
   print(io, _get_system_str(string.(problem.x), string.(problem.f); padfront=2))

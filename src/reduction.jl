@@ -80,14 +80,14 @@ Split RHS of system into fast/unperturbed and slow/perturbed part for a given
 slow-fast separation of rates.
 Terms in O(ε²) are discarded.
 """
-function split_system(f::Vector{QQMPolyRingElem}, p_sf::Vector{QQMPolyRingElem}, sf_separation::Vector{Bool})
+function split_system(f::Vector{QQMPolyRingElem}, p::Vector{QQMPolyRingElem}, sf_separation::Vector{Bool})
   R = parent(f[1])
-  f0 = [evaluate(fᵢ, p_sf[.!sf_separation], zero.(p_sf[.!sf_separation])) for fᵢ in f]
+  f0 = [evaluate(fᵢ, p[.!sf_separation], zero.(p[.!sf_separation])) for fᵢ in f]
   f1 = f .- f0 
   # remove all terms from f1 that are in O(ε²)
   r = [R(0) for _ in f1]
   # get indices of parameters considered for slow-fast separation
-  idx_p = [any(v .== p_sf) for v in gens(R)]
+  idx_p = [any(v .== p) for v in gens(R)]
   idx_p_num = (1:ngens(R))[idx_p]
   idx_slow_all = idx_p_num[.!sf_separation]
   # store all terms in O(ε²) in 
@@ -105,15 +105,6 @@ function split_system(f::Vector{QQMPolyRingElem}, p_sf::Vector{QQMPolyRingElem},
   @assert all(f0 .+ f1 .+ r .== f) "Something went wrong with splitting the system, please file a bug report at https://github.com/jo-ap/TikhonovFenichelReductions.jl"
   return f0, f1, r 
 end
-
-# function second_order_terms(f::QQMPolyRingElem, x::Vector{QQMPolyRingElem})
-#   R = parent(f)
-#   t = terms(f)
-#   t2 = [evaluate(term, x, [R(2) for _ in x]) for term in t]
-#   idx_second_order = [evaluate(term, [R(1) for x in gens(R)]) > 2 for term in t2]
-#   return sum(terms[idx_second_order])
-# end
-
 
 """
     $(TYPEDSIGNATURES)
@@ -152,7 +143,7 @@ See also: [`Reduction`](@ref)
 
 """
 function get_varieties(problem::ReductionProblem, sf_separation::Vector{Bool})
-  tfpv_candidate = get_tfpv(gens(problem._Fp), problem.idx_slow_fast, sf_separation)
+  tfpv_candidate = get_tfpv(gens(problem._Fp), sf_separation)
   f0 = get_f0_Rx(problem, tfpv_candidate)
   J = jacobian(f0, problem._x_Rx)
   I = ideal(f0)
@@ -171,11 +162,10 @@ Constructor for `Reduction` Type.
 See also: [`set_manifold!`](@ref) [`set_decomposition!`](@ref)
 """
 function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::Int=problem.s)
-  _p = copy(problem.p)
-  _p[problem.idx_slow_fast] = problem.p_sf.*sf_separation
+  _p = problem.p .* sf_separation
   n = length(problem.x)
   r = n - s
-  f0, f1, higher_order_terms = split_system(problem.f, problem.p_sf, sf_separation)
+  f0, f1, higher_order_terms = split_system(problem.f, problem.p, sf_separation)
   Df0 = jacobian(problem.f, problem.x)
   T, _ = polynomial_ring(problem._F, "λ")
   M = problem._F.(problem.x)
@@ -328,7 +318,6 @@ function jacobian_tfpv_at_x0(reduction::Reduction)
   eval_mat(reduction.Df0, [reduction.problem._F.(reduction._p); reduction.x0])
 end
 
-
 function _set_point!(reduction::Reduction, x0::AbstractVector)::Bool
   x0 = parse_ring(reduction.problem._F, x0)
   n = length(reduction.problem.x)
@@ -441,7 +430,7 @@ function get_decomposition(reduction::Reduction, variety::Variety)
   r = length(reduction.problem.x) - reduction.problem.s
   p = gens(base_ring(reduction.problem._Rx))
   x = gens(reduction.problem._Rx)
-  _f0 = reduction.problem._f(x, get_tfpv(p, reduction.problem.idx_slow_fast, reduction.sf_separation))
+  _f0 = reduction.problem._f(x, get_tfpv(p, reduction.sf_separation))
   # use generators for irreducible component as entries for Psi
   if length(variety.gens_R) == r 
     Psi = matrix(R, reshape(variety.gens_R, r, 1))
@@ -550,75 +539,10 @@ function compute_reduction!(reduction::Reduction)
   return true
 end
 
-# function get_reduced_system(reduction::Reduction; on_manifold=true)
-#   # compute the reduced system, if this was not done before 
-#   warn = true
-#   if !any(reduction.reduction_cached)
-#     ret = compute_reduction!(reduction)
-#     warn = false
-#     if !ret 
-#       return 
-#     end
-#   end
-#   # return reduced system
-#   if on_manifold 
-#     if reduction.reduction_cached[2] 
-#       return reduction.g
-#     elseif warn
-#       @warn "Slow manifold has not been defined succesfully. Reduced system is only returned in raw form, i.e. the reduced components are not substituted according to the slow manfold."
-#     end 
-#     return 
-#   end
-#   return reduction.g_raw
-# end
-
-
-# function compute_directional_reduction(reduction::Reduction, γ::Function)
-#   # check if curve satisfies γ(0) = π⁺
-#   @assert all(γ(reduction.p, 0) .== reduction._p) "The curve γ must satisfy γ(0) = π⁺"
-#   # compute γ'(0)
-#   Rδ, δ = polynomial_ring(reduction.R, :δ)
-#   dγ = derivative.(γ(reduction.p, δ))
-#   dγ_0 = matrix(reduction.problem._F ,length(reduction.p), 1, evaluate.(dγ, 0))
-#   # compute D₂f(x, p_sfˣ)
-#   D₂f = reduction.problem._F.(eval_mat(jacobian(reduction.f, reduction.p), reduction.p, reduction._p))
-#   # Check if P-Psi-composition is defined 
-#   if reduction.success[3]
-#     # check if non-singular point is defined
-#     if !reduction.success[2]
-#       @info "The non-singular point on the slow manifold has not been set successfully. Trying to compute the reduction anyway."
-#     end
-#     # dimensions
-#     n = length(reduction.x)
-#     # compute reduced system
-#     A = reduction.DPsi*reduction.P
-#     Q = reduction.P*inv(A)*reduction.DPsi
-#     Iₙ = diagonal_matrix(reduction.problem._F(1), n)
-#     f_red_raw = (Iₙ - Q)*D₂f*dγ_0
-#     # reshape as vector
-#     f_red = reshape(Matrix(f_red_raw), n)
-#   else
-#     # reduction cannot be computed
-#     @error "Reduced system cannot be computed. You need to set a valid product decomposition, i.e. P and Psi such that f0 = P⋅Psi"
-#     return, nothing
-#   end
-#   # Check if slow manifold is set 
-#   if reduction.success[1]
-#     # substitute components according to slow manifold
-#     a = reduction.problem._F.([reduction.p; reduction.M])
-#     f_red_subs = [evaluate(f, a) for f in f_red]
-#     return f_red, f_red_subs
-#   else
-#     @warn "Slow manifold has not been defined succesfully. Reduced system is only returned in raw form, i.e. the reduced components are not substituted according to the slow manfold."
-#     return f_red, nothing
-#   end
-# end
-
 function _get_slow_fast(reduction::Reduction)
-  p = reduction.problem.p_sf
   sf_separation = reduction.sf_separation
-  slow = p[.!sf_separation]
-  fast = p[sf_separation]
+  slow = reduction.problem.p[.!sf_separation]
+  fast = reduction.problem.p[sf_separation]
   return slow, fast
 end
 

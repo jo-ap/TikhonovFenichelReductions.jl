@@ -14,7 +14,7 @@ function f(x, p)
   ]
 end
 
-problem = ReductionProblem(f, x, p, 1; idx_slow_fast = [true, true, false, true])
+problem = ReductionProblem(f, x, p, 1)
 
 @testset "TikhonovFenichelReductions Tests" begin
 

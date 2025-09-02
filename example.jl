@@ -36,7 +36,10 @@ s = 2
 problem = ReductionProblem(f, x, p, s)
 
 # find slow-fast separations that are TFPVs
-sf_separations, varieties = tfpvs_and_varieties(problem);
+# we can restrict the search to certain TFPVs by defining which parameters
+# should and should not be small.
+preset = (α=1, β=0)
+sf_separations, varieties = tfpvs_and_varieties(problem; preset=preset);
 
 # print slow-fast separations and corresponding slow manifolds with their dimension
 print_tfpvs(problem, sf_separations)

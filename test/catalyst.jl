@@ -11,7 +11,7 @@ rn = @reaction_network begin
 end
 
 # check if ReductionProblem can be constructed correctly
-problem_catalyst = ReductionProblem(rn, 1; idx_slow_fast = [true, true, false, true])
+problem_catalyst = ReductionProblem(rn, 1)
 @test all(problem_catalyst.f .- problem.f .== 0)
 
 

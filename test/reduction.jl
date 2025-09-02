@@ -41,12 +41,12 @@ M_auto = [get_explicit_manifold(problem, v) for v in all_varieties]
 R, idx_M = compute_all_reductions(problem, tfpvs, varieties, [m[1] for m in M_auto])
 
 # Access the `Reduction` object 
-reduction_3 = R[3][1]
-@test reduction_3.M == [S, 0]
-@test Matrix(reduction_3.Df0) == [-e₀*k₁+k₁*C k₁*S+k₋₁; e₀*k₁-k₁*C -k₁*S-k₋₁-k₂]
-@test Matrix(reduction_3.Df0_at_x0) == [0 k₁*S+k₋₁; 0 -k₁*S-k₋₁-k₂]
-@test all(Matrix(reduction_3.P) .== [S*k₁ + k₋₁; -S*k₁ - k₋₁ - k₂])
-@test all(Matrix(reduction_3.Psi) .== [C])
+reduction_4 = R[4][1]
+@test reduction_4.M == [S, 0]
+@test Matrix(reduction_4.Df0) == [-e₀*k₁+k₁*C k₁*S+k₋₁; e₀*k₁-k₁*C -k₁*S-k₋₁-k₂]
+@test Matrix(reduction_4.Df0_at_x0) == [0 k₁*S+k₋₁; 0 -k₁*S-k₋₁-k₂]
+@test all(Matrix(reduction_4.P) .== [S*k₁ + k₋₁; -S*k₁ - k₋₁ - k₂])
+@test all(Matrix(reduction_4.Psi) .== [C])
 
 # and the corresponding reduced system
-@test reduction_3.g[1] == (-S*e₀*k₁*k₂)//(S*k₁ + k₋₁ + k₂)
+@test reduction_4.g[1] == (-S*e₀*k₁*k₂)//(S*k₁ + k₋₁ + k₂)
