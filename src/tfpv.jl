@@ -328,62 +328,59 @@ See also: [`tfpvs_groebner`](@ref), [`print_results`](@ref), [`print_tfpvs`](@re
 """
 function tfpvs_and_varieties(problem::ReductionProblem; preset::NamedTuple=NamedTuple())
   # check possible slow-fast separations for sufficient conditions to be a TFPV for dimension s
-  slow_fast = Vector{Bool}[]
-  if isempty(preset)
-    # check all slow-fast separations
-    slow_fast = num2bin.(1:(2^length(problem.p)-2), length(problem.p))
-  else 
-    # only consider slow-fast that match presets
-    slow, fast = get_preset_slow_fast(problem, preset)
-    # free parameters
-    idx_inner = .!(slow .|| fast)
-    m = sum(idx_inner)
-    slow_fast_inner = num2bin.(0:(2^m-1), m)
-    slow_fast = [zeros(Bool, length(problem.p)) for _ in slow_fast_inner]
-    # set predefined parameters
-    for i in eachindex(slow_fast_inner)
-      slow_fast[i][fast] .= true 
-      slow_fast[i][idx_inner] = slow_fast_inner[i]
-    end
-  end
-  # define all polynomials and the Jacobian of f in ℝ(p)[x]
   # keep track of which slow-fast separation satisfies the conditions and save
   # irreducible components of V(f0) and their dimensions
-  N = length(slow_fast)
+  tfpv_candidates = get_tfpv_candidates(problem, preset)
+  N = length(tfpv_candidates)
   idx_keep = zeros(Bool, N)
   varieties = Vector{Vector{Variety}}(undef, N)
   for i in 1:N
-    if all(.!slow_fast[i][slow]) && all(slow_fast[i][fast])
-      tfpv_candidate = get_tfpv(gens(problem._Fp), slow_fast[i])
-      f0 = get_f0_Rx(problem, tfpv_candidate)
-      J_p_slow = jacobian(f0, problem._x_Rx)
-      I = ideal(f0)
-      if dim(I) >=  problem.s 
-        keep_i, Y, dim_Y = _get_varieties(problem, I, J_p_slow)
-        if keep_i
-          idx_keep[i] = true
-          varieties[i] = [Variety(Y[k], dim_Y[k], problem) for k in eachindex(Y)]
-        end
+    tfpv_candidate = get_tfpv(gens(problem._Fp), tfpv_candidates[i])
+    # define all polynomials and the Jacobian of f in ℝ(p)[x]
+    f0 = get_f0_Rx(problem, tfpv_candidate)
+    J_p_slow = jacobian(f0, problem._x_Rx)
+    I = ideal(f0)
+    if dim(I) >=  problem.s 
+      keep_i, Y, dim_Y = _get_varieties(problem, I, J_p_slow)
+      if keep_i
+        idx_keep[i] = true
+        varieties[i] = [Variety(Y[k], dim_Y[k], problem) for k in eachindex(Y)]
       end
     end
   end
-  return slow_fast[idx_keep], varieties[idx_keep]
+  return tfpv_candidates[idx_keep], varieties[idx_keep]
 end
 
-function get_preset_slow_fast(problem::ReductionProblem, preset::NamedTuple)
-  slow = zeros(Bool, length(problem.p))
-  fast = zeros(Bool, length(problem.p))
-  p = Symbol.(problem.p)
-  for k in keys(preset)
-    idx = findfirst(k .== p)
-    @assert !isnothing(idx) "$(string(k)) is not a parameter"
-    if preset[k] == 0
-      slow[idx] = 1 
-    else
-      fast[idx] = 1 
+function get_tfpv_candidates(problem, preset)
+  if isempty(preset)
+    # check all slow-fast separations
+    return num2bin.(1:(2^length(problem.p)-2), length(problem.p))
+  else 
+    # only consider slow-fast separations that match presets
+    slow = zeros(Bool, length(problem.p))
+    fast = zeros(Bool, length(problem.p))
+    p = Symbol.(problem.p)
+    for k in keys(preset)
+      idx = findfirst(k .== p)
+      @assert !isnothing(idx) "$(string(k)) is not a parameter"
+      if preset[k] == 0
+        slow[idx] = 1 
+      else
+        fast[idx] = 1 
+      end
     end
+    # free parameters
+    idx_inner = .!(slow .|| fast)
+    m = sum(idx_inner)
+    tfpv_candidates_inner = num2bin.(0:(2^m-1), m)
+    # set predefined and free parameters
+    tfpv_candidates = [zeros(Bool, length(problem.p)) for _ in tfpv_candidates_inner]
+    for i in eachindex(tfpv_candidates_inner)
+      tfpv_candidates[i][fast] .= true 
+      tfpv_candidates[i][idx_inner] = tfpv_candidates_inner[i]
+    end
+    return tfpv_candidates
   end
-  return slow, fast
 end
 
 function _get_varieties(
