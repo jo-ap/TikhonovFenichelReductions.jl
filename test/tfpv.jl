@@ -2,7 +2,7 @@
 tfpvs, varieties = tfpvs_and_varieties(problem);
 
 # use predetermined parameters
-preset = (k₋₁ = 1) 
+preset = (k₋₁ = 1,)
 tfpvs, varieties = tfpvs_and_varieties(problem; preset=preset);
 
 # s is too large
