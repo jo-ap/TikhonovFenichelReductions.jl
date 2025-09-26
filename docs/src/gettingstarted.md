@@ -12,8 +12,8 @@ in Julia package Mode.
     16GB).
     On Windows, Oscar.jl needs to be installed using the Windows Subsystem for
     Linux (WSL).
-    Instructions can be found in the
-    [documentation](https://www.oscar-system.org/getting-started/install-win/).
+    Instructions can be found in their
+    [documentation](https://www.oscar-system.org/install/win/).
     
 
 
