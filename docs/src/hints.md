@@ -26,7 +26,7 @@ end
 problem_catalyst = ReductionProblem(rn, 1)
 ```
 
-## LaTeX 
+## ``\LaTeX`` 
 All of the `print_...` functions can be used with the keyword `latex=true` to
 produce LaTeX code (this relies on `Latexify.jl` internally).
 The output strings can also be written to arbitrary `IO` streams, which allows
