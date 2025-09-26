@@ -1,8 +1,13 @@
 # TikhonovFenichelReductions.jl
 
-A Julia package for finding Tikhonov-Fenichel Parameter Values (TFPVs) for
-polynomial ODE systems and computing the corresponding reductions as described
-in [goeke2013a,goeke2014,goeke2015](@cite).
+A Julia implementation of the algebraic approach to timescale separation, i.e.
+slow-fast dynamics, described in [goeke2013a,goeke2014,goeke2015](@cite). 
+This allows to find all critical parameters, so-called Tikhonov-Fenichel
+Parameter Values (TFPVs), and computation of the corresponding reductions for
+a given polynomial ODE systems.
+
+An example showcasing the package and some explanations of the procedures can
+be found in [apelt2025](@cite). 
 
 ## Overview
 The general framework for this package is singular perturbation theory.
