@@ -121,7 +121,7 @@ such that ``\textup{rank}\;P(x_0) = \textup{rank}\;D\psi(x_0) = r`` and
 for an open Zariski neighbourhood  ``\mathcal{U}_{x_0}``.
 Then, the reduced system in the sense of Tikhonov is given as 
 ```math
-\dot{x} = \left[1_n - P(x)A(x)^{-1} D\psi(x)\right] f^{(1)}(x)
+\dot{x} = \left[1_n - P(x)(D\psi(x)P(x))^{-1}D\psi(x)\right] f^{(1)}(x)
 ```
 The procedures to compute a reduced system with `TikhonovFenichelReductions.jl`
 are demonstrated in the [Getting Started](@ref) section.
