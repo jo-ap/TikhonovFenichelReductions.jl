@@ -31,6 +31,8 @@ mutable struct Reduction
   chi::Poly{FracFieldElem{QQMPolyRingElem}}
   "Components of the system on slow manifold"
   M::Vector{FracFieldElem{QQMPolyRingElem}}
+  "Whether existence of reduction onto the given manifold can be excluded"
+  no_reduction::Bool
   "Non-singular point in the irreducible component of `V(f0)` containing the slow manifold"
   x0::Vector{FracFieldElem{QQMPolyRingElem}}
   "Matrix with rational functions, such that `f0=P⋅Psi`"
@@ -185,6 +187,7 @@ function Reduction(problem::ReductionProblem, sf_separation::Vector{Bool}; s::In
                    T,
                    T(0),
                    M,
+                   false,
                    x0,
                    P,
                    Psi,
@@ -262,6 +265,7 @@ function set_manifold!(reduction::Reduction, M::AbstractVector)::Bool
     coeffs = collect(coefficients(charpoly(jacobian_tfpv_on_manifold(reduction))))
     if all(coeffs[1:reduction.problem.s + 1] .== 0)
       @info "There exists no reduction onto this manifold"
+      reduction.no_reduction = true
       return false
       # check if a generic point on the slow manifold is non-singular
     elseif !_set_point!(reduction, M)

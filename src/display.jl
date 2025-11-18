@@ -20,6 +20,8 @@ function Base.show(io::IO, ::MIME"text/plain", reduction::Reduction)
     print(io, "\n Ψ      = [" * join([string(ψ) for ψ in reduction.Psi], ", ") * "]") 
     print(io, "\n x₀     = [" * join(string.(reduction.x0), ", ") * "]")
     print(io, "\n Df(x₀) = $(reduction.Df0_at_x0)")
+  elseif reduction.no_reduction 
+    print(io, "\n There exists no reduction onto M = [" * join(string.(reduction.M), ", ") * "]")
   end
   if any(reduction.reduction_cached)
     str = _get_reduced_system_str(reduction; padfront=2)
