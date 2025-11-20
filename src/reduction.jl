@@ -504,7 +504,7 @@ to the slow manifold is set `reduction.g_raw` while the `s`-dimensional
 reduction on the slow manifold is given by `reduction.g`.
 A safe getter function for this is `get_reduced_system(reduction::Reduction)`.
 
-See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`set_point!`](@ref), [`compute_all_reductions`](@ref), [`Reduction`](@ref), [`print_reduced_system`](@ref)
+See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`set_point!`](@ref), [`compute_reductions`](@ref), [`Reduction`](@ref), [`print_reduced_system`](@ref)
 """
 function compute_reduction!(reduction::Reduction)
   # Check if P-Psi-composition is defined 
@@ -613,22 +613,27 @@ function get_explicit_manifold(problem::ReductionProblem, variety::Variety)
   M = gens(fraction_field(R))
   G = fraction_field(R).(gens(variety.ideal))
   G_old = zeros(fraction_field(R), length(G))
-  while !all(G .== G_old) #!is_correct_variety(problem, M, variety) && cnt <= max_cnt
+  # try solving polynomials in G that are linear in one component until s local
+  # coordinates are found
+  while !all(G .== G_old)
+    # halt if G does not change anymore
+    G_old = G 
     for k in eachindex(G)
+      # get all variables that occur
       v = get_variables_in_poly.(G)
       if any(v[k]) 
         idx = (1:length(M))[v[k]]
+        # check if variable i can be used to solve a polynomial
         for i in idx
           if is_linear(G[k], i)
             val = solve_linear(G[k], i)
             M = [evaluate(m, [i], [val]) for m in M]
-            G = [evaluate(g, M) for g in G]
+            G = [evaluate(g, [i], [val]) for g in G]
             break
           end
         end
       end
     end
-    G_old = G
   end
   M_F = [Rx_to_F(problem, numerator(m))//Rx_to_F(problem, denominator(m)) for m in M]
   return M_F, is_correct_manifold(problem, M, variety)
