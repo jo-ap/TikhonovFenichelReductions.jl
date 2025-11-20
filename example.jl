@@ -128,12 +128,6 @@ M = [
   F.([B,S,ρ//α*(1-B)])
 ]
 
-# compute all reductions (with a manifold in M)
-R, idx = compute_all_reductions(problem, sf_separations, varieties, M; print=true);
-
-# Access the `Reduction` object with the indices as in `manifolds`
-# Reduction for `sf_separations[1]` onto `manifolds[1][2]`
-R[1][2]
 
 # note that there is a heuristic that can be used to compute all reductions automatically (this may fail for some varieties)
 # try to compute the manifolds automatically 
@@ -141,5 +135,8 @@ M_auto = [get_explicit_manifold(problem, V) for V in all_varieties]
 # check if all manifolds are computed automatically
 @assert all([m[2] for m in M_auto])
 
-R, idx = compute_all_reductions(problem, sf_separations, varieties, [M[1] for M in M_auto]; print=true);
+R, idx = compute_reductions(problem, sf_separations, varieties, all_varieties, [M[1] for M in M_auto])
 
+# Access the `Reduction` object with the indices as in `manifolds`
+# Reduction for `sf_separations[1]` onto `manifolds[1][1]`
+R[(1,1)]

@@ -20,7 +20,7 @@ export ReductionProblem,
   compute_reduction!, 
   # get_reduced_system,
   # compute_directional_reduction,
-  unique_varieties, compute_all_reductions, find_varieties,
+  unique_varieties, compute_reductions, find_varieties,
   get_explicit_manifold
 
 ## Dependencies
