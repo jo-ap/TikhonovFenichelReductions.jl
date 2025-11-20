@@ -188,9 +188,9 @@ all_V = unique_varieties(problem, varieties)
 all_M = [get_explicit_manifold(problem, V) for V in all_V] 
 
 # get reduction and indices of varieties that correspond to unique slow manifolds
-all_reductions, idx_M = compute_reductions(problem, tfpvs, varieties, all_V, [m[1] for m in all_M]);
+R, idx_M = compute_reductions(problem, tfpvs, varieties, all_V, [m[1] for m in all_M]);
 
-all_reductions[15][1]
+R[(15,1)]
 ```
 
 ### General TFPVs 
