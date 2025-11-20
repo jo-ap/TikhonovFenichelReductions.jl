@@ -38,10 +38,10 @@ M_auto = [get_explicit_manifold(problem, v) for v in all_varieties]
 @test all(all(M .== [m[1] for m in M_auto]))
 
 # compute all reductions
-R, idx_M = compute_all_reductions(problem, tfpvs, varieties, [m[1] for m in M_auto])
+R, idx_M = compute_reductions(problem, tfpvs, varieties, all_varieties, [m[1] for m in M_auto])
 
 # Access the `Reduction` object 
-reduction_4 = R[4][1]
+reduction_4 = R[(4,1)]
 @test reduction_4.M == [S, 0]
 @test Matrix(reduction_4.Df0) == [-e₀*k₁+k₁*C k₁*S+k₋₁; e₀*k₁-k₁*C -k₁*S-k₋₁-k₂]
 @test Matrix(reduction_4.Df0_at_x0) == [0 k₁*S+k₋₁; 0 -k₁*S-k₋₁-k₂]
