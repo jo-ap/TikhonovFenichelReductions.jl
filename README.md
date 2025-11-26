@@ -25,7 +25,8 @@ TFPVs.
 It also includes functions to simplify the computation of the corresponding
 reduced systems.
 Note that this approach yields all possible timescale separations of _rates_
-instead of _components_ as in Tikhonov's theorem [6].
+instead of _components_ as in Tikhonov's theorem [6] (it is thus a coordinate
+free approach to geometric singular perturbation theory).
 
 ## Installation
 Run
@@ -33,15 +34,9 @@ Run
 add https://github.com/jo-ap/TikhonovFenichelReductions.jl
 ~~~
 in Julia package Mode.
+Note that this package relies on [Oscar.jl](https://www.oscar-system.org/) and
+therefore needs to be installed in the Windows Subsystem for Linux on Windows.
 
-## Example
-Have a look at the file `example.jl`, which uses this package to compute all
-TFPVs as discussed in [7] and yields the Rosenzweig-MacArthur model as a
-reduction from a three-dimensional system.
-
-## Dependencies
-This packages builds up on [Oscar.jl](https://www.oscar-system.org/).
- 
 ## References
 [1] A. Goeke and S. Walcher, ‘Quasi-Steady State: Searching for and Utilizing Small Parameters’, in Recent Trends in Dynamical Systems, A. Johann, H.-P. Kruse, F. Rupp, and S. Schmitz, Eds., in Springer Proceedings in Mathematics & Statistics, vol. 35. Basel: Springer Basel, 2013, pp. 153–178. doi: [10.1007/978-3-0348-0451-6_8](http://link.springer.com/10.1007/978-3-0348-0451-6_8).
 
