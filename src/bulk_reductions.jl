@@ -60,10 +60,7 @@ The backwards step, i.e. finding all `manifolds` for which this is an explicit
 description, is then with `find_varieties`.
 
 !!! warning
-
-    If `set_decomposition!` fails, the reduction cannot be computed.
-    This triggers a warning, but the `Reduction` instance will be returned
-    (without containing the reduced system).
+    If `set_decomposition!` fails, the reduction cannot be computed. This triggers a warning, but the `Reduction` instance will be returned (without containing the reduced system).
 
 See also: [`unique_varieties`](@ref), [`compute_reduction!`](@ref), [`Reduction`](@ref), [`set_manifold!`](@ref), [`set_decomposition!`](@ref)
 """
