@@ -30,8 +30,7 @@ problem_catalyst = ReductionProblem(rn, 1)
 All of the `print_...` functions can be used with the keyword `latex=true` to
 produce LaTeX code (this relies on `Latexify.jl` internally).
 The output strings can also be written to arbitrary `IO` streams, which allows
-to write directly to a file (e.g. to include the ODE definition from a
-main.tex).
+to write directly to a file.
 ```@example 2 
 print_system(problem_catalyst; latex=true)
 ```

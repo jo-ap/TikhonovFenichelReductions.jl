@@ -379,9 +379,10 @@ end
 Try to automatically compute matrix of rational functions `P` from given vector
 of polynomials `Psi`, such that `f0=P⋅Psi` and `V(f0)=V(Psi)` holds locally.
 
-NOTE: This always works if the drop in dimension `r=n-s=1`, but may fail for
-`r>1` (if the number of generators for the irreducible component of `V(f0)` is
-greater than `r`).
+!!! warning 
+    This always works if the drop in dimension `r=n-s=1`, but may fail for
+    `r>1` (if the number of generators for the irreducible component of `V(f0)`
+    is greater than `r`).
 
 ### Description
 `Psi` can be chosen from `r` algebraically independent entries of `f0`. 

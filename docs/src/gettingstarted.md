@@ -14,16 +14,14 @@ in Julia package Mode.
     Linux (WSL).
     Instructions can be found in their
     [documentation](https://www.oscar-system.org/install/win/).
-    
-
 
 ## Example
-Here we consider the derivation of the Rosenzweig-MacArthur model as a
+Here we consider the derivation of the Rosenzweig-MacArthur model via a
 reduction from a three dimensional system as demonstrated in
 [kruff2019](@cite). 
 
 Load the package and its dependency [Oscar.jl](https://www.oscar-system.org/). 
-Note that loading Oscar is optional, but results in prettier printing of
+Note that loading Oscar is optional, but results in pretty printing of
 types and imports useful functions.
 ```@example 1
 using TikhonovFenichelReductions
@@ -49,7 +47,7 @@ function f(x, p)
 end
 ```
 
-Initialize the problem with desired dimension of the reduced system
+Initialize the problem and set the desired dimension of the reduced system
 ```@example 1
 # dimension of the reduced system
 s = 2
@@ -69,15 +67,15 @@ affine variety
 \mathcal{V}_{\mathbb{C}}(f(\cdot,\pi^\star)) = \{x\in\mathbb{C}^n \mid f(x,\pi^\star)=0\}
 ```
 and their dimension, where ``\pi^\star`` is defined by the corresponding
-slow-fast separation in `sf_separation`. 
+slow-fast separation in `tfpvs`. 
 This information is stored using the type `Variety`.
-Note that later have to check manually whether the variety taken in
+Note that we later have to check manually whether the variety taken in
 ``\mathbb{R}^n`` has the same dimension (i.e. if there exists a real
 non-singular point), which then at least locally renders this variety a
 manifold.
 
 ```@example 1
-tfpvs, varieties = tfpvs_and_varieties(problem)
+tfpvs, varieties = tfpvs_and_varieties(problem);
 ```
 Show the results: All possible slow-fast separation of rates 
 ```@example 1
@@ -110,20 +108,20 @@ which has (complex) dimension
 varieties[15][1].dim
 ```
 as a variety. 
-We can see, that there is only one irreducible component, so the slow manifold is 
+We can see that there is only one irreducible component, so the slow manifold is 
 ``\mathcal{V}_{\mathbb{R}}(H) = \{(B,S,0) \mid B,S \in \mathbb{R}\}``
-with dimension ``s=2`` as desired.
+with (real) dimension ``s=2`` as desired.
 
 We need to define the slow manifold explicitly in order to check whether the
 reduction exists. 
-This also allows us to substitute the variables that got reduced according to
-the slow manifold in the reduced system.
+This also allows to substitute the variables that got reduced according to the
+slow manifold in the reduced system.
 ```@example 1
 set_manifold!(reduction, [B, S, 0])
 ```
 
 Note that in this case any generic point on the affine variety is non-singular
-and can be chosen.  
+and can be chosen as ``x_0``.  
 Thus, we don't have to call `set_point!` to set a non-singular point explicitly
 on whose neighbourhood the reduction exists. 
 This also means ``\dim \mathcal{V}_{\mathbb{C}}(f(\cdot,\pi^\star)) = \dim
@@ -132,21 +130,19 @@ component containing the non-singular point.
 
 Lastly, we define a product decomposition ``f(\cdot,\pi^\star) = P \cdot \psi``
 with ``\mathcal{V}(\psi) = \mathcal{V}(f(\cdot,\pi^\star))``.
-This can be done by specifying only ``\psi`` using the generators of the
-irreducible component of ``\mathcal{V}(f^{(0)})`` that corresponds to the slow
-manifold.
-Then, the methods automatically computes ``P``, which relies on having exactly
-``r`` generators of the variety corresponding to the slow manifold.
+In most cases this can be done by specifying only ``\psi`` using the generators
+of the irreducible component of ``\mathcal{V}(f^{(0)})`` that corresponds to the
+slow manifold.
+Here, ``P`` can be computed automatically, which relies on having exactly ``r``
+generators of the variety corresponding to the slow manifold.
 ```@example 1
 set_decomposition!(reduction, varieties[15][1])
 ```
-In most cases, this method should work, but you can also manually set ``P`` and
-``Psi``.
+If this method fails, you can manually set ``P`` and ``Psi``.
 
 Now we can compute and show the reduced system.
 ```@example 1
-compute_reduction!(reduction)
-print_reduced_system(reduction)
+compute_reduction!(reduction);
 ```
 This updates the reduction object, which now contains the reduced system before
 and after variables are substituted as defined by the slow manifold.
@@ -176,8 +172,8 @@ Thus, the full system converges to the reduction as ``\varepsilon \to 0`` if
 
 #### Bulk Computations 
 `TikhonovFenichelReductions.jl` has methods that simplify the computation of
-multiple reductions with the same manifold, since typically many different TFPVs
-share the same slow manifold.
+multiple reductions onto the same slow manifold, since typically many different
+TFPVs share the varieties.
 Additionally, the function `get_explicit_manifold` implements a heuristic 
 to find an explicit parametric description of the slow manifold.
 Thus, in simple enough cases, the computation of all reductions is fully
@@ -213,18 +209,25 @@ for Q in PD
     println(gens(Q[2]))
 end
 ```
-Thus, in this case, all TFPVs are slow-fast separations of rates.
+Because ``G`` is a monomial ideal, all TFPVs are slow-fast separations of
+rates, which are revealed by the primary decomposition.
 
 In cases where `G` is more complicated, we can check whether the ideal generated
-by `G` contains any monomials as follows. 
+by `G` contains any monomials using ideal quotients: An ideal
+``I\subseteq\mathbb{Q}[x_1,\dots,x_n]`` contains a monomial if and only if
+``I:\langle x_1 \cdots x_n\rangle^\infty=\mathbb{Q}[x_1,\dots,x_n]``, which is
+the case here.
 ```@example 1
-# polynomial ring ℚ[p,x]
+# get the polynomial ring ℚ[p,x]
 R = parent(α)
-# polynomial ring ℚ[p]
+
+# construct the polynomial ring ℚ[p]
 S, v = polynomial_ring(QQ, "_" .* p)
+
+# ring homomorphism between S and R that maps _pᵢ in S to pᵢ in R
 h = hom(S, R, system_parameters(problem))
 
-# the ideal generated by G in the ring S
+# the ideal generated by G (only containing polynomials in p) in the ring S
 I = preimage(h, ideal(G));
 
 # compute the saturation I:⟨π₁⋯πₘ⟩^∞
