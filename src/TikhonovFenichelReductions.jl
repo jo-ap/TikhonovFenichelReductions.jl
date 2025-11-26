@@ -1,7 +1,7 @@
 # TikhonovFenichelReductions.jl is licensed under the GPL v3+ (see LICENSE).
 #
 # Johannes Apelt
-# contact: johannes.apelt@posteo.de
+# contact: johannes.apelt@uni-greifswald.de
 
 module TikhonovFenichelReductions
 
@@ -18,8 +18,6 @@ export ReductionProblem,
   jacobian_tfpv_on_manifold, jacobian_tfpv_at_x0,
   set_manifold!, set_point!, set_decomposition!, 
   compute_reduction!, 
-  # get_reduced_system,
-  # compute_directional_reduction,
   unique_varieties, compute_reductions, find_varieties,
   get_explicit_manifold
 
