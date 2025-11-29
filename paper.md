@@ -14,19 +14,15 @@ authors:
 affiliations:
  - name: Institute of Mathematics and Computer Science, University of Greifswald, Germany
    index: 1
-date: 27 November 2025
+date: 29 November 2025
 bibliography: paper.bib
 ---
 
 # Summary
-
 Singular perturbation theory is a mathematical toolbox that allows
 dimensionality reduction of ODE systems whose components evolve on different
 time scales emanating from the presence of a small parameter $\varepsilon$. 
-Intuitively, the fast components evolve so quickly that they can be approximated
-with their steady state on the slow time scale for $\varepsilon$ sufficiently
-small.
-More precisely, we get the limit
+More precisely, we obtain the *reduced system* as the limit
 \begin{equation}
   \label{eq:tikhonov}
   \begin{aligned}
@@ -39,186 +35,124 @@ More precisely, we get the limit
     0       & = h(u,v)
   \end{aligned}
 \end{equation}
-where the *reduced system* on the right is defined on the so-called *slow
-manifold* $M_0=\{(u,v)\,\vert\, h(u,v)=0\}$ and its dynamics can be described by
-the slow component $u$ alone (i.e. by local coordinates on $M_0$).
-This is known as Tikhonov's [-@tikhonov1952] theorem [see @verhulst2007 for its
-present-day form]. 
-Dimensionality reduction is very useful for model derivation and analysis, but
-requiring the system to be in standard form as in \autoref{eq:tikhonov} can make
-it difficult to find meaningful reductions, as it relies on the choice of
-appropriate coordinates. 
-The importance of a coordinate-free approach was already pointed out by
-@fenichel1979, who established a geometric singular perturbation theory (GSPT;
-see @wechselberger2020 for an overview).
-More recently, Goeke and Walcher (together with colleagues) developed an
-algebraic approach to GSPT that allows to find all critical parameters admitting
-a reduction in the sense of Tikhonov and Fenichel together with their slow
-manifolds (implicitly given as affine varieties) systematically for polynomial
-or rational ODE systems [@goeke2013; @goeke2013a; @goeke2014; @goeke2015]. 
-These critical parameters define a slow-fast separation of processes instead of
-components, i.e. we obtain reductions for systems of the form
+as stated in Tikhonov's theorem [-@tikhonov1952; Theorem 1.1 in @verhulst2007].
+For autonomous systems, @fenichel1979 established a geometric singular
+perturbation theory (GSPT) in coordinate-free settings [see @wechselberger2020].
+Convergence properties then follow from the slow manifold 
+$M_0=\{(u,v)\,\vert\,h(u,v)=0\}$, on which the reduced system is defined.
+
+The algebraic approach to GSPT recently developed by Goeke and Walcher (and
+colleagues) allows to systematically find all critical parameters admitting a
+reduction for polynomial or rational ODE systems of the form
 \begin{equation}
     \label{eq:slowfastsystem}
     \dot{x} = f(x,\pi) = f^{(0)}(x) + \varepsilon f^{(1)}(x) + \mathcal{O}(\varepsilon^2), 
     \quad x\in\mathbb{R}^n, \pi\in\mathbb{R}^m,
 \end{equation}
+i.e. we obtain all reductions for a system with a slow-fast separation of
+processes instead of components as in the standard form (\ref{eq:tikhonov}),
 which renders this a coordinate-free approach.
-The main idea is to evaluate necessary conditions for a slow-fast separation as
-in \autoref{eq:slowfastsystem} for the existence of a reduction.
+This can be achieved by evaluating necessary conditions for the existence of a
+reduction for a system as in (\ref{eq:slowfastsystem}) [@goeke2013; @goeke2013a;
+@goeke2014; @goeke2015].
 
 `TikhonovFenichelReductions.jl` is a `Julia` [@bezanson2017] package
 implementing this approach for polynomial ODE systems.
 @apelt2025 provide a showcasing example and more detailed explanations.
 
 # Statement of need
-Ad-hoc approaches to singular perturbation theory require prior knowledge about
-a suitable time scale separation and substantial mathematical effort to compute
-the reduction.
-The algebraic approach due to Goeke and Walcher yields algorithmically
-accessible conditions for the existence of a reduction, which allows us to find
-all reductions of a given ODE system [@goeke2015].
-This relies on methods from computational algebra, such as the computation of
-Gröbner bases, minimal primary decompositions, normal forms and symbolic matrix
-operations, which are implemented in many computer algebra systems.
-However, their usage for the problem at hand is not trivial.
+The ad-hoc approach to singular perturbation theory requires prior knowledge
+about a suitable time scale separation and substantial mathematical effort to
+compute the reduction.
+The algebraic approach yields algorithmically accessible conditions for the
+existence of a reduction, which allows us to find all reductions of a given
+polynomial ODE system using methods from computational algebra, and simplifies
+the computation of reduced systems [@goeke2015].
 `TikhonovFenichelReductions.jl` makes the required computations easily
-accessible (for non-expert users) by utilizing the package `Oscar.jl`
-[@oscar2022; @decker2025], which provides a unified framework combining
-different computer algebra tools, and the performance and flexibility of `Julia`
-[@bezanson2017].
+accessible (even for non-expert users) by utilizing `Oscar.jl` [@oscar2022;
+@decker2025].
 
-The author is not aware of any publicly available implementation of this
-particular theory, but there exist an implementation for a related approach for
-computing invariant manifolds by Roberts [-@roberts1997; -@roberts-webapp].
+The author is not aware of any publicly available implementation of the theory
+by Goeke and Walcher, but there exist an implementation for a related approach
+for computing invariant manifolds by Roberts [-@roberts1997; -@roberts-webapp].
 
 # Features
 The main features provided by `TikhonovFenichelReductions.jl` are the search for
 critical parameters admitting a reduction, so-called *Tikhonov-Fenichel
 Parameter Values (TFPVs)*, and the computation of the corresponding reduced
 systems.
-The general procedure is discussed in the following.
-More detailed explanations and examples are given by @apelt2025 and can be found
-in the
-[documentation](https://jo-ap.github.io/TikhonovFenichelReductions.jl/stable/)
-of the package.
+Detailed explanations and examples are provided by @apelt2025 and in the
+[documentation](https://jo-ap.github.io/TikhonovFenichelReductions.jl/stable/).
 
 ## Finding TFPVs
-To find TFPVs, we first construct an instance of type `ReductionProblem`, which
-creates all symbolic objects needed and parses the system given as a `Julia`
-function. 
-For this, we specify the desired dimension $s$ of the slow manifold.
-Then, there are two methods for finding TFPVs.
+The package provides two methods for finding TFPVs admitting a reduction onto an
+$s$-dimensional slow manifold.
 
-1. `tfpvs_and_varieties` returns all TFPV candidates for which some parameters
-are set to zero, which we call *slow-fast separations of rates*, together
-with the corresponding potential slow manifolds given implicitly as affine
-varieties (i.e. the common zeros of a set of polynomials) and their dimensions. 
-Note that such a TFPV can admit multiple slow manifolds corresponding to the
-irreducible components of the variety $\mathcal{V}(f^{(0)})$. 
+Restricting the search for TFPVs to *slow-fast separations of rates*, i.e. TFPVs
+with some parameters set to zero, is typically more efficient and yields the
+TFPV candidates together with their slow manifolds given implicitly as the
+irreducible components of the corresponding affine variety
+$\mathcal{V}(f^{(0)})=\{x\in\mathbb{R}^n \mid f^{(0)}(x)=0\}$.
 
-2. `tfpvs_groebner` computes a Gröbner basis $G$ with an elimination ordering
-for the state variables of an ideal obtained from necessary conditions for
-the existence of a reduction.
-Then, every TFPV is contained in $\mathcal{V}(G)$.
-Note that this can be a computationally intensive task. 
-If it is feasible to compute $G$ for the problem at hand, it may reveal more
-complex TFPVs determined by expressions in the original parameters that can be
-considered small.
-Introducing new parameters from these expressions typically allows us to use the
-methods for slow-fast separations of rates, in particular the computation of
-the reduced system as implemented in `TikhonovFenichelReductions.jl`.
+Computing a Gröbner basis $G$ with an elimination ordering for the state
+variables of an ideal obtained from necessary conditions for the existence of a
+reduction yields all TFPVs implicitly as $\mathcal{V}(G)$.
+This may be infeasible to compute, but can reveal more complex expressions that
+can be considered as small parameters.
+However, introducing new parameters from these expressions typically allows us
+to use the methods for slow-fast separations of rates, particularly the
+computation of the reduced system.
 
 ## Computing reductions
-In order to compute a reduction for a slow-fast separation of rates as in
-Theorem 1 in @goeke2014, we construct an instance of type `Reduction`, which
-holds all the relevant information.
+Computing a reduction for a slow-fast separation of rates as in
+Theorem 1 in @goeke2014 requires essentially two steps.
 Let $Y$ be the irreducible component of $\mathcal{V}(f^{(0)})$ with dimension
-$s$ corresponding to the slow manifold $M_0$ (as returned by
-`tfpvs_and_varieties`). 
+$s$ corresponding to the slow manifold $M_0$ and $r=n-s$. 
 
-First, we have to find an explicit description of $M_0$. 
-In most cases this can be obtained automatically with the heuristic
-`get_explicit_manifold`. 
-Alternatively, we have to parameterize $Y$ explicitly w.r.t. $r$
-state variables (the local coordinates).
-Then we call `set_manifold!` to store the results in the `Reduction` instance.
+First, we need to find a parametric representation of $Y$ as a manifold.
+This may be done automatically by a provided heuristic. 
+If this fails, $Y$ must be parameterized explicitly w.r.t. $s$ state variables
+(the local coordinates) manually.
 
-Next, we need to find a product decomposition $P(x)\psi(x) = f^{(0)}(x)$, where
-$P(x)$ is a $n\times r$ matrix of rational functions and $\psi(x)$ is a vector of
-polynomials, such that locally $\mathcal{V}(\psi)=\mathcal{V}(f^{(0)})$ and
-$\text{rank}\;P(x) = \text{rank}\;D\psi(x) = r$ hold.
-$\psi$ can be constructed from $r$ independent entries of $f^{(0)}$ or the
-generators of $Y$ (if the corresponding ideal has exactly $r$ generators).
-The package contains a heuristic to compute $P$ automatically from $\psi$, which
-may fail if the $r$ entries for $\psi$ cannot be set automatically. 
-In this case, $P$ and $\psi$ need to be computed manually.
-The function `set_decomposition!` dispatches on the appropriate method and can
-take $P$ and $\psi$ together, $\psi$, or an instance of `Variety` as arguments.
+Next, we need to find a product decomposition $P\psi = f^{(0)}$, where $P$ is a
+$n\times r$ matrix of rational functions and $\psi$ is a vector of polynomials
+locally satisfying $\mathcal{V}(\psi)=\mathcal{V}(f^{(0)})$ and $\text{rank}\;P
+= \text{rank}\;D\psi = r$.
+If $Y$ is defined by $r$ generators or $r$ independent entries of $f^{(0)}$ can
+be found by a heuristic, $P$ and $\psi$ can be computed automatically.
 
-If the slow manifold and product decomposition are set correctly,
-`compute_reduction!` yields the reduced system, which is given as
+With this, the reduced system in the sense of Tikhonov is given by
 $$
-    \dot{x} = \left[1_n - P(x)(D\psi(x)P(x))^{-1} D\psi(x)\right] f^{(1)}(x)
+    \dot{x} = \left[1_n - P(x)(D\psi(x)P(x))^{-1} D\psi(x)\right] f^{(1)}(x).
 $$ 
-[@goeke2014].
-<!-- The constructor for the `Reduction` type can also directly be called with the -->
-<!-- slow manifold and variety as arguments for convenience.  -->
 
-For complex systems, there may exist many TFPV candidates, which makes the
-analysis of interesting cases intractable. 
-To circumvent this problem, we can use the function `unique_varieties` to find
-all the potential slow manifolds with dimension $s$ that exist for the input
-system.
-Typically, there are much fewer unique varieties than TFPV candidates and it
-suffices to find explicit descriptions of the corresponding manifolds (e.g. with
-`get_explicit_manifold`) for these cases.
-Then, we can compute all reductions grouped by slow manifolds with
-`compute_reductions`.
-Note that this relies on the heuristic to set the product decomposition for
-$f^{(0)}$.
-Overall, this means we can compute all or at least most reductions fully
-automatically in most cases. 
+For complex systems, there may exist many TFPVs each admitting multiple
+reductions, which makes their analysis intractable. 
+Thus, `TikhonovFenichelReductions.jl` contains methods for finding all unique
+slow manifolds (as varieties) and computing all reductions onto each of them.
+This relies on the heuristics for finding a parametric representations of the
+varieties and setting a product decomposition for $f^{(0)}$, but in most cases
+this means we can compute all or at least most reductions fully automatically. 
 
 ## Integration with the `Julia` ecosystem
-The initialization of a `ReductionProblem` can be done directly from a reaction
-network defined with `Catalyst.jl` [@loman2023].
-This is particularly useful as singular perturbation is commonly used in
-modelling of (bio)chemical reactions -- often in the form of quasi-steady state
-reductions [@goeke2013a].
-
-In modelling applications, the search for critical parameters and computation of
-the reduction is only the first step followed by model analysis.
-Because the reduced systems obtained with `TikhonovFenichelReductions.jl` are
-already parsed to the appropriate types from `Oscar.jl`, one can use functions
-from the latter package that aid the symbolic analysis (e.g. computing a minimal
-primary decomposition to find fixed points, factor polynomials, etc.).
-
-Because metaprogramming is supported in `Julia`, it is also possible to build
-`Julia` functions from the symbolically given reduction.
-This allows to easily get an overview of the behaviour of the reductions by
-using numerical simulations and avoids having to parse code between languages
-and frameworks.
-See e.g. the small package
-[`TFRSimulations.jl`](https://github.com/jo-ap/TFRSimulations),
-that yields a responsive GUI showing simulations of a reduced system directly
-from an instance of `Reduction`.
-
+The input system can be given as a reaction network defined with `Catalyst.jl`
+[@loman2023].
+Because the reduced systems are represented using types from `Oscar.jl`, the
+latter's functions can be used to aid the symbolic analysis. 
+`Julia`'s support for metaprogramming  allows to perform further tasks such as a
+numerical analysis without having to copy or parse code (see e.g.
+[`TFRSimulations.jl`](https://github.com/jo-ap/TFRSimulations)).
 For convenience, there are several methods for displaying the output, including
 printing as \LaTeX{} source code via
 [`Latexify.jl`](https://github.com/korsbo/Latexify.jl).
 
 # Acknowledgements
-This work was supported by a scholarship awarded by the University of Greifswald
+This work was supported by a scholarship awarded by the University of Greifswald 
 according to the "Landesgraduiertenförderungsgesetz (LGFG) MV".
-I like to thank Volkmar Liebscher for his supervision and discussing the maths
-behind this software package,
-Sebastian Walcher and Alexandra Goeke for the development of the
-Tikhonov-Fenichel reduction theory and for making me aware of its many
-advantages,
-Leonard Schmitz for the helpful exchanges about the computational algebra used
-in this paper, 
-and the OSCAR team for their quick and helpful replies to my questions and
-remarks.
+I like to thank Volkmar Liebscher for his supervision and support,
+Sebastian Walcher and Alexandra Goeke for developing the Tikhonov-Fenichel
+reduction theory,
+Leonard Schmitz for discussing aspects of the computational algebra, 
+and the OSCAR team for their helpful replies to my questions.
 
 # References
