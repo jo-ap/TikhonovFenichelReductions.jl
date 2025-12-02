@@ -3,7 +3,7 @@
 ## Installation
 Run
 ~~~
-add https://github.com/jo-ap/tikhonovfenichelreductions.jl
+add TikhonovFenichelReductions
 ~~~
 in Julia package Mode.
 !!! note "Installation"

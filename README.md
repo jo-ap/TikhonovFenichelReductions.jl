@@ -32,7 +32,7 @@ free approach to geometric singular perturbation theory).
 ## Installation
 Run
 ~~~
-add https://github.com/jo-ap/TikhonovFenichelReductions.jl
+add TikhonovFenichelReductions
 ~~~
 in Julia package Mode.
 Note that this package relies on [Oscar.jl](https://www.oscar-system.org/) and
