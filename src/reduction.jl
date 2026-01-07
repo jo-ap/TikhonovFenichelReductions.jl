@@ -553,14 +553,9 @@ function is_linear(p::MPolyRingElem, i::Int)
   e = [exponent(p, k, i) for k=1:length(p)]
   return any(e .> 0) && all(e .<= 1)
 end
-function is_linear(p::AbstractAlgebra.Generic.FracFieldElem, i::Int)
-  num, den = numerator(p), denominator(p)
-  e_num = [exponent(num, k, i) for k=1:length(num)]
-  e_den = [exponent(den, k, i) for k=1:length(den)]
-  return any(e_num .> 0) && all(e_num .<= 1) && all(e_den .== 0)
-end
 
-function solve_linear(p::Union{MPolyRingElem, AbstractAlgebra.Generic.FracFieldElem}, i::Int)
+# function solve_linear(p::Union{MPolyRingElem, AbstractAlgebra.Generic.FracFieldElem}, i::Int)
+function solve_linear(p::MPolyRingElem, i::Int)
   R = parent(p)
   if is_linear(p, i)
     # p = s + t = 0
@@ -573,29 +568,29 @@ function solve_linear(p::Union{MPolyRingElem, AbstractAlgebra.Generic.FracFieldE
   return nothing
 end
 
-function get_variables_in_poly(p::MPolyRingElem)
-  R = parent(p)
-  x_occurs = [false for _ in gens(R)] 
-  ce = coefficients_and_exponents(p)
-  for (_,e) in ce 
-    @. x_occurs = x_occurs || e .> 0
-  end
-  return x_occurs
+function occurs_in_poly(p::T, v::Vector{T}) where T<:MPolyRingElem 
+  _vars = vars(p)
+  return [x in _vars for x in v]
 end
-function get_variables_in_poly(p::AbstractAlgebra.Generic.FracFieldElem)
-  x_occurs_num, x_occurs_den = get_variables_in_poly.([numerator(p), denominator(p)])
+function occurs_in_poly(p::AbstractAlgebra.Generic.FracFieldElem{T}, v::Vector{T}) where T<:MPolyRingElem
+  x_occurs_num = occurs_in_poly(numerator(p), v) 
+  x_occurs_den = occurs_in_poly(denominator(p), v)
   return x_occurs_num .|| x_occurs_den
 end
 
-function is_correct_manifold(problem, M, manifold)
-  vanishes = all([evaluate(p, M) == 0 for p in manifold.groebner_basis])
-  v = get_variables_in_poly.(M)
-  v_total = [false for _v in v[1]]
-  for i in eachindex(v) 
-    @. v_total = v_total || v[i] 
+function is_correct_manifold(problem, M, variety)
+  # check if f^{(0)}(x)=0 for x ∈ M 
+  for p in variety.groebner_basis_R 
+    if evaluate(p, problem.x, M) != 0
+      return false
+    end
   end
-  n_correct = sum(v_total) == problem.s
-  return vanishes && n_correct
+  # check if the number of local coordinates is correct
+  v = zeros(Int, length(M))
+  for m in M 
+    v .+= occurs_in_poly(m, problem.x)
+  end
+  return sum(v .> 0) == problem.s
 end
 
 """
@@ -608,10 +603,12 @@ with a boolean value indicating whether the manifold could be computed
 automatically.
 """
 function get_explicit_manifold(problem::ReductionProblem, variety::Variety)
-  R = base_ring(variety.ideal)
-  M = gens(fraction_field(R))
-  G = fraction_field(R).(gens(variety.ideal))
-  G_old = zeros(fraction_field(R), length(G))
+  R = parent(problem.x[1])
+  # index of state variables in ring R
+  idx_x = (length(problem.p)+1):(length(problem.p) + length(problem.x))
+  M = fraction_field(R).(problem.x)
+  G = sort(variety.groebner_basis_R; by=length)
+  G_old = zeros(R, length(G))
   # try solving polynomials in G that are linear in one component until s local
   # coordinates are found
   while !all(G .== G_old)
@@ -619,22 +616,21 @@ function get_explicit_manifold(problem::ReductionProblem, variety::Variety)
     G_old = G 
     for k in eachindex(G)
       # get all variables that occur
-      v = get_variables_in_poly.(G)
+      v = [occurs_in_poly(g, problem.x) for g in G]
       if any(v[k]) 
-        idx = (1:length(M))[v[k]]
         # check if variable i can be used to solve a polynomial
-        for i in idx
+        for i in idx_x[v[k]]
           if is_linear(G[k], i)
             val = solve_linear(G[k], i)
             M = [evaluate(m, [i], [val]) for m in M]
-            G = [evaluate(g, [i], [val]) for g in G]
+            # keep only numerators of resulting rational functions
+            G = [numerator(evaluate(g, [i], [val])) for g in G]
             break
           end
         end
       end
     end
   end
-  M_F = [Rx_to_F(problem, numerator(m))//Rx_to_F(problem, denominator(m)) for m in M]
-  return M_F, is_correct_manifold(problem, M, variety)
+  return M, is_correct_manifold(problem, M, variety)
 end
 
