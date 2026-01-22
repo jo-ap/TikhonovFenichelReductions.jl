@@ -630,6 +630,9 @@ function get_explicit_manifold(problem::ReductionProblem, variety::Variety)
         end
       end
     end
+    if all(G .== 0)
+      break
+    end
   end
   return M, is_correct_manifold(problem, M, variety)
 end

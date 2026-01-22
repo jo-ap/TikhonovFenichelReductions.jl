@@ -35,6 +35,7 @@ M = [
   problem._F.([k₋₁*C//(k₁*(e₀ - C)), C])
 ]
 M_auto = [get_explicit_manifold(problem, v) for v in all_varieties]
+@test all([m[2] for m in M_auto])
 @test all(all(M .== [m[1] for m in M_auto]))
 
 # compute all reductions
