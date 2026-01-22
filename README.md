@@ -1,4 +1,4 @@
-# TikhonovFenichelReductions.jl
+# <img alt="Logo of TikhonovFenichelReductions.jl" src="/docs/src/assets/logo.svg" height=120> TikhonovFenichelReductions.jl
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://jo-ap.github.io/TikhonovFenichelReductions.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://jo-ap.github.io/TikhonovFenichelReductions.jl/dev)
