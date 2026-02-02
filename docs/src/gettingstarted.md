@@ -154,8 +154,8 @@ The first two components of ```reduction.g``` define the reduced system and can
 be rewritten as 
 ```math
 \begin{align*}
-\frac{dB}{dt} &= \rho B (1 - B) - \alpha(\eta + \beta) S \frac{B}{\delta + \gamma B} \\
-\frac{dS}{dt} &= -\eta S + \gamma(\eta + \beta) S \frac{B}{\delta + \gamma B} \\
+\frac{dB}{dt} &= \rho B (1 - B) - \alpha(\eta + \beta) \frac{B}{\delta + \gamma B} S \\
+\frac{dS}{dt} &= -\eta S + \gamma(\eta + \beta) \frac{B}{\delta + \gamma B} S \\
 \end{align*}
 ```
 which is exactly the Rosenzweig-MacArthur model.
@@ -182,6 +182,8 @@ automatic.
 ```@example 1
 all_V = unique_varieties(problem, varieties)
 all_M = [get_explicit_manifold(problem, V) for V in all_V] 
+# check that all manifolds could be computed automatically
+@assert all([m[2] for m in all_M])
 
 # get reduction and indices of varieties that correspond to unique slow manifolds
 R, idx_M = compute_reductions(problem, tfpvs, varieties, all_V, [m[1] for m in all_M]);
