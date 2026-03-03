@@ -10,6 +10,21 @@ polynomial ODE systems and their corresponding reductions (see [1-3] for
 details).
 The package is described and showcased in [4].
 
+## Scope 
+This package allows modellers working with dynamical systems (autonomous
+ordinary differential equations) that have a polynomial RHS to perform
+dimensionality reduction via timescale separation semi-automatically.
+The crucial difference to other similar approaches is that this yields *all*
+possible reductions of a given ODE system.
+
+Polynomial ODE systems arise frequently e.g. in mathematical chemistry or
+biology, where processes often evolve on different time scales, which renders
+this framework particularly helpful. 
+In essence, this package may be used to derive simple conceptual models from
+realistic but high dimensional (i.e. mathematically complex) ones. 
+It can also be used to study the behaviour of a larger system in certain extreme
+parameter regions.
+
 ## Outline
 Consider an ODE system of the form 
 ```math
@@ -29,14 +44,38 @@ Note that this approach yields all possible timescale separations of _rates_
 instead of _components_ as in Tikhonov's theorem [7] (it is thus a coordinate
 free approach to geometric singular perturbation theory).
 
-## Installation
-Run
+More details can be found in the
+[documentation](https://jo-ap.github.io/TikhonovFenichelReductions.jl/stable). 
+A practical example can be found in the [getting started
+section](https://jo-ap.github.io/TikhonovFenichelReductions.jl/stable/gettingstarted/#Example).
+
+## Requirements and Installation
+This package requires at least Julia 1.9 and relies on
+[Oscar.jl](https://www.oscar-system.org/), which means it must be installed in
+the Windows Subsystem for Linux on Windows.
+To install it, run
 ~~~
 add TikhonovFenichelReductions
 ~~~
 in Julia package Mode.
-Note that this package relies on [Oscar.jl](https://www.oscar-system.org/) and
-therefore needs to be installed in the Windows Subsystem for Linux on Windows.
+More details can be found
+[here](https://jo-ap.github.io/TikhonovFenichelReductions.jl/stable/gettingstarted/#Installation) 
+and in the documentation for [Oscar.jl](https://www.oscar-system.org/).
+
+## Development and Tests
+Please open an issue here, if you encounter a bug or want to share suggestions
+for the package.
+Pull requests are also welcome, preferably after reaching out. 
+
+Unit tests can be run with
+~~~
+julia --project=./test ./test/runtests.jl 
+~~~
+from the main directory.
+Make sure to install the dependencies first:
+~~~
+(TikhonovFenichelReductions/test) pkg> instantiate
+~~~
 
 ## References
 [1] A. Goeke and S. Walcher, ‘Quasi-Steady State: Searching for and Utilizing Small Parameters’, in Recent Trends in Dynamical Systems, A. Johann, H.-P. Kruse, F. Rupp, and S. Schmitz, Eds., in Springer Proceedings in Mathematics & Statistics, vol. 35. Basel: Springer Basel, 2013, pp. 153–178. doi: [10.1007/978-3-0348-0451-6_8](http://link.springer.com/10.1007/978-3-0348-0451-6_8).
