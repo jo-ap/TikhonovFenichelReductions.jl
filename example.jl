@@ -41,6 +41,9 @@ problem = ReductionProblem(f, x, p, s)
 preset = (α=1, β=0)
 sf_separations, varieties = tfpvs_and_varieties(problem; preset=preset);
 
+# Here, we want to find all slw-fast separations of rates that are TFPVs
+sf_separations, varieties = tfpvs_and_varieties(problem);
+
 # print slow-fast separations and corresponding slow manifolds with their dimension
 print_tfpvs(problem, sf_separations)
 print_varieties(varieties)
@@ -127,7 +130,6 @@ M = [
   F.([B,S,β//δ*S]),
   F.([B,S,ρ//α*(1-B)])
 ]
-
 
 # note that there is a heuristic that can be used to compute all reductions automatically (this may fail for some varieties)
 # try to compute the manifolds automatically 
