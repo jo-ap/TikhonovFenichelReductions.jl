@@ -19,7 +19,11 @@ jobs:
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1.12'
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@v2
+      # run tests
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+      # generate docs
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
       - name: Build and deploy
