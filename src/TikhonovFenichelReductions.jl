@@ -22,7 +22,7 @@ export ReductionProblem,
   get_explicit_manifold
 
 ## Dependencies
-import Base 
+import Base: ==
 import Pkg
 using DocStringExtensions
 using LaTeXStrings
@@ -48,6 +48,5 @@ include("./reduction.jl")
 include("./bulk_reductions.jl")
 include("./display.jl")
 include("./output.jl")
-
 
 end # module TikhonovFenichelReductions

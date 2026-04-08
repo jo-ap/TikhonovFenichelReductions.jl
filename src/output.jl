@@ -232,10 +232,14 @@ successfully, the reduced system is shown in the original phase space.
 See also: [`rewrite_rational`](@ref), [`print_tfpvs`](@ref), [`print_varieties`](@ref)
 """
 function print_reduced_system(io::IO, reduction::Reduction; rewrite::Bool=true, factor::Bool=false, latex::Bool=false, local_coordinates::Bool=true)
-  str = _get_reduced_system_str(reduction; rewrite=rewrite, factor=factor, padfront=0, local_coordinates=local_coordinates)
-  if latex && str != ""
-    str_latex = [replace(latexify(s; env=:raw, mult_symbol=""), "=" => "&=") for s in split(str, "\n")]
-    str = "\\begin{aligned}\n" * join(str_latex, "\\\\ \n") * "\n\\end{aligned}"
+  success, str = _get_reduced_system_str(reduction; rewrite=rewrite, factor=factor, padfront=0, local_coordinates=local_coordinates)
+  if latex 
+    if success
+      str_latex = [replace(latexify(s; env=:raw, mult_symbol=""), "=" => "&=") for s in split(str, "\n")]
+      str = "\\begin{aligned}\n" * join(str_latex, "\\\\ \n") * "\n\\end{aligned}"
+    elseif str != ""
+      str = "There exists no reduction onto \$M = \\left( " * join(latexify.(string.(reduction.M); env=:raw), ", ") * " \\right)\$"
+    end
   end
   println(io, str)
 end
@@ -270,9 +274,12 @@ function get_system_str(f, u; rewrite::Bool=true, factor::Bool=false, padfront::
 end
 
 function _get_reduced_system_str(reduction::Reduction; rewrite::Bool=true, factor::Bool=false, padfront::Int=0, local_coordinates::Bool=true)
+  if reduction.no_reduction 
+    return (false, "There exists no reduction onto M = [" * join(string.(reduction.M), ", ") * "]")
+  end
   if !any(reduction.reduction_cached)
     @warn "Reduced system is not yet computed"
-    return ""
+    return (false, "")
   end
   g = reduction.reduction_cached[2] ? reduction.g : reduction.g_raw
   x = reduction.problem.x
@@ -280,7 +287,7 @@ function _get_reduced_system_str(reduction::Reduction; rewrite::Bool=true, facto
     g = g[reduction.idx_components]
     x = x[reduction.idx_components]
   end
-  return get_system_str(g, x; rewrite=rewrite, factor=factor, padfront=padfront)
+  return (true, get_system_str(g, x; rewrite=rewrite, factor=factor, padfront=padfront))
 end
 
 """

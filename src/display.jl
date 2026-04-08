@@ -23,7 +23,7 @@ function Base.show(io::IO, ::MIME"text/plain", reduction::Reduction)
     print(io, "\n There exists no reduction onto M = [" * join(string.(reduction.M), ", ") * "]")
   end
   if any(reduction.reduction_cached)
-    str = _get_reduced_system_str(reduction; padfront=2)
+    _, str = _get_reduced_system_str(reduction; padfront=2)
     str_reduced_system = reduction.reduction_cached[2] ?  "\n Reduced system:" :  "\n Formal reduced system:"
     print(io, str_reduced_system * "\n" * str)
   end
