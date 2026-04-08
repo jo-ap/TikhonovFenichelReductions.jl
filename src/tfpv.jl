@@ -35,6 +35,18 @@ struct ReductionProblem
   _x_Rx::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
 end
 
+# equality for ReductionProblem
+function ==(a::ReductionProblem, b::ReductionProblem) 
+  # check all fields except RHS as julia function
+  for fn in fieldnames(ReductionProblem)
+    if fn != :_f && getfield(a, fn) != getfield(b, fn)
+      return false
+    end
+  end
+  # check if julia function produces the same RHS 
+  return all(a._f(a.x, a.p) .- b._f(b.x, b.p) .== 0)
+end
+
 """
     $(TYPEDSIGNATURES)
 

@@ -53,6 +53,9 @@ mutable struct Reduction
   reduction_cached::Vector{Bool}
 end
 
+# equality for Reduction 
+==(a::Reduction, b::Reduction) = all([getfield(a, fn) == getfield(b, fn) for fn in fieldnames(Reduction)])
+
 # conversion functions
 function R_to_Rx(problem::ReductionProblem, f::QQMPolyRingElem)
   _p = gens(base_ring(problem._Rx))
