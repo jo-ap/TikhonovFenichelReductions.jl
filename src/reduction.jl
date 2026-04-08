@@ -436,7 +436,7 @@ function get_decomposition(reduction::Reduction, variety::Variety)
   r = length(reduction.problem.x) - reduction.problem.s
   p = gens(base_ring(reduction.problem._Rx))
   x = gens(reduction.problem._Rx)
-  _f0 = reduction.problem._f(x, get_tfpv(p, reduction.sf_separation))
+  _f0 = reduction.problem._Rx.(reduction.problem._f(x, get_tfpv(p, reduction.sf_separation)))
   # use generators for irreducible component as entries for Psi
   if length(variety.gens_R) == r 
     Psi = matrix(R, reshape(variety.gens_R, r, 1))

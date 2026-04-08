@@ -150,7 +150,7 @@ function parse_system(f::Function, x::Vector{T}, p::Vector{T}) where T<:Union{St
   # rational function field in p and polynomial ring in x 
   Fp,_ = rational_function_field(QQ, p)
   Rx,_ = polynomial_ring(Fp, x)
-  _f_Rx = f(gens(Rx), gens(Fp))
+  _f_Rx = Rx.(f(gens(Rx), gens(Fp)))
   return R, Fp, Rx, _f, _x, _p, _f_Rx
 end
 
@@ -303,7 +303,7 @@ function get_f0_Rx(
     sf_separation::Vector{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}
   )::Vector{MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}}
   x = gens(problem._Rx)
-  return problem._f(x, sf_separation)
+  return problem._Rx.(problem._f(x, sf_separation))
 end
 
 function update_cofficients(f::MPoly{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}}, p::Vector{RationalFunctionFieldElem{QQFieldElem, QQMPolyRingElem}})
