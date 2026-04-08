@@ -12,7 +12,7 @@ end
 
 # check if ReductionProblem can be constructed correctly
 problem_catalyst = ReductionProblem(rn, 1)
-@test all(problem_catalyst.f .- problem.f .== 0)
+@test problem_catalyst == problem
 
 
 
