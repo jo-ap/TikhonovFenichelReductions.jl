@@ -15,7 +15,7 @@ in Julia package Mode.
     Instructions can be found in their
     [documentation](https://www.oscar-system.org/install/win/).
 
-## Example
+## Rosenzweig-MacArthur Model via TFR
 Here we consider the derivation of the Rosenzweig-MacArthur model via a
 reduction from a three dimensional system as demonstrated in
 [kruff2019](@cite). 
@@ -236,12 +236,3 @@ I = preimage(h, ideal(G));
 I_sat = saturation(I, ideal(prod(v)))
 is_one(I_sat)
 ```
-
-
-
-
-
-
-
-
-
