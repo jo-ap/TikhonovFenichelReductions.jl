@@ -49,7 +49,7 @@ More details can be found in the
 A practical example can be found in the [getting started
 section](https://jo-ap.github.io/TikhonovFenichelReductions.jl/stable/gettingstarted/#Example).
 
-## Requirements and Installation
+## Requirements and installation
 This package requires at least Julia 1.9 and relies on
 [Oscar.jl](https://www.oscar-system.org/), which means it must be installed in
 the Windows Subsystem for Linux on Windows.
@@ -62,9 +62,11 @@ More details can be found
 [here](https://jo-ap.github.io/TikhonovFenichelReductions.jl/stable/gettingstarted/#Installation) 
 and in the documentation for [Oscar.jl](https://www.oscar-system.org/).
 
-## Contribution
+## Contribution and support
 Please open an issue here, if you encounter a bug or want to share suggestions
 for the package.
+Questions or support requests can be posted in
+[Discussions](https://github.com/jo-ap/TikhonovFenichelReductions.jl/discussions). 
 Pull requests are also welcome, preferably after reaching out. 
 
 Unit tests can be run with
