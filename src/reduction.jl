@@ -152,7 +152,8 @@ function get_varieties(problem::ReductionProblem, sf_separation::Vector{Bool})
   f0 = get_f0_Rx(problem, tfpv_candidate)
   J = jacobian(f0, problem._x_Rx)
   I = ideal(f0)
-  _get_varieties(problem, I, J)
+  _, Y, dim_Y = _get_varieties(problem, I, J)
+  return [Variety(Y[k], dim_Y[k], problem) for k in eachindex(Y)]
 end
 
 """
@@ -383,7 +384,7 @@ Try to automatically compute matrix of rational functions `P` from given vector
 of polynomials `Psi`, such that `f0=P⋅Psi` and `V(f0)=V(Psi)` holds locally.
 
 !!! warning 
-    This always works if the drop in dimension `r=n-s=1`, but may fail for `r>1` (if the number of generators for the irreducible component of `V(f0)` is greater than `r`).
+    This always works if the drop in dimension `r=n-s=1`, but may fail for `r>1` if the number of generators for the irreducible component of `V(f0)` is greater than `r`.
 
 ### Description
 `Psi` can be chosen from `r` algebraically independent entries of `f0`. 
@@ -479,7 +480,7 @@ function get_decomposition(reduction::Reduction, Psi::Vector{QQMPolyRingElem})
       P = matrix(reduction.problem._F, [Rx_to_F(reduction.problem, f) for f in U*Q])
       return P, Psi
     end
-    @warn "Could not set P automatically."
+    @warn "Could not set product decomposition automatically."
     return nothing, Psi
   end
 end
