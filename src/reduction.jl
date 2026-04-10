@@ -350,6 +350,9 @@ end
 
 Set non-singular point on irreducible component of `V(f0)` corresponding to the slow manifold. 
 Typically, this can be done automatically by setting the slow manifold.
+If the eigenvalue does not factor the characteristic polynomial of D₁f(x0,p_sf) with power s, 
+there exists no reduction in the neighbourhood of this point. 
+In this case, the function returns `false` and a warning is shown.
 
 See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`Reduction`](@ref)
 """
@@ -384,7 +387,7 @@ Try to automatically compute matrix of rational functions `P` from given vector
 of polynomials `Psi`, such that `f0=P⋅Psi` and `V(f0)=V(Psi)` holds locally.
 
 !!! warning 
-    This always works if the drop in dimension `r=n-s=1`, but may fail for `r>1` if the number of generators for the irreducible component of `V(f0)` is greater than `r`.
+    This always works if the drop in dimension `r=n-s=1`, but fails if the number of generators for the irreducible component of `V(f0)` is greater than `r>1`.
 
 ### Description
 `Psi` can be chosen from `r` algebraically independent entries of `f0`. 

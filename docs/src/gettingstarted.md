@@ -116,9 +116,12 @@ We need to define the slow manifold explicitly in order to check whether the
 reduction exists. 
 This also allows to substitute the variables that got reduced according to the
 slow manifold in the reduced system.
+variables.
 ```@example 1
 set_manifold!(reduction, [B, S, 0])
 ```
+This function checks if ``f(\cdot,\pi^\star)`` vanishes on the manifold passed
+as an argument and updates the `Reduction` object if the ckeck is passed. 
 
 Note that in this case any generic point on the affine variety is non-singular
 and can be chosen as ``x_0``.  
@@ -131,31 +134,41 @@ component containing the non-singular point.
 Lastly, we define a product decomposition ``f(\cdot,\pi^\star) = P \cdot \psi``
 with ``\mathcal{V}(\psi) = \mathcal{V}(f(\cdot,\pi^\star))``.
 In most cases this can be done by specifying only ``\psi`` using the generators
-of the irreducible component of ``\mathcal{V}(f^{(0)})`` that corresponds to the
-slow manifold.
-Here, ``P`` can be computed automatically, which relies on having exactly ``r``
-generators of the variety corresponding to the slow manifold.
+of the irreducible component of ``\mathcal{V}(f(\cdot,\pi^\star))`` that
+corresponds to the slow manifold, but this can fail if the associated ideal is
+not represented with exactly ``r`` generators. 
+Here however, ``P`` can be computed automatically.
 ```@example 1
 set_decomposition!(reduction, varieties[15][1])
 ```
-If this method fails, you can manually set ``P`` and ``Psi``.
+If this method fails, you can manually set ``P`` and ``\Psi``.
+Again, this function only mutates the `Reduction` object if ``P`` and ``Psi``
+satisfy ``f(\cdot,\pi^\star) = P\cdot Psi``. 
+Thus, it returns `false` if the product decomposition cannot be set
+automatically or if ``P`` and ``\Psi`` provided are not a product decomposition
+for ``f(\cdot,\pi^\star)``.
 
-Now we can compute and show the reduced system.
+
+If everything has been set correctly, we can compute and show the reduced
+system.
 ```@example 1
 compute_reduction!(reduction);
 ```
-This updates the reduction object, which now contains the reduced system before
-and after variables are substituted as defined by the slow manifold.
-You can see how the reduction object is updated:
+If any of the previous steps failed, the reduced system cannot be computed and
+this function returns `false`.
+Otherwise, this updates the `Reduction` object, which now contains the reduced
+system before and after variables are substituted as defined by the slow
+manifold.
+You can see how the `Reduction` object is updated:
 ```@example 1 
 reduction
 ```
-The first two components of ```reduction.g``` define the reduced system and can
-be rewritten as 
+The first two components of `reduction.g` define the reduced system and can be
+rewritten as 
 ```math
 \begin{align*}
 \frac{dB}{dt} &= \rho B (1 - B) - \alpha(\eta + \beta) \frac{B}{\delta + \gamma B} S \\
-\frac{dS}{dt} &= -\eta S + \gamma(\eta + \beta) \frac{B}{\delta + \gamma B} S \\
+\frac{dS}{dt} &= -\eta S + \gamma(\eta + \beta) \frac{B}{\delta + \gamma B} S 
 \end{align*}
 ```
 which is exactly the Rosenzweig-MacArthur model.
@@ -173,26 +186,32 @@ Thus, the full system converges to the reduction as ``\varepsilon \to 0`` if
 #### Bulk Computations 
 `TikhonovFenichelReductions.jl` has methods that simplify the computation of
 multiple reductions onto the same slow manifold, since typically many different
-TFPVs share the varieties.
+TFPVs share a common variety.
+
+!!! warning 
+    Note that bulk computation of reductions relies on `set_decomposition!` to
+    automatically find a product decomposition of ``f(\cdot,\pi^\star)``, which
+    might fail with a warning in some cases (see the explanation for
+    `set_decomposition!` above).
+
 Additionally, the function `get_explicit_manifold` implements a heuristic 
 to find an explicit parametric description of the slow manifold.
-Thus, in simple enough cases, the computation of all reductions is fully
-automatic. 
+Thus, in many cases including for this example, the computation of all
+reductions is fully automatic. 
 
 ```@example 1
-all_V = unique_varieties(problem, varieties)
-all_M = [get_explicit_manifold(problem, V) for V in all_V] 
+unique_V = unique_varieties(problem, varieties)
+unique_M = [get_explicit_manifold(problem, V) for V in unique_V] 
 # check that all manifolds could be computed automatically
-@assert all([m[2] for m in all_M])
+@assert all([m[2] for m in unique_M])
 
 # get reduction and indices of varieties that correspond to unique slow manifolds
-R, idx_M = compute_reductions(problem, tfpvs, varieties, all_V, [m[1] for m in all_M]);
+R, idx_M = compute_reductions(problem, tfpvs, varieties, unique_V, [m[1] for m in unique_M]);
 
 R[(15,1)]
 ```
 
 ### General TFPVs 
-
 One can also get all general TFPVs by computing a Gröbner basis `G` that
 reflects necessary conditions on the parameters of the system. 
 Note that depending on the input system and the drop in dimension this can be a

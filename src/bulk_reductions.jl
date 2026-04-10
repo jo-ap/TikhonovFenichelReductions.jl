@@ -48,7 +48,7 @@ end
 Compute all reductions onto each of the explicitly given slow manifolds in `M`
 with corresponding varieties `V`.
 Returns the reductions `R` as a dictionary with keys `(i,j)`, such that
-`R[(i,j)]` is the reduction for `tfpv[i]` and the variety `V[i][j]`.
+`R[(i,j)]` is the reduction for `tfpvs[i]` and the variety `varieties[i][j]`.
 
 ### Description
 All possible choices of slow manifolds can be obtained with
@@ -57,7 +57,7 @@ For each of these, a parameterized form, i.e. the slow manifold in phase space
 defined by the remaining components of the system, must be provided.
 In most cases this can be obtained with [`get_explicit_manifold`](@ref).
 The backwards step, i.e. finding all `manifolds` for which this is an explicit
-description, is then with `find_varieties`.
+description, is then achieved with `find_varieties`.
 
 !!! warning
     If `set_decomposition!` fails, the reduction cannot be computed. This triggers a warning, but the `Reduction` instance will be returned (without containing the reduced system).
