@@ -19,19 +19,23 @@ bibliography: paper.bib
 ---
 
 # Summary
-Natural systems often evolve on different characteristic time scales, i.e. the
-rates of processes differ substantially in orders of magnitude [@hek2010].
-Singular perturbation theory is a mathematical toolbox that translates this
-feature to ODE models of such systems and allows to perform dimensionality
-reduction when only one characteristic time scale (typically the slow one
-describing the long term behaviour) is of interest [@wechselberger2020].
-This is reflected by the presence of a small parameter $\varepsilon>0$, which
-can be interpreted as the conversion rate between the two time scales.
-Roughly speaking, the dynamics in slow time $\tau=\varepsilon t$ can be
-approximated by substituting the fast part of the system with its steady state,
-i.e.\ for the slow processes the fast changes appear instant.
+
+Natural systems often evolve on different characteristic time scales, with
+process rates differing substantially by orders of magnitude [@hek2010].
+To study such systems, singular perturbation theory provides a mathematical
+toolbox that translates this feature to ODE models and enables dimensionality
+reduction by focusing on a single characteristic time scale, (typically the slow
+one governing the long-term behaviour) [@wechselberger2020].
+
+This separation of time scales is reflected by the presence of a small parameter
+$\varepsilon>0$, which can be interpreted as the ratio between the two time
+scales. Roughly speaking, the dynamics in slow time $\tau=\varepsilon t$ can be
+approximated by replacing the fast part of the system with its steady state, so
+that the fast dynamics effectively appear instantaneous on the slow time scale.
+
 More precisely, we obtain the *reduced system* (or *reduction* in short) as the
 limit
+
 \begin{equation}
   \label{eq:tikhonov}
   \begin{aligned}
@@ -44,35 +48,39 @@ limit
     0       & = h(u,v), \quad v\in\mathbb{R}^r 
   \end{aligned}
 \end{equation}
-with $\dot{}=\text{d}/\text{d}\tau$ as stated in Tikhonov's theorem
-[-@tikhonov1952; Theorem 1.1 in @verhulst2007],
-which is defined on the so-called slow manifold
-$M_0=\{(u,v)\,\vert\,h(u,v)=0\}$.
-For autonomous systems the results by @fenichel1979 allow a clear geometric
-interpretation --- hence the name geometric singular perturbation theory (GSPT)
---- and guarantee that for $\varepsilon>0$ sufficiently small the reduction
-captures the behaviour of the full system. 
 
-In practice GSPT can mitigate the realism-complexity trade-off, as modellers can
-work with the reduction instead of the full system, which is likely more
-feasible. 
-Because the reduction is still embedded in the full system as a special case
-defined by the time scales, one retains the original interpretability.
-This allows to follow the modelling paradigm: 
+with $\dot{}=\mathrm{d}/\mathrm{d}\tau$ as stated in Tikhonov's theorem
+[-@tikhonov1952; Theorem 1.1 in @verhulst2007]. The reduced system is defined
+on the so-called slow manifold
+$M_0=\{(u,v)\,\vert\,h(u,v)=0\}$.
+
+For autonomous systems, the results of @fenichel1979 allow a clear geometric
+interpretation --- hence the name geometric singular perturbation theory (GSPT)
+--- and guarantee that for sufficiently small $\varepsilon>0$, the reduction
+captures the behaviour of the full system.
+
+In practice, GSPT can mitigate the realism-complexity trade-off, as modellers
+can work with the reduction instead of the full system, which is often more
+tractable.
+Because the reduction remains embedded in the original system through the time
+scale separation, the original interpretability is retained.
+This allows one to follow the modelling paradigm:
 Start with a complex but realistic model, reduce later.
 
 The algebraic approach recently developed by Goeke \& Walcher (and colleagues)
-allows to work with GSPT systematically and is coordinate-free, i.e. we do not
-rely on the standard form (\ref{eq:tikhonov}) with a time scale separation of
-components.
+allows one to work with GSPT systematically and is coordinate-free, i.e. we do
+not rely on the standard form (\ref{eq:tikhonov}) with a time scale separation
+of components.
+
 Instead, we consider systems of the form 
 \begin{equation}
     \label{eq:slowfastsystem}
     x' = f^{(0)}(x) + \varepsilon f^{(1)}(x) + \mathcal{O}(\varepsilon^2), 
     \quad x\in\mathbb{R}^n,
 \end{equation}
-where $f^{(0)}$ contains the fast processes and $f^{(1)}$ the slow ones.
-Note that system (\ref{eq:tikhonov}) can also be stated in fast time $t$ as
+where $f^{(0)}$ contains the fast processes and $f^{(1)}$ contains the slow
+ones.
+Note that system (\ref{eq:tikhonov}) can also be written in fast time $t$ as
 \begin{equation}
     \label{eq:tikhonovfast}
     \begin{aligned}
@@ -80,13 +88,16 @@ Note that system (\ref{eq:tikhonov}) can also be stated in fast time $t$ as
         v' &= h(u,v)
     \end{aligned}
 \end{equation}
-where $'=\text{d}/\text{d}t$. 
-Thus, we can translate (\ref{eq:slowfastsystem}) to (\ref{eq:tikhonovfast}) 
-by setting $x = (u,v)^{\text{T}}$, $f^{(0)} = (0, h)^{\text{T}}$ and $f^{(1)} =
-(g, 0)^{\text{T}}$, but the reverse requires finding a suitable coordinate
-transformation, which is not always feasible.
-However, it turns out that this is not needed explicitly to
-obtain the reduced system, which can be computed using (\ref{eq:reduction}). 
+
+where $'=\mathrm{d}/\mathrm{d}t$. 
+Thus, we can translate (\ref{eq:slowfastsystem}) into
+(\ref{eq:tikhonovfast}) by setting
+$x = (u,v)^{\mathrm{T}}$, $f^{(0)} = (0, h)^{\mathrm{T}}$ and
+$f^{(1)} = (g, 0)^{\mathrm{T}}$.
+However, the reverse direction requires a suitable coordinate transformation,
+which is not always feasible.
+Fortunately, this transformation is not explicitly needed to obtain the reduced
+system, which can be computed using (\ref{eq:reduction}).
 
 The main benefit of this framework is however that it allows to find all
 critical parameters admitting a reduction for polynomial or rational ODE systems
@@ -100,19 +111,21 @@ implementing this approach for polynomial ODE systems.
 @apelt2025 provide a showcasing example and more detailed explanations.
 
 # Statement of need
-The ad-hoc approach to singular perturbation theory requires prior knowledge
-about a suitable time scale separation and substantial mathematical effort to
-compute the reduction.
-The algebraic approach due to Goeke \& Walcher systematically yields *all*
-possible reductions for a given polynomial ODE system, which enables modellers to
-consider reductions for several scenarios defined by the time scale separations
-[@goeke2015].
-`TikhonovFenichelReductions.jl` makes the required computations easily
-accessible (even for non-expert users).
 
-The author is not aware of any publicly available implementation of this theory,
-but there exist an implementation for a related approach for computing invariant
-manifolds by Roberts [-@roberts1997; -@roberts-webapp].
+The ad-hoc approach to singular perturbation theory requires prior knowledge of
+a suitable time scale separation and substantial mathematical effort to compute
+the reduction.
+In contrast, the algebraic framework developed by Goeke \& Walcher
+systematically yields *all* possible reductions for a given polynomial ODE
+system, enabling modellers to consider several scenarios defined by different
+time scale separations [@goeke2015].
+`TikhonovFenichelReductions.jl` makes the required computations easily
+accessible, even for non-expert users.
+
+To the author's knowledge, no publicly available implementation of this theory
+currently exists.
+However, there is an implementation of a related approach for computing
+invariant manifolds by Roberts [-@roberts1997; -@roberts-webapp].
 
 # Software design 
 `TikhonovFenichelReductions.jl` is implemented in `Julia` due to its
