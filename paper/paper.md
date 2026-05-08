@@ -24,8 +24,8 @@ Natural systems often evolve on different characteristic time scales, with
 process rates differing substantially by orders of magnitude [@hek2010].
 To study such systems, singular perturbation theory provides a mathematical
 toolbox that translates this feature to ODE models and enables dimensionality
-reduction by focusing on a single characteristic time scale, (typically the slow
-one governing the long-term behaviour) [@wechselberger2020].
+reduction by focusing on a single characteristic time scale---typically the slow
+one governing the long-term behaviour [@wechselberger2020].
 
 This separation of time scales is reflected by the presence of a small parameter
 $\varepsilon>0$, which can be interpreted as the ratio between the two time
