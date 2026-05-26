@@ -253,6 +253,7 @@ See also: [`Reduction`](@ref), [`set_decomposition!`](@ref), [`set_point!`](@ref
 function set_manifold!(reduction::Reduction, M::AbstractVector)::Bool
   M = parse_ring(reduction.problem._F, M)
   n = length(reduction.problem.x)
+  s = n - size(reduction.P)[2]
   @assert length(M) == n "The slow manifold M must be defined in $n components."
   _f0 = [evaluate(fᵢ, [reduction.problem._F.(reduction.problem.p); M]) for fᵢ in reduction.f0]
   f_vanishes = all(iszero.(_f0))
@@ -267,7 +268,7 @@ function set_manifold!(reduction::Reduction, M::AbstractVector)::Bool
     # jacobian at a non-singular point exactly with power s, i.e. there is no
     # reduction if the polynomial is given by λ^(s+1)•r(λ)
     coeffs = collect(coefficients(charpoly(jacobian_tfpv_on_manifold(reduction))))
-    if all(coeffs[1:reduction.problem.s + 1] .== 0)
+    if all(coeffs[1:s + 1] .== 0)
       @info "There exists no reduction onto this manifold"
       reduction.no_reduction = true
       return false
@@ -329,13 +330,14 @@ end
 function _set_point!(reduction::Reduction, x0::AbstractVector)::Bool
   x0 = parse_ring(reduction.problem._F, x0)
   n = length(reduction.problem.x)
+  s = n - size(reduction.P)[2]
   @assert length(x0) == n "The point x0 must have $n components."
   # compute characteristic polynomial
   Df0_at_x0 = eval_mat(reduction.Df0, [reduction.problem._F.(reduction._p); x0])
   chi = charpoly(reduction.T, Df0_at_x0)
   # check condition for coefficients
   c = collect(coefficients(chi))
-  check_chi = all(iszero.(c[1:reduction.problem.s])) && !iszero(c[reduction.problem.s+1])
+  check_chi = all(iszero.(c[1:s])) && !iszero(c[s+1])
   if check_chi
     reduction.x0 = x0
     reduction.Df0_at_x0 = Df0_at_x0
@@ -358,8 +360,9 @@ See also: [`set_manifold!`](@ref), [`set_decomposition!`](@ref), [`Reduction`](@
 """
 function set_point!(reduction::Reduction, x0::AbstractVector)::Bool
   retval = _set_point!(reduction, x0)
+  s = length(reduction.problem.x) - size(reduction.P)[2]
   if !retval
-    @warn "The eigenvalue λ does not factor the characteristic polynomial of D₁f(x0,p_sf) with power s=$(reduction.problem.s)"
+    @warn "The eigenvalue λ does not factor the characteristic polynomial of D₁f(x0,p_sf) with power s=$(s)"
   end
   return retval 
 end
@@ -403,7 +406,7 @@ end
 
 function _set_decomposition!(reduction::Reduction, P::MatSpaceElem, Psi)
   n = length(reduction.problem.x)
-  r = n - reduction.problem.s
+  r = size(reduction.P)[2]
   @assert size(Psi, 1) == r && size(Psi, 2) == 1 "Psi must be of size $r or $r×1"
   DPsi = jacobian(Psi, reduction.problem.x)
   DPsi = parent(reduction.DPsi)(reduction.problem._F.(DPsi))
@@ -426,7 +429,7 @@ function _set_decomposition!(reduction::Reduction, P::MatSpaceElem, Psi)
 end
 function _set_decomposition!(reduction::Reduction, P::VecOrMat, Psi)
   n = length(reduction.problem.x)
-  r = n - reduction.problem.s
+  r = size(reduction.P)[2]
   @assert size(P,1) == n && size(P,2) == r "P must be of size $n×$r"
   P = reshape(P, n, r)
   P = reduction.problem._F.(P)
@@ -437,7 +440,7 @@ end
 # try computing matrix of rational functions P from Psi
 function get_decomposition(reduction::Reduction, variety::Variety)
   R = parent(reduction.problem.x[1])
-  r = length(reduction.problem.x) - reduction.problem.s
+  r = size(reduction.P)[2]
   p = gens(base_ring(reduction.problem._Rx))
   x = gens(reduction.problem._Rx)
   _f0 = reduction.problem._Rx.(reduction.problem._f(x, get_tfpv(p, reduction.sf_separation)))
@@ -469,7 +472,7 @@ function get_decomposition(reduction::Reduction, variety::Variety)
   return nothing, nothing
 end
 function get_decomposition(reduction::Reduction, Psi::Vector{QQMPolyRingElem})
-  r = length(reduction.problem.x) - reduction.problem.s
+  r = size(reduction.P)[2]
   @assert size(Psi, 1) == r "Psi must have length r=$r"
   if size(Psi, 1) == 1
     return reduction.f0.//Psi, Psi
