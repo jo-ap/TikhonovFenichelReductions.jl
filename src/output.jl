@@ -238,6 +238,7 @@ function print_reduced_system(io::IO, reduction::Reduction; rewrite::Bool=true, 
       str_latex = [replace(latexify(s; env=:raw, mult_symbol=""), "=" => "&=") for s in split(str, "\n")]
       str = "\\begin{aligned}\n" * join(str_latex, "\\\\ \n") * "\n\\end{aligned}"
     elseif str != ""
+      # str = "There exists no reduction onto this manifold."
       str = "There exists no reduction onto \$M = \\left( " * join(latexify.(string.(reduction.M); env=:raw), ", ") * " \\right)\$"
     end
   end
