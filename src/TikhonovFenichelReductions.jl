@@ -30,6 +30,7 @@ using Latexify
 using Logging
 using Oscar
 using Oscar.AbstractAlgebra.Generic: FracField, FracFieldElem, MatSpaceElem, MPoly, PolyRing, Poly, RationalFunctionField, RationalFunctionFieldElem
+using ProgressMeter
 
 const PROJECT_TOML = Pkg.TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))
 const VERSION_NUMBER = VersionNumber(PROJECT_TOML["version"])

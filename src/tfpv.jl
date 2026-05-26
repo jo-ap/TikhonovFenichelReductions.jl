@@ -105,7 +105,10 @@ struct Variety
 end
 
 function Variety(I::MPolyIdeal, dim::Int64, problem::ReductionProblem) 
-  _I = ideal(rewrite_variety_generator.(gens(I)))
+  # use Gröbner basis in ℚ(p)[x]an generating set
+  G_Rx = groebner_basis(I; complete_reduction=true)
+  # prase this to ℚ[p,x]
+  _I = ideal(rewrite_variety_generator.(G_Rx))
   gens_R = [parse_variety_generator(problem, rewrite_variety_generator(g)) for g in gens(_I)]
   @assert I == _I
   G, _T = groebner_basis_with_transformation_matrix(_I; complete_reduction=true)
@@ -324,9 +327,10 @@ Find all slow-fast separations `π⁺` that are TFPVs by using the necessary con
 - the affine variety `V(f0)` contains an irreducible component `Y` of dimension `s` 
 - the `s`-th coefficient of the characteristic polynomial of `D₁f(x,π⁺)` is non-zero for `x∈Y`
 
-`preset` can be used to restrict the search for TFPVs to slow-fast separations
-of rates with predefined slow/fast rates, e.g. for `preset=(α=0, β=1)` only TFPVs
-with α ∈ O(ε) and β ∈ O(1) are considered.
+### Arguments 
+- `preset`: Restrict the search for TFPVs to slow-fast separations of rates with predefined slow/fast rates, e.g. for `preset=(α=0, β=1)` only TFPVs with α ∈ O(ε) and β ∈ O(1) are considered.
+- `progress`: Shows progress bar if set to `true` for loop over all TFPV candidates.
+- `skip`: Skip TFPV candidates (e.g. if primary decomposition cannot be computed)
 
 ### Description
 The irreducible components are obtained by computing a minimal primary decomposition. 
@@ -338,15 +342,22 @@ function `tfpvs_groebner`.
 
 See also: [`tfpvs_groebner`](@ref), [`print_results`](@ref), [`print_tfpvs`](@ref), [`print_varieties`](@ref)
 """
-function tfpvs_and_varieties(problem::ReductionProblem; preset::NamedTuple=NamedTuple())
+function tfpvs_and_varieties(problem::ReductionProblem; preset::NamedTuple=NamedTuple(), progress=false, skip=Vector{Bool}[])
   # check possible slow-fast separations for sufficient conditions to be a TFPV for dimension s
   # keep track of which slow-fast separation satisfies the conditions and save
   # irreducible components of V(f0) and their dimensions
   tfpv_candidates = get_tfpv_candidates(problem, preset)
+  # optional: skip tfpv candidates
+  deleteat!(tfpv_candidates, [tfpv in skip for tfpv in tfpv_candidates])
   N = length(tfpv_candidates)
   idx_keep = zeros(Bool, N)
   varieties = Vector{Vector{Variety}}(undef, N)
+  prog = Progress(N; enabled=progress)
   for i in 1:N
+    # print TFPV candidate that is currently checked
+    update!(prog; showvalues=[(:i, "$i / $N"), ("π̃",tfpv_candidates[i])], force=true) 
+    # update progress bar
+    next!(prog)
     tfpv_candidate = get_tfpv(gens(problem._Fp), tfpv_candidates[i])
     # define all polynomials and the Jacobian of f in ℝ(p)[x]
     f0 = get_f0_Rx(problem, tfpv_candidate)
@@ -391,6 +402,9 @@ function get_tfpv_candidates(problem, preset)
       tfpv_candidates[i][fast] .= true 
       tfpv_candidates[i][idx_inner] = tfpv_candidates_inner[i]
     end
+    # remove cases where all rates are fast / all rates are slow
+    deleteat!(tfpv_candidates, all.(tfpv_candidates))
+    deleteat!(tfpv_candidates, all.(tfpv_candidates .== false))
     return tfpv_candidates
   end
 end
