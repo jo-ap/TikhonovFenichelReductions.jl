@@ -233,6 +233,8 @@ I like to thank Volkmar Liebscher for his supervision and support,
 Sebastian Walcher and Alexandra Goeke for developing the Tikhonov-Fenichel
 reduction theory,
 Leonard Schmitz for discussing aspects of the computational algebra, 
-and the OSCAR team for their great work and helpful replies to my questions.
+the OSCAR team for their great work and helpful replies to my questions,
+and the editor Neea Rusch as well as the two reviewers Hector Mozo and Oskar
+Henriksson for their constructive remarks.
 
 # References
