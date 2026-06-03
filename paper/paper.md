@@ -66,10 +66,10 @@ tractable.
 Because the reduction remains embedded in the original system through the time
 scale separation, the original interpretability is retained.
 This allows one to follow the modelling paradigm:
-Start with a complex but realistic model, reduce later.
+start with a complex but realistic model, reduce later.
 
 The algebraic approach recently developed by Goeke \& Walcher (and colleagues)
-allows one to work with GSPT systematically and is coordinate-free, i.e. we do
+allows one to work with GSPT systematically and is coordinate-free, i.e., we do
 not rely on the standard form (\ref{eq:tikhonov}) with a time scale separation
 of components.
 Instead, we consider systems of the form 
@@ -99,7 +99,7 @@ which is not always feasible.
 Fortunately, this transformation is not explicitly needed to obtain the reduced
 system, which can be computed using (\ref{eq:reduction}).
 
-The main benefit of this framework is however that it allows to find all
+The main benefit of this framework is, however, that it allows one to find all
 critical parameters admitting a reduction for polynomial or rational ODE systems
 of the form (\ref{eq:slowfastsystem}).
 Thus, modellers do not have to rely on prior knowledge to find suitable time
@@ -136,7 +136,7 @@ Core features are the search for critical parameters admitting a reduction,
 so-called *Tikhonov-Fenichel Parameter Values (TFPVs)*, and the computation of
 the corresponding reduced systems.
 Crucially, this requires various computations with multiple symbolic
-representations (i.e. different polynomial rings, rational function fields and
+representations (i.e., different polynomial rings, rational function fields and
 matrix spaces) and therefore parsing of data between the corresponding types in
 `Oscar.jl`, which `TikhonovFenichelReductions.jl` performs hidden away from the
 user. 
@@ -149,7 +149,7 @@ search of TFPVs,
 and `Reduction`, which holds all relevant information for the reduced
 system and the steps required to compute it.
 The latter also contains the reduced system and other information parsed to the
-appropriate types from `Oscar.jl`, that can be further used, e.g. for a symbolic
+appropriate types from `Oscar.jl`, that can be further used, e.g., for a symbolic
 analysis.
 
 Detailed explanations and examples are provided by @apelt2025 and in the
@@ -159,7 +159,7 @@ The core features are summarized in the following.
 ## Finding TFPVs
 The package provides a method to obtain all possible TFPVs implicitly by
 computing a Gröbner Basis and one to find *slow-fast separations of rates*,
-i.e. TFPVs with some parameters set to zero.
+i.e., TFPVs with some parameters set to zero.
 Although the former method is an exhaustive search, the latter is usually better
 suited in practice as it yields the TFPVs one is typically interested in
 explicitly, is more efficient, and directly outputs the corresponding slow
@@ -196,7 +196,7 @@ The input system can be given as a reaction network defined with `Catalyst.jl`
 Because the reduced systems are represented using types from `Oscar.jl`, the
 latter's functions can be used to aid the symbolic analysis. 
 `Julia`'s support for metaprogramming  allows to perform further tasks such as a
-numerical analysis without having to copy or parse code (see e.g.
+numerical analysis without having to copy or parse code (see. e.g..
 [`TFRSimulations.jl`](https://github.com/jo-ap/TFRSimulations)).
 For convenience, there are several methods for displaying the output, including
 printing as \LaTeX{} source code via
@@ -220,7 +220,7 @@ Gröbner Basis may fail for complex systems.
 In this case, `TikhonovFenichelReductions.jl` may enable and simplify the search
 for the most common TFPVs.
 Given the ubiquity of time scale separation techniques in this field alone 
-[see e.g. @abbott2020; @poggiale2004; @revilla2015], the package can be a
+[see, e.g., @abbott2020; @poggiale2004; @revilla2015], the package can be a
 potentially useful tool for modellers.
 
 # AI usage disclosure
@@ -230,7 +230,7 @@ of this manuscript, or the preparation of supporting materials.
 # Acknowledgements
 This work was supported by a scholarship awarded by the University of Greifswald 
 according to the "Landesgraduiertenförderungsgesetz (LGFG) MV".
-I like to thank Volkmar Liebscher for his supervision and support,
+I want to thank Volkmar Liebscher for his supervision and support,
 Sebastian Walcher and Alexandra Goeke for developing the Tikhonov-Fenichel
 reduction theory,
 Leonard Schmitz for discussing aspects of the computational algebra, 
