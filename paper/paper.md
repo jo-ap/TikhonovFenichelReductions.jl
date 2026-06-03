@@ -10,11 +10,12 @@ tags:
 
 authors:
   - name: Johannes Apelt
+    orcid: 0009-0000-8973-7495
     affiliation: 1
 affiliations:
  - name: Institute of Mathematics and Computer Science, University of Greifswald, Germany
    index: 1
-date: 14 January 2026
+date: 06 June 2026
 bibliography: paper.bib
 ---
 
@@ -55,8 +56,8 @@ on the so-called slow manifold
 $M_0=\{(u,v)\,\vert\,h(u,v)=0\}$.
 
 For autonomous systems, the results of @fenichel1979 allow a clear geometric
-interpretation --- hence the name geometric singular perturbation theory (GSPT)
---- and guarantee that for sufficiently small $\varepsilon>0$, the reduction
+interpretation, hence the name geometric singular perturbation theory (GSPT),
+and guarantee that for sufficiently small $\varepsilon>0$, the reduction
 captures the behaviour of the full system.
 
 In practice, GSPT can mitigate the realism-complexity trade-off, as modellers
@@ -71,7 +72,6 @@ The algebraic approach recently developed by Goeke \& Walcher (and colleagues)
 allows one to work with GSPT systematically and is coordinate-free, i.e. we do
 not rely on the standard form (\ref{eq:tikhonov}) with a time scale separation
 of components.
-
 Instead, we consider systems of the form 
 \begin{equation}
     \label{eq:slowfastsystem}
@@ -120,7 +120,7 @@ systematically yields *all* possible reductions for a given polynomial ODE
 system, enabling modellers to consider several scenarios defined by different
 time scale separations [@goeke2015].
 `TikhonovFenichelReductions.jl` makes the required computations easily
-accessible, even for non-expert users.
+accessible.
 
 To the author's knowledge, no publicly available implementation of this theory
 currently exists.
@@ -171,6 +171,7 @@ GSPT.
 ## Computing reductions
 Computing a reduction for a slow-fast separation of rates as in
 Theorem 1 in @goeke2014 requires essentially two steps.
+Let $s$ be the dimension of the reduced system and $r=n-s$.
 First, we need to provide a parametric representation of the slow manifold,
 which is given as an irreducible component of the affine variety
 $\mathcal{V}(f^{(0)})$.
