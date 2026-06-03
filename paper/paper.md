@@ -56,9 +56,9 @@ on the so-called slow manifold
 $M_0=\{(u,v)\,\vert\,h(u,v)=0\}$.
 
 For autonomous systems, the results of @fenichel1979 allow a clear geometric
-interpretation, hence the name geometric singular perturbation theory (GSPT),
-and guarantee that for sufficiently small $\varepsilon>0$, the reduction
-captures the behaviour of the full system.
+interpretation---hence the name geometric singular perturbation theory
+(GSPT)---and guarantee that, for sufficiently small $\varepsilon>0$, the
+reduction captures the behaviour of the full system.
 
 In practice, GSPT can mitigate the realism-complexity trade-off, as modellers
 can work with the reduction instead of the full system, which is often more
@@ -71,7 +71,7 @@ start with a complex but realistic model, reduce later.
 The algebraic approach recently developed by Goeke \& Walcher (and colleagues)
 allows one to work with GSPT systematically and is coordinate-free, i.e., we do
 not rely on the standard form (\ref{eq:tikhonov}) with a time scale separation
-of components.
+of components [@goeke2013; @goeke2013a; @goeke2014; @goeke2015].
 Instead, we consider systems of the form 
 \begin{equation}
     \label{eq:slowfastsystem}
@@ -105,7 +105,7 @@ of the form (\ref{eq:slowfastsystem}).
 Thus, modellers do not have to rely on prior knowledge to find suitable time
 scale separations as they can systematically consider all of them.
 This can be achieved by evaluating necessary conditions for the existence of a
-reduction [@goeke2013; @goeke2013a; @goeke2014; @goeke2015].
+reduction [@goeke2013; @goeke2015].
 `TikhonovFenichelReductions.jl` is a `Julia` [@bezanson2017] package
 implementing this approach for polynomial ODE systems.
 @apelt2025 provide a showcasing example and more detailed explanations.
@@ -136,7 +136,7 @@ Core features are the search for critical parameters admitting a reduction,
 so-called *Tikhonov-Fenichel Parameter Values (TFPVs)*, and the computation of
 the corresponding reduced systems.
 Crucially, this requires various computations with multiple symbolic
-representations (i.e., different polynomial rings, rational function fields and
+representations (e.g., different polynomial rings, rational function fields and
 matrix spaces) and therefore parsing of data between the corresponding types in
 `Oscar.jl`, which `TikhonovFenichelReductions.jl` performs hidden away from the
 user. 
@@ -158,7 +158,7 @@ The core features are summarized in the following.
 
 ## Finding TFPVs
 The package provides a method to obtain all possible TFPVs implicitly by
-computing a Gröbner Basis and one to find *slow-fast separations of rates*,
+computing a Gröbner basis and one to find *slow-fast separations of rates*,
 i.e., TFPVs with some parameters set to zero.
 Although the former method is an exhaustive search, the latter is usually better
 suited in practice as it yields the TFPVs one is typically interested in
@@ -196,7 +196,7 @@ The input system can be given as a reaction network defined with `Catalyst.jl`
 Because the reduced systems are represented using types from `Oscar.jl`, the
 latter's functions can be used to aid the symbolic analysis. 
 `Julia`'s support for metaprogramming  allows to perform further tasks such as a
-numerical analysis without having to copy or parse code (see. e.g..
+numerical analysis without having to copy or parse code (see, e.g.,
 [`TFRSimulations.jl`](https://github.com/jo-ap/TFRSimulations)).
 For convenience, there are several methods for displaying the output, including
 printing as \LaTeX{} source code via
@@ -216,7 +216,7 @@ For the model introduced in the former, the application was relatively
 straightforward, but more complex models as in the latter require some more
 work.
 In particular, the method for finding TFPVs that relies on the computation of a
-Gröbner Basis may fail for complex systems. 
+Gröbner basis may fail for complex systems. 
 In this case, `TikhonovFenichelReductions.jl` may enable and simplify the search
 for the most common TFPVs.
 Given the ubiquity of time scale separation techniques in this field alone 
@@ -235,7 +235,7 @@ Sebastian Walcher and Alexandra Goeke for developing the Tikhonov-Fenichel
 reduction theory,
 Leonard Schmitz for discussing aspects of the computational algebra, 
 the OSCAR team for their great work and helpful replies to my questions,
-and the editor Neea Rusch as well as the two reviewers Hector Mozo and Oskar
-Henriksson for their constructive remarks.
+and the editors Neea Rusch and Daniel S. Katz as well as the reviewers Hector
+Mozo and Oskar Henriksson for their effort and constructive remarks.
 
 # References
