@@ -2,8 +2,7 @@
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://jo-ap.github.io/TikhonovFenichelReductions.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://jo-ap.github.io/TikhonovFenichelReductions.jl/dev)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14411663.svg)](https://doi.org/10.5281/zenodo.14411663)
-
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.09924/status.svg)](https://doi.org/10.21105/joss.09924)
 
 A Julia package for computing Tikhonov-Fenichel Parameter Values (TFPVs) for
 polynomial ODE systems and their corresponding reductions (see [1-3] for
@@ -77,6 +76,27 @@ from the main directory.
 Make sure to install the dependencies first:
 ~~~
 (TikhonovFenichelReductions/test) pkg> instantiate
+~~~
+
+## Citing `TikhonovFenichelReductions.jl`
+If you have used `TikhonovFenichelReductions.jl` in your work, please cite it as:
+
+Johannes Apelt, _TikhonovFenichelReductions.jl: A systematic approach to geometric singular perturbation theory_, Journal of Open Source Software, 11(122), 2026, https://doi.org/10.21105/joss.09924
+
+You can also use this BibTeX entry:
+~~~bibtex
+@article{apelt2026,
+  doi = {10.21105/joss.09924},
+  title = {{T}ikhonov{F}enichel{R}eductions.jl: A systematic approach to geometric singular perturbation theory},
+  author = {Apelt, Johannes},
+  journal = {Journal of Open Source Software}
+  url = {https://doi.org/10.21105/joss.09924},
+  year = {2026},
+  publisher = {The Open Journal},
+  volume = {11},
+  number = {122},
+  pages = {9924},
+}
 ~~~
 
 ## References
