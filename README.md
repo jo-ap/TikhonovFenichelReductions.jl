@@ -89,7 +89,7 @@ You can also use this BibTeX entry:
   doi = {10.21105/joss.09924},
   title = {{T}ikhonov{F}enichel{R}eductions.jl: A systematic approach to geometric singular perturbation theory},
   author = {Apelt, Johannes},
-  journal = {Journal of Open Source Software}
+  journal = {Journal of Open Source Software},
   url = {https://doi.org/10.21105/joss.09924},
   year = {2026},
   publisher = {The Open Journal},
